@@ -1,0 +1,104 @@
+<?php
+// index.php - メインファイル
+
+session_start();
+header('Content-Type: text/html; charset=utf-8');
+
+// 必要なファイルを読み込み
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/queries.php';
+require_once __DIR__ . '/translations.php';
+
+// データベース接続
+$pdo = getDatabaseConnection();
+
+$errors = [];
+$successMessage = "";
+
+// POST処理
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $action = $_POST['action'];
+    
+    if ($action === 'add_transaction' && isset($_POST['re_date'], $_POST['price'], $_POST['label1'], $_POST['label2'])) {
+        $result = addTransaction(
+            $pdo,
+            $_POST['re_date'],
+            (int)$_POST['price'],
+            trim($_POST['label1']),
+            trim($_POST['label2'])
+        );
+        
+        if ($result['success']) {
+            $_SESSION['successMessage'] = $result['message'];
+            $_SESSION['form_tab'] = 'entry';
+            $_SESSION['form_re_date'] = $result['data']['re_date'];
+            $_SESSION['form_label1'] = $result['data']['label1'];
+            $_SESSION['form_label2'] = $result['data']['label2'];
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
+        } else {
+            $errors[] = $result['message'];
+        }
+    }
+    elseif ($action === 'add_shop' && isset($_POST['name'])) {
+        $result = addShop($pdo, $_POST['name']);
+        if ($result['success']) {
+            $_SESSION['successMessage'] = $result['message'];
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
+        } else {
+            $errors[] = $result['message'];
+        }
+    }
+    elseif ($action === 'add_category' && isset($_POST['name'])) {
+        $result = addCategory($pdo, $_POST['name']);
+        if ($result['success']) {
+            $_SESSION['successMessage'] = $result['message'];
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
+        } else {
+            $errors[] = $result['message'];
+        }
+    }
+}
+
+// セッションからメッセージ取得
+if (isset($_SESSION['successMessage'])) {
+    $successMessage = $_SESSION['successMessage'];
+    unset($_SESSION['successMessage']);
+}
+
+// パラメータ取得
+$start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
+$end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
+$period_range = isset($_GET['period_range']) ? $_GET['period_range'] : '12';
+$search_shop = isset($_GET['search_shop']) ? $_GET['search_shop'] : '';
+$search_category = isset($_GET['search_category']) ? $_GET['search_category'] : '';
+$search_limit = isset($_GET['search_limit']) ? $_GET['search_limit'] : '100';
+$recent_limit = isset($_GET['recent_limit']) ? $_GET['recent_limit'] : '20';
+
+// データ取得
+$summary = getSummary($pdo, $start_date, $end_date);
+$total = $summary['total'];
+$record_count = $summary['record_count'];
+$shop_count = $summary['shop_count'];
+
+$active_days = getActiveDays($pdo, $start_date, $end_date);
+
+$shop_data_result = getShopData($pdo, $start_date, $end_date);
+$shop_data_above_4pct = $shop_data_result['above_4pct'];
+$shop_data_below_4pct_total = $shop_data_result['below_4pct_total'];
+$others_shop = $shop_data_result['others_shop'];
+
+$category_data = getCategoryData($pdo, $start_date, $end_date);
+$daily_data = getDailyData($pdo, $start_date, $end_date);
+$period_data = getPeriodData($pdo, $period_range);
+$recent_transactions = getRecentTransactions($pdo, $start_date, $end_date, $search_shop, $search_category, $recent_limit);
+$search_results = getSearchResults($pdo, $search_shop, $search_category, $search_limit);
+
+$shops = getShops($pdo);
+$categories = getCategories($pdo);
+
+// ビュー読み込み
+require_once __DIR__ . '/view.php';

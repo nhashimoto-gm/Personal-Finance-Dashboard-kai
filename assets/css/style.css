@@ -1,0 +1,301 @@
+/* style.css - スタイルシート */
+
+:root {
+    --elevation-1: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    --elevation-2: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+    --elevation-3: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+    --transition-speed: 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    --chart-height: 400px;
+}
+
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+}
+
+.card {
+    box-shadow: var(--elevation-1);
+    transition: box-shadow var(--transition-speed);
+    border: none;
+    border-radius: 8px;
+}
+
+.card-header {
+    position: sticky;
+    top: 60px;
+    z-index: 1020;
+    background-color: rgba(59, 130, 246, 0.1);
+    backdrop-filter: blur(4px);
+}
+
+.stat-card {
+    border-left: 4px solid #0d6efd;
+    transition: all var(--transition-speed);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--elevation-3);
+}
+
+.chart-container {
+    height: var(--chart-height);
+    margin-bottom: 20px;
+}
+
+.table-responsive {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.clickable {
+    cursor: pointer;
+    text-decoration: underline;
+    transition: opacity var(--transition-speed);
+}
+
+.clickable:hover {
+    opacity: 0.7;
+}
+
+.btn {
+    transition: all var(--transition-speed);
+    border-radius: 4px;
+    text-transform: none;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.btn-group .btn-sm {
+    padding: 0.25rem 0.5rem;
+    line-height: 1.2;
+    font-size: 0.875rem;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.badge {
+    border-radius: 12px;
+    padding: 0.35em 0.65em;
+    font-weight: 500;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.navbar {
+    box-shadow: var(--elevation-2);
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+}
+
+[data-bs-theme="light"] .stat-card:hover {
+    box-shadow: var(--elevation-3);
+}
+
+.filter-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    margin: 0.25rem;
+    background-color: rgba(13, 110, 253, 0.1);
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.filter-badge .btn-close {
+    font-size: 0.7rem;
+    padding: 0;
+    width: 1rem;
+    height: 1rem;
+}
+
+.active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+    align-items: center;
+}
+
+.active-filters .btn {
+    align-self: center;
+}
+
+.card-header .btn-group {
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+
+.card-header .d-flex>* {
+    align-self: flex-start;
+}
+
+.card-header .d-flex {
+    gap: 0.5rem;
+}
+
+.card-header .btn-group .btn,
+.card-header .btn-outline-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.btn-group-sm .btn,
+.btn-group .btn-sm {
+    min-height: auto;
+    line-height: 1;
+    padding: 0.25rem 0.5rem;
+}
+
+.card-header .btn-sm {
+    height: auto;
+    padding: 0.25rem 0.5rem;
+}
+
+#periodTrendSection {
+    scroll-margin-top: 50px;
+}
+
+#recentTransactionsSection {
+    scroll-margin-top: 50px;
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+    :root {
+        --chart-height: 300px;
+    }
+
+    .table .clickable {
+        min-height: auto;
+        display: inline;
+    }
+
+    .badge {
+        padding: 0.2em 0.45em;
+        font-size: 0.75rem;
+        line-height: 1.2;
+    }
+
+    .navbar {
+        position: relative;
+    }
+
+    .filter-badge {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        gap: 0.35rem;
+    }
+
+    .filter-badge .btn-close {
+        font-size: 0.65rem;
+        width: 0.85rem;
+        height: 0.85rem;
+    }
+
+    .active-filters .btn-sm,
+    .active-filters .btn-outline-danger {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.8rem !important;
+        line-height: 1.2 !important;
+        height: auto !important;
+    }
+
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+
+    .card-header h5 {
+        font-size: 0.95rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    .table {
+        font-size: 0.875rem;
+    }
+
+    .table td,
+    .table th {
+        padding: 0.4rem 0.5rem;
+    }
+
+    .clickable {
+        min-height: auto;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .form-control,
+    .btn {
+        min-height: 44px;
+    }
+
+    .btn-group .btn,
+    .btn-group .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.4rem;
+        white-space: nowrap;
+        height: auto;
+        line-height: 1.2;
+    }
+
+    .btn-group-sm .btn {
+        min-height: unset;
+        height: auto;
+        padding: 0.25rem 0.4rem;
+    }
+}
+
+/* 極小デバイス（iPhone SE等）*/
+@media (max-width: 400px) {
+    .btn-group .btn,
+    .btn-group .btn-sm {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.35rem;
+        height: auto;
+        line-height: 1.2;
+    }
+
+    .card-header h5 {
+        font-size: 0.85rem;
+    }
+
+    .btn-group-sm .btn {
+        min-height: unset;
+        padding: 0.25rem 0.35rem;
+    }
+}
+
+/* 超極小デバイス */
+@media (max-width: 360px) {
+    .btn-group .btn,
+    .btn-group .btn-sm {
+        font-size: 0.65rem;
+        padding: 0.25rem 0.3rem;
+        height: auto;
+        line-height: 1.2;
+    }
+
+    .btn-group-sm .btn {
+        min-height: unset;
+        padding: 0.25rem 0.3rem;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    :root {
+        --chart-height: 350px;
+    }
+}
+        

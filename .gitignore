@@ -1,0 +1,26 @@
+# Database credentials
+.env_db
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+error_log
+debug.log
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# PHP
+vendor/
+composer.lock
