@@ -7,6 +7,16 @@
         <div class="card">
             <div class="card-body">
                 <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label" for="startDate" data-i18n="startDate">開始日</label>
+                        <input type="date" class="form-control" name="start_date" id="startDate"
+                            value="<?= htmlspecialchars($start_date) ?>">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="endDate" data-i18n="endDate">終了日</label>
+                        <input type="date" class="form-control" name="end_date" id="endDate"
+                            value="<?= htmlspecialchars($end_date) ?>">
+                    </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100" style="margin-top: 2rem;">
                             <i class="bi bi-search"></i> <span data-i18n="filter">絞り込み</span>
@@ -182,3 +192,4 @@
 
     <!-- 検索結果 -->
     <?php require_once __DIR__ . '/search_results.php'; ?>
+</div>
