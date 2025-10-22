@@ -182,14 +182,3 @@
 
     <!-- 検索結果 -->
     <?php require_once __DIR__ . '/search_results.php'; ?>
-</div-md-3">
-                        <label class="form-label" for="startDate" data-i18n="startDate">開始日</label>
-                        <input type="date" class="form-control" name="start_date" id="startDate"
-                            value="<?= htmlspecialchars($start_date) ?>">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label" for="endDate" data-i18n="endDate">終了日</label>
-                        <input type="date" class="form-control" name="end_date" id="endDate"
-                            value="<?= htmlspecialchars($end_date) ?>">
-                    </div>
-                    <div class="col
