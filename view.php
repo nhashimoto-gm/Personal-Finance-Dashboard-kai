@@ -23,7 +23,7 @@
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1">
                 <i class="bi bi-wallet2"></i> <span data-i18n="title"
-                    onclick="window.location.href='https://www.sv-nhalolipop.cloud/kakeibo/index.php';"
+                    onclick="window.location.href='index.php';"
                     style="cursor: pointer;">
                     Personal Finance Dashboard
                 </span>
