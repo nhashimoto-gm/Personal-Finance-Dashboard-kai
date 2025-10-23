@@ -5,16 +5,12 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\CategoryController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
 */
 
 // Dashboard (Home Page)
@@ -24,7 +20,8 @@ Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/transactions/entry', [TransactionController::class, 'entry'])->name('transactions.entry');
 
 // Transaction CRUD Routes
-Route::resource('transactions', TransactionController::class);
+// resourceメソッドを使う場合は、他のtransactions.*名前のルートと衝突しないようにする
+Route::resource('transactions', TransactionController::class)->except(['create']);
 
 // Shop Management Routes
 Route::prefix('management/shops')->name('shops.')->group(function () {
@@ -50,3 +47,20 @@ Route::post('/language', function (Illuminate\Http\Request $request) {
     }
     return redirect()->back();
 })->name('language.switch');
+
+// Database Connection Test (remove in production)
+Route::get('/test-db', function () {
+    try {
+        DB::connection()->getPdo();
+        $shopCount = DB::table('shops')->count();
+        $categoryCount = DB::table('categories')->count();
+        $transactionCount = DB::table('transactions')->count();
+        
+        return "Database connection OK!<br>" .
+               "Shops: {$shopCount}<br>" .
+               "Categories: {$categoryCount}<br>" .
+               "Transactions: {$transactionCount}";
+    } catch (\Exception $e) {
+        return 'Database connection failed: ' . $e->getMessage();
+    }
+});

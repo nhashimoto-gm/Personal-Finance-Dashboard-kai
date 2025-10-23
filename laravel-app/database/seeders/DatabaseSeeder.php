@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
+// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\Shop;
-use App\Models\Category;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,31 +12,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed shops
-        $shops = [
-            'Supermarket',
-            'Restaurant',
-            'Online Shop',
-            'Convenience Store',
-            'Others'
-        ];
+        // \App\Models\User::factory(10)->create();
 
-        foreach ($shops as $shop) {
-            Shop::create(['name' => $shop]);
-        }
-
-        // Seed categories
-        $categories = [
-            'Food',
-            'Drink',
-            'Daily Goods',
-            'Entertainment',
-            'Transportation',
-            'Others'
-        ];
-
-        foreach ($categories as $category) {
-            Category::create(['name' => $category]);
-        }
+        // \App\Models\User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
     }
 }
