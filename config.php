@@ -39,5 +39,15 @@ function getDatabaseConnection() {
     }
 }
 
+// テーブル名設定取得
+function getTableNames() {
+    return [
+        'source' => getenv('DB_TABLE_SOURCE') ?: 'source',
+        'cat_1_labels' => getenv('DB_TABLE_SHOP') ?: 'cat_1_labels',
+        'cat_2_labels' => getenv('DB_TABLE_CATEGORY') ?: 'cat_2_labels',
+        'view1' => getenv('DB_VIEW_MAIN') ?: 'view1'
+    ];
+}
+
 // 設定初期化
 loadEnvironment();
