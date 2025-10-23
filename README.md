@@ -5,6 +5,8 @@ A comprehensive personal finance tracking dashboard built with PHP, MySQL, Boots
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PHP Version](https://img.shields.io/badge/PHP-7.4+-blue.svg)](https://www.php.net/)
 [![MySQL](https://img.shields.io/badge/MySQL-5.7+-orange.svg)](https://www.mysql.com/)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
+[![Highcharts](https://img.shields.io/badge/Highcharts-Latest-00A1E4?logo=highcharts&logoColor=white)](https://www.highcharts.com/)
 
 ---
 
