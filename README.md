@@ -175,6 +175,33 @@ Coming soon...
 
 ---
 
+## 🚢 Deployment
+
+### Laravel Version
+
+This project includes a **Laravel version** located in the `laravel-app/` directory. See deployment guides:
+
+- **[Lolipop Deployment Guide](docs/LOLIPOP_DEPLOYMENT_GUIDE.md)** - Complete guide for deploying to Lolipop shared hosting
+- **[Lolipop Quick Start](docs/LOLIPOP_QUICKSTART.md)** - Quick 3-step deployment guide
+- **[Database Migration Guide](docs/DATABASE_MIGRATION_GUIDE.md)** - Converting existing tables to Laravel structure
+
+#### Quick Deployment to Lolipop
+
+```bash
+# SSH into your Lolipop server
+ssh your-account@ssh.lolipop.jp -p 2222
+
+# Clone and deploy
+cd ~/web
+git clone https://github.com/nhashimoto-gm/Personal-Finance-Dashboard.git
+cd Personal-Finance-Dashboard/laravel-app
+bash deploy-lolipop.sh
+```
+
+For other hosting platforms, refer to the [Laravel Deployment Documentation](https://laravel.com/docs/10.x/deployment).
+
+---
+
 ## 🛠️ Technology Stack
 
 | Category | Technology |
