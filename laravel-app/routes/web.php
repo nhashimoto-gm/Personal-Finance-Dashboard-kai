@@ -20,11 +20,13 @@ Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/transactions/entry', [TransactionController::class, 'entry'])->name('transactions.entry');
 
 // Transaction CRUD Routes
-// resourceメソッドを使う場合は、他のtransactions.*名前のルートと衝突しないようにする
-Route::resource('transactions', TransactionController::class)->except(['create']);
+// レート制限付き: 1分間に10リクエストまで
+Route::resource('transactions', TransactionController::class)
+    ->except(['create'])
+    ->middleware('throttle:10,1');
 
 // Shop Management Routes
-Route::prefix('management/shops')->name('shops.')->group(function () {
+Route::prefix('management/shops')->name('shops.')->middleware('throttle:10,1')->group(function () {
     Route::get('/', [ShopController::class, 'index'])->name('index');
     Route::post('/', [ShopController::class, 'store'])->name('store');
     Route::put('/{shop}', [ShopController::class, 'update'])->name('update');
@@ -32,7 +34,7 @@ Route::prefix('management/shops')->name('shops.')->group(function () {
 });
 
 // Category Management Routes
-Route::prefix('management/categories')->name('categories.')->group(function () {
+Route::prefix('management/categories')->name('categories.')->middleware('throttle:10,1')->group(function () {
     Route::get('/', [CategoryController::class, 'index'])->name('index');
     Route::post('/', [CategoryController::class, 'store'])->name('store');
     Route::put('/{category}', [CategoryController::class, 'update'])->name('update');

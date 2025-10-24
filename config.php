@@ -78,5 +78,118 @@ function verifyCsrfToken($token) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
 
+// レート制限設定
+define('RATE_LIMIT_REQUESTS', 10);  // 最大リクエスト数
+define('RATE_LIMIT_WINDOW', 60);    // 時間枠（秒）
+
+/**
+ * レート制限をチェック
+ * @param string $action アクション名（例: 'add_transaction', 'add_shop'）
+ * @return array ['allowed' => bool, 'message' => string, 'retry_after' => int]
+ */
+function checkRateLimit($action = 'default') {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $key = 'rate_limit_' . $action;
+    $now = time();
+
+    // セッションに記録がない場合は初期化
+    if (!isset($_SESSION[$key])) {
+        $_SESSION[$key] = [];
+    }
+
+    // 古いリクエストを削除（時間枠外のもの）
+    $_SESSION[$key] = array_filter($_SESSION[$key], function($timestamp) use ($now) {
+        return ($now - $timestamp) < RATE_LIMIT_WINDOW;
+    });
+
+    // リクエスト数をチェック
+    $requestCount = count($_SESSION[$key]);
+
+    if ($requestCount >= RATE_LIMIT_REQUESTS) {
+        // 制限超過：最も古いリクエストから何秒後にリトライ可能かを計算
+        $oldestRequest = min($_SESSION[$key]);
+        $retryAfter = RATE_LIMIT_WINDOW - ($now - $oldestRequest);
+
+        return [
+            'allowed' => false,
+            'message' => 'Too many requests. Please try again in ' . $retryAfter . ' seconds.',
+            'retry_after' => $retryAfter
+        ];
+    }
+
+    return [
+        'allowed' => true,
+        'message' => '',
+        'retry_after' => 0
+    ];
+}
+
+/**
+ * リクエストを記録
+ * @param string $action アクション名
+ */
+function recordRequest($action = 'default') {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $key = 'rate_limit_' . $action;
+    $now = time();
+
+    if (!isset($_SESSION[$key])) {
+        $_SESSION[$key] = [];
+    }
+
+    // 現在のタイムスタンプを追加
+    $_SESSION[$key][] = $now;
+}
+
+/**
+ * レート制限情報を取得（デバッグ用）
+ * @param string $action アクション名
+ * @return array
+ */
+function getRateLimitInfo($action = 'default') {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $key = 'rate_limit_' . $action;
+    $now = time();
+
+    if (!isset($_SESSION[$key])) {
+        return [
+            'requests' => 0,
+            'limit' => RATE_LIMIT_REQUESTS,
+            'remaining' => RATE_LIMIT_REQUESTS,
+            'reset' => 0
+        ];
+    }
+
+    // 古いリクエストを削除
+    $_SESSION[$key] = array_filter($_SESSION[$key], function($timestamp) use ($now) {
+        return ($now - $timestamp) < RATE_LIMIT_WINDOW;
+    });
+
+    $requestCount = count($_SESSION[$key]);
+    $remaining = max(0, RATE_LIMIT_REQUESTS - $requestCount);
+
+    $reset = 0;
+    if (!empty($_SESSION[$key])) {
+        $oldestRequest = min($_SESSION[$key]);
+        $reset = $oldestRequest + RATE_LIMIT_WINDOW;
+    }
+
+    return [
+        'requests' => $requestCount,
+        'limit' => RATE_LIMIT_REQUESTS,
+        'remaining' => $remaining,
+        'reset' => $reset
+    ];
+}
+
 // 設定初期化
 loadEnvironment();

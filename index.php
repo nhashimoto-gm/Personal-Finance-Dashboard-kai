@@ -29,45 +29,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     } else {
         $action = $_POST['action'];
 
-        if ($action === 'add_transaction' && isset($_POST['re_date'], $_POST['price'], $_POST['label1'], $_POST['label2'])) {
-            $result = addTransaction(
-                $pdo,
-                $_POST['re_date'],
-                (int)$_POST['price'],
-                trim($_POST['label1']),
-                trim($_POST['label2'])
-            );
+        // レート制限チェック
+        $rateLimitCheck = checkRateLimit($action);
+        if (!$rateLimitCheck['allowed']) {
+            $errors[] = $rateLimitCheck['message'];
+        } else {
+            // レート制限OK - リクエストを記録
+            recordRequest($action);
 
-            if ($result['success']) {
-                $_SESSION['successMessage'] = $result['message'];
-                $_SESSION['form_tab'] = 'entry';
-                $_SESSION['form_re_date'] = $result['data']['re_date'];
-                $_SESSION['form_label1'] = $result['data']['label1'];
-                $_SESSION['form_label2'] = $result['data']['label2'];
-                header('Location: ' . $_SERVER['REQUEST_URI']);
-                exit;
-            } else {
-                $errors[] = $result['message'];
+            // 各アクションの処理
+            if ($action === 'add_transaction' && isset($_POST['re_date'], $_POST['price'], $_POST['label1'], $_POST['label2'])) {
+                $result = addTransaction(
+                    $pdo,
+                    $_POST['re_date'],
+                    (int)$_POST['price'],
+                    trim($_POST['label1']),
+                    trim($_POST['label2'])
+                );
+
+                if ($result['success']) {
+                    $_SESSION['successMessage'] = $result['message'];
+                    $_SESSION['form_tab'] = 'entry';
+                    $_SESSION['form_re_date'] = $result['data']['re_date'];
+                    $_SESSION['form_label1'] = $result['data']['label1'];
+                    $_SESSION['form_label2'] = $result['data']['label2'];
+                    header('Location: ' . $_SERVER['REQUEST_URI']);
+                    exit;
+                } else {
+                    $errors[] = $result['message'];
+                }
             }
-        }
-        elseif ($action === 'add_shop' && isset($_POST['name'])) {
-            $result = addShop($pdo, $_POST['name']);
-            if ($result['success']) {
-                $_SESSION['successMessage'] = $result['message'];
-                header('Location: ' . $_SERVER['REQUEST_URI']);
-                exit;
-            } else {
-                $errors[] = $result['message'];
+            elseif ($action === 'add_shop' && isset($_POST['name'])) {
+                $result = addShop($pdo, $_POST['name']);
+                if ($result['success']) {
+                    $_SESSION['successMessage'] = $result['message'];
+                    header('Location: ' . $_SERVER['REQUEST_URI']);
+                    exit;
+                } else {
+                    $errors[] = $result['message'];
+                }
             }
-        }
-        elseif ($action === 'add_category' && isset($_POST['name'])) {
-            $result = addCategory($pdo, $_POST['name']);
-            if ($result['success']) {
-                $_SESSION['successMessage'] = $result['message'];
-                header('Location: ' . $_SERVER['REQUEST_URI']);
-                exit;
-            } else {
-                $errors[] = $result['message'];
+            elseif ($action === 'add_category' && isset($_POST['name'])) {
+                $result = addCategory($pdo, $_POST['name']);
+                if ($result['success']) {
+                    $_SESSION['successMessage'] = $result['message'];
+                    header('Location: ' . $_SERVER['REQUEST_URI']);
+                    exit;
+                } else {
+                    $errors[] = $result['message'];
+                }
             }
         }
     }
