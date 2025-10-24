@@ -181,3 +181,71 @@ function getSearchResults($pdo, $search_shop, $search_category, $search_limit) {
     $stmt->execute($params);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+// 予算一覧取得
+function getBudgets($pdo, $year = null, $month = null) {
+    try {
+        $tables = getTableNames();
+        $sql = "SELECT * FROM {$tables['budgets']} WHERE 1=1";
+        $params = [];
+
+        if ($year !== null) {
+            $sql .= " AND target_year = ?";
+            $params[] = $year;
+        }
+
+        if ($month !== null) {
+            $sql .= " AND target_month = ?";
+            $params[] = $month;
+        }
+
+        $sql .= " ORDER BY target_year DESC, target_month DESC, budget_type, target_id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log('Budget fetch error: ' . $e->getMessage());
+        return [];
+    }
+}
+
+// 予算進捗取得
+function getBudgetProgress($pdo, $year, $month) {
+    try {
+        $tables = getTableNames();
+
+        // 月次全体予算を取得
+        $stmt = $pdo->prepare("SELECT * FROM {$tables['budgets']} WHERE budget_type = 'monthly' AND target_id IS NULL AND target_year = ? AND target_month = ?");
+        $stmt->execute([$year, $month]);
+        $budget = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$budget) {
+            return null;
+        }
+
+        // その月の実績を取得
+        $start_date = sprintf('%04d-%02d-01', $year, $month);
+        $end_date = date('Y-m-t', strtotime($start_date));
+
+        $stmt = $pdo->prepare("SELECT SUM(price) as total FROM {$tables['source']} WHERE re_date BETWEEN ? AND ?");
+        $stmt->execute([$start_date, $end_date]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $actual = $result['total'] ?? 0;
+
+        $budget_amount = $budget['amount'];
+        $percentage = $budget_amount > 0 ? round(($actual / $budget_amount) * 100, 1) : 0;
+
+        return [
+            'budget_id' => $budget['id'],
+            'budget_amount' => $budget_amount,
+            'actual_amount' => $actual,
+            'remaining' => $budget_amount - $actual,
+            'percentage' => $percentage,
+            'alert_level' => $percentage >= 100 ? 'danger' : ($percentage >= 80 ? 'warning' : 'success')
+        ];
+    } catch (PDOException $e) {
+        error_log('Budget progress fetch error: ' . $e->getMessage());
+        return null;
+    }
+}

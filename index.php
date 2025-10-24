@@ -79,6 +79,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $errors[] = $result['message'];
                 }
             }
+            elseif ($action === 'update_transaction' && isset($_POST['id'], $_POST['re_date'], $_POST['price'], $_POST['label1'], $_POST['label2'])) {
+                $result = updateTransaction(
+                    $pdo,
+                    (int)$_POST['id'],
+                    $_POST['re_date'],
+                    (int)$_POST['price'],
+                    trim($_POST['label1']),
+                    trim($_POST['label2'])
+                );
+
+                if ($result['success']) {
+                    $_SESSION['successMessage'] = $result['message'];
+                    header('Location: ' . $_SERVER['REQUEST_URI']);
+                    exit;
+                } else {
+                    $errors[] = $result['message'];
+                }
+            }
+            elseif ($action === 'delete_transaction' && isset($_POST['id'])) {
+                $result = deleteTransaction($pdo, (int)$_POST['id']);
+                if ($result['success']) {
+                    $_SESSION['successMessage'] = $result['message'];
+                    header('Location: ' . $_SERVER['REQUEST_URI']);
+                    exit;
+                } else {
+                    $errors[] = $result['message'];
+                }
+            }
+            elseif ($action === 'set_budget' && isset($_POST['budget_type'], $_POST['target_year'], $_POST['target_month'], $_POST['amount'])) {
+                $target_id = isset($_POST['target_id']) && $_POST['target_id'] !== '' ? (int)$_POST['target_id'] : null;
+                $result = setBudget(
+                    $pdo,
+                    $_POST['budget_type'],
+                    $target_id,
+                    (int)$_POST['target_year'],
+                    (int)$_POST['target_month'],
+                    (int)$_POST['amount']
+                );
+
+                if ($result['success']) {
+                    $_SESSION['successMessage'] = $result['message'];
+                    header('Location: ' . $_SERVER['REQUEST_URI']);
+                    exit;
+                } else {
+                    $errors[] = $result['message'];
+                }
+            }
+            elseif ($action === 'delete_budget' && isset($_POST['id'])) {
+                $result = deleteBudget($pdo, (int)$_POST['id']);
+                if ($result['success']) {
+                    $_SESSION['successMessage'] = $result['message'];
+                    header('Location: ' . $_SERVER['REQUEST_URI']);
+                    exit;
+                } else {
+                    $errors[] = $result['message'];
+                }
+            }
         }
     }
 }
@@ -119,6 +176,12 @@ $search_results = getSearchResults($pdo, $search_shop, $search_category, $search
 
 $shops = getShops($pdo);
 $categories = getCategories($pdo);
+
+// 予算データ取得（当月）
+$current_year = (int)date('Y');
+$current_month = (int)date('m');
+$budget_progress = getBudgetProgress($pdo, $current_year, $current_month);
+$all_budgets = getBudgets($pdo);
 
 // ビュー読み込み
 require_once __DIR__ . '/view.php';
