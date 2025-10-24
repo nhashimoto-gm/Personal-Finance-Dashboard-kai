@@ -70,6 +70,12 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="budget-tab" data-bs-toggle="tab" data-bs-target="#budget-pane"
+                    type="button" role="tab" aria-controls="budget-pane" aria-selected="false">
+                    <i class="bi bi-piggy-bank"></i> <span data-i18n="budget">予算</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="management-tab" data-bs-toggle="tab" data-bs-target="#management-pane"
                     type="button" role="tab" aria-controls="management-pane" aria-selected="false">
                     <i class="bi bi-gear"></i> <span data-i18n="tabManagement">マスター</span>
@@ -88,8 +94,59 @@
                 <?php require_once __DIR__ . '/views/entry.php'; ?>
             </div>
 
+            <div class="tab-pane fade" id="budget-pane" role="tabpanel" aria-labelledby="budget-tab">
+                <?php require_once __DIR__ . '/views/budget.php'; ?>
+            </div>
+
             <div class="tab-pane fade" id="management-pane" role="tabpanel" aria-labelledby="management-tab">
                 <?php require_once __DIR__ . '/views/management.php'; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- 編集モーダル -->
+    <div class="modal fade" id="editTransactionModal" tabindex="-1" aria-labelledby="editTransactionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editTransactionModalLabel" data-i18n="editTransaction">取引を編集</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="">
+                    <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+                    <input type="hidden" name="action" value="update_transaction">
+                    <input type="hidden" name="id" id="edit_transaction_id">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="edit_re_date" class="form-label" data-i18n="date">日付</label>
+                            <input type="date" class="form-control" id="edit_re_date" name="re_date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_price" class="form-label" data-i18n="amount">金額</label>
+                            <input type="number" class="form-control" id="edit_price" name="price" min="1" max="100000000" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_label1" class="form-label" data-i18n="shop">ショップ</label>
+                            <select class="form-select" id="edit_label1" name="label1" required>
+                                <?php foreach ($shops as $shop): ?>
+                                    <option value="<?= htmlspecialchars($shop) ?>"><?= htmlspecialchars($shop) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_label2" class="form-label" data-i18n="category">カテゴリ</label>
+                            <select class="form-select" id="edit_label2" name="label2" required>
+                                <?php foreach ($categories as $category): ?>
+                                    <option value="<?= htmlspecialchars($category) ?>"><?= htmlspecialchars($category) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">キャンセル</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="update">更新</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

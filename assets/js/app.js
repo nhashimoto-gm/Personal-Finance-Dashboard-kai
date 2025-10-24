@@ -453,3 +453,55 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// トランザクション編集
+function editTransaction(id, date, price, shop, category) {
+    // モーダルにデータをセット
+    document.getElementById('edit_transaction_id').value = id;
+    document.getElementById('edit_re_date').value = date;
+    document.getElementById('edit_price').value = price;
+    document.getElementById('edit_label1').value = shop;
+    document.getElementById('edit_label2').value = category;
+
+    // モーダルを表示
+    const modal = new bootstrap.Modal(document.getElementById('editTransactionModal'));
+    modal.show();
+}
+
+// トランザクション削除
+function deleteTransaction(id) {
+    const lang = currentLang;
+    const confirmMsg = translations[lang]['confirmDelete'] || 'Are you sure you want to delete this transaction?';
+
+    if (confirm(confirmMsg)) {
+        // CSRFトークンを取得
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        // フォームを作成して送信
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '';
+
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = csrfToken;
+
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'delete_transaction';
+
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'id';
+        idInput.value = id;
+
+        form.appendChild(csrfInput);
+        form.appendChild(actionInput);
+        form.appendChild(idInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+}

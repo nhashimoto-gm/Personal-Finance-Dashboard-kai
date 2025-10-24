@@ -84,3 +84,62 @@
         </div>
     </div>
 </div>
+
+<!-- CSVインポート -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-transparent">
+                <h5 class="mb-0"><i class="bi bi-upload"></i> <span data-i18n="importCSV">CSVインポート</span></h5>
+            </div>
+            <div class="card-body">
+                <?php if (isset($_SESSION['import_errors'])): ?>
+                    <div class="alert alert-danger">
+                        <strong>Import Errors:</strong>
+                        <ul class="mb-0">
+                            <?php foreach ($_SESSION['import_errors'] as $error): ?>
+                                <li><?= htmlspecialchars($error) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                    <?php unset($_SESSION['import_errors']); ?>
+                <?php endif; ?>
+
+                <form method="POST" action="import.php" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label" data-i18n="csvFile">CSVファイル</label>
+                            <input type="file" class="form-control" name="csv_file" accept=".csv" required>
+                            <div class="form-text">
+                                <span data-i18n="csvFormat">Format: Date,Shop,Category,Amount (YYYY-MM-DD format)</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-upload"></i> <span data-i18n="importButton">インポート</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-0">
+                        <strong><i class="bi bi-info-circle"></i> <span data-i18n="csvInstructions">CSVファイル形式:</span></strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Header row: Date, Shop, Category, Amount</li>
+                            <li>Date format: YYYY-MM-DD (e.g., 2024-01-15)</li>
+                            <li>Amount: Positive integer</li>
+                            <li>Maximum file size: 5MB</li>
+                        </ul>
+                        <div class="mt-2">
+                            <strong>Example:</strong>
+                            <pre class="mb-0 mt-1" style="font-size: 0.85rem;">Date,Shop,Category,Amount
+2024-01-15,Supermarket,Food,3500
+2024-01-16,Restaurant,Food,2800</pre>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -28,6 +28,12 @@
                             <i class="bi bi-arrow-clockwise"></i> <span data-i18n="reset">リセット</span>
                         </button>
                     </div>
+                    <div class="col-md-2">
+                        <a href="export.php?type=summary&start_date=<?= $start_date ?>&end_date=<?= $end_date ?>"
+                           class="btn btn-success w-100" style="margin-top: 2rem;">
+                            <i class="bi bi-download"></i> <span data-i18n="export">Export</span>
+                        </a>
+                    </div>
                 </form>
             </div>
         </div>
@@ -98,6 +104,55 @@
         </div>
     </div>
 </div>
+
+<!-- 予算進捗 -->
+<?php if ($budget_progress): ?>
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-<?= $budget_progress['alert_level'] ?>">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-piggy-bank"></i> <span data-i18n="budgetProgress">予算進捗</span> (<?= $current_year ?>年<?= $current_month ?>月)</h5>
+                <?php if ($budget_progress['alert_level'] === 'danger'): ?>
+                    <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> <span data-i18n="budgetOver">予算超過！</span></span>
+                <?php elseif ($budget_progress['alert_level'] === 'warning'): ?>
+                    <span class="badge bg-warning"><i class="bi bi-exclamation-circle"></i> <span data-i18n="budgetWarning">予算の80%に到達</span></span>
+                <?php else: ?>
+                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> <span data-i18n="budgetOk">予算内</span></span>
+                <?php endif; ?>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="text-muted small" data-i18n="budgetAmount">予算額</div>
+                        <div class="h4">¥<?= number_format($budget_progress['budget_amount']) ?></div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small" data-i18n="actualAmount">実績額</div>
+                        <div class="h4 text-<?= $budget_progress['alert_level'] ?>">¥<?= number_format($budget_progress['actual_amount']) ?></div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small" data-i18n="remaining">残高</div>
+                        <div class="h4 text-<?= $budget_progress['alert_level'] ?>">¥<?= number_format($budget_progress['remaining']) ?></div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small" data-i18n="percentage">達成率</div>
+                        <div class="h4 text-<?= $budget_progress['alert_level'] ?>"><?= $budget_progress['percentage'] ?>%</div>
+                    </div>
+                </div>
+                <div class="progress" style="height: 30px;">
+                    <div class="progress-bar bg-<?= $budget_progress['alert_level'] ?>" role="progressbar"
+                         style="width: <?= min($budget_progress['percentage'], 100) ?>%;"
+                         aria-valuenow="<?= $budget_progress['percentage'] ?>"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                        <?= $budget_progress['percentage'] ?>%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="row">
     <!-- ショップ別グラフ -->
