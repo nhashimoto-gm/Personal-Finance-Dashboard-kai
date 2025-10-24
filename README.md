@@ -37,10 +37,12 @@ A comprehensive personal finance tracking dashboard built with PHP, MySQL, Boots
 - **Period Trend Analysis** - Stacked bar chart (12 months/2 years/5 years/10 years views)
 - **Transaction History** - Filterable and searchable transaction table with clickable filters
 
-### 📝 Data Entry
+### 📝 Data Entry & Management
 - Quick transaction entry form
-- Shop and category dropdown selection
+- **Edit & Delete** - Modify or remove existing transactions
+- Shop and category dropdown selection with incremental search
 - Input validation and real-time guidance
+- **CSV Import** - Bulk import transactions from file
 - Success/error message notifications
 
 ### ⚙️ Master Management
@@ -48,13 +50,25 @@ A comprehensive personal finance tracking dashboard built with PHP, MySQL, Boots
 - Category list management (add/view)
 - Easy master data maintenance
 
+### 💰 Budget Management
+- **Monthly Budget Planning** - Set and track monthly spending limits
+- **Visual Progress Tracking** - Color-coded progress bars and alerts
+- **Smart Alerts** - Warning at 80%, danger at 100% of budget
+- **Budget vs Actual** - Real-time comparison with remaining balance
+
+### 📤 Data Import/Export
+- **CSV Export** - Export transactions, summaries, and analytics
+- **Excel Compatible** - UTF-8 BOM encoding for seamless Excel import
+- **Bulk Import** - Import multiple transactions from CSV files
+- **Validation** - Automatic data validation during import
+
 ### 🌐 Additional Features
 - **Multi-language Support** - Seamless Japanese/English toggle
 - **Dark Mode** - Theme switcher with automatic chart color updates
 - **Responsive Design** - Mobile-first, works on all devices
 - **Interactive Charts** - Powered by Highcharts with animations
 - **Search & Filter** - Click any shop or category to filter transactions
-- **Export Ready** - Data structure ready for CSV/Excel export
+- **CRUD Operations** - Full Create, Read, Update, Delete support
 
 ---
 
@@ -453,17 +467,20 @@ Please include:
 
 ## 🗺️ Roadmap
 
-### Version 1.1 (Planned)
-- [ ] Export to CSV/Excel
-- [ ] Import transactions from file
-- [ ] Recurring transactions
-- [ ] Budget planning and alerts
+### Version 1.1 (✅ Completed)
+- [x] **Transaction Edit & Delete** - Modify or remove transactions with inline controls
+- [x] **Export to CSV/Excel** - Export transactions and summaries with UTF-8 BOM support
+- [x] **Budget Planning & Alerts** - Set monthly budgets with visual progress tracking
+- [x] **Import from CSV** - Bulk import transactions with validation
 
 ### Version 1.2 (Planned)
+- [ ] Transaction memo/notes field
+- [ ] Recurring transactions (auto-generated)
 - [ ] REST API endpoints
 - [ ] User authentication & multi-user support
 - [ ] Transaction categories hierarchy
 - [ ] Advanced filtering options
+- [ ] Email notifications for budget alerts
 
 ### Version 2.0 (Future)
 - [ ] Multi-currency support
