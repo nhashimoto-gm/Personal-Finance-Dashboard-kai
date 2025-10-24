@@ -177,28 +177,27 @@ Coming soon...
 
 ## 🚢 Deployment
 
-### Laravel Version
+### Shared Hosting Deployment
 
-This project includes a **Laravel version** located in the `laravel-app/` directory. See deployment guides:
+This application can be deployed to any shared hosting service that supports PHP 7.4+ and MySQL.
 
-- **[Lolipop Deployment Guide](docs/LOLIPOP_DEPLOYMENT_GUIDE.md)** - Complete guide for deploying to Lolipop shared hosting
-- **[Lolipop Quick Start](docs/LOLIPOP_QUICKSTART.md)** - Quick 3-step deployment guide
-- **[Database Migration Guide](docs/DATABASE_MIGRATION_GUIDE.md)** - Converting existing tables to Laravel structure
+#### General Deployment Steps
 
-#### Quick Deployment to Lolipop
+1. Upload all files to your web server
+2. Import `database.sql` into your MySQL database
+3. Configure `.env_db` with your database credentials
+4. Set proper file permissions (storage directories writable)
+5. Point your web server to the root directory containing `index.php`
 
-```bash
-# SSH into your Lolipop server
-ssh your-account@ssh.lolipop.jp -p 2222
+#### Example: Apache Configuration
 
-# Clone and deploy
-cd ~/web
-git clone https://github.com/nhashimoto-gm/Personal-Finance-Dashboard.git
-cd Personal-Finance-Dashboard/laravel-app
-bash deploy-lolipop.sh
+```apache
+DirectoryIndex index.php
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
 ```
-
-For other hosting platforms, refer to the [Laravel Deployment Documentation](https://laravel.com/docs/10.x/deployment).
 
 ---
 
