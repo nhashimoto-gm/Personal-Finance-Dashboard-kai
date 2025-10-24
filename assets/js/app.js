@@ -426,3 +426,30 @@ window.addEventListener('load', function() {
         entryTab.show();
     }
 });
+
+// Choices.js - インクリメンタルサーチ機能を持つドロップダウン
+document.addEventListener('DOMContentLoaded', function() {
+    // ショップのセレクトボックスにChoices.jsを適用
+    const shopSelect = document.querySelector('select[name="label1"]');
+    if (shopSelect) {
+        new Choices(shopSelect, {
+            searchEnabled: true,
+            searchPlaceholderValue: 'Search...',
+            itemSelectText: '',
+            shouldSort: false,
+            position: 'bottom'
+        });
+    }
+
+    // カテゴリのセレクトボックスにChoices.jsを適用
+    const categorySelect = document.querySelector('select[name="label2"]');
+    if (categorySelect) {
+        new Choices(categorySelect, {
+            searchEnabled: true,
+            searchPlaceholderValue: 'Search...',
+            itemSelectText: '',
+            shouldSort: false,
+            position: 'bottom'
+        });
+    }
+});
