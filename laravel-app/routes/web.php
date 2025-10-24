@@ -47,20 +47,3 @@ Route::post('/language', function (Illuminate\Http\Request $request) {
     }
     return redirect()->back();
 })->name('language.switch');
-
-// Database Connection Test (remove in production)
-Route::get('/test-db', function () {
-    try {
-        DB::connection()->getPdo();
-        $shopCount = DB::table('shops')->count();
-        $categoryCount = DB::table('categories')->count();
-        $transactionCount = DB::table('transactions')->count();
-        
-        return "Database connection OK!<br>" .
-               "Shops: {$shopCount}<br>" .
-               "Categories: {$categoryCount}<br>" .
-               "Transactions: {$transactionCount}";
-    } catch (\Exception $e) {
-        return 'Database connection failed: ' . $e->getMessage();
-    }
-});

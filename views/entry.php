@@ -11,6 +11,7 @@
             <div class="card-body">
                 <form method="POST">
                     <input type="hidden" name="action" value="add_transaction">
+                    <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
