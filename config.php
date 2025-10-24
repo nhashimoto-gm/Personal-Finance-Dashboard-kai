@@ -1,10 +1,21 @@
 <?php
 // config.php - 設定ファイル
 
-// エラー表示設定（開発時のみ）
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// エラー表示設定（環境別）
+$appEnv = getenv('APP_ENV') ?: 'development';
+if ($appEnv === 'production') {
+    // 本番環境: エラーをログに記録し、画面には表示しない
+    ini_set('display_errors', 0);
+    ini_set('display_startup_errors', 0);
+    error_reporting(E_ALL);
+    ini_set('log_errors', 1);
+    ini_set('error_log', __DIR__ . '/error.log');
+} else {
+    // 開発環境: エラーを画面に表示
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+}
 
 // 環境変数読み込み
 function loadEnvironment() {
@@ -47,6 +58,24 @@ function getTableNames() {
         'cat_2_labels' => getenv('DB_TABLE_CATEGORY') ?: 'cat_2_labels',
         'view1' => getenv('DB_VIEW_MAIN') ?: 'view1'
     ];
+}
+
+// CSRF保護関数
+function generateCsrfToken() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function verifyCsrfToken($token) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
 
 // 設定初期化

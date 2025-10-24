@@ -401,6 +401,10 @@ function addMasterData(type, name) {
     data.append('action', type === 'shop' ? 'add_shop' : 'add_category');
     data.append('name', name);
 
+    // CSRFトークンを追加
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    data.append('csrf_token', csrfToken);
+
     fetch(window.location.href, {
             method: 'POST',
             body: data

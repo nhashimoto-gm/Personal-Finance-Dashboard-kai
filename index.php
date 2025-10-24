@@ -1,7 +1,12 @@
 <?php
 // index.php - メインファイル
 
-session_start();
+// セキュアなセッション設定
+session_start([
+    'cookie_httponly' => true,  // JavaScriptからのアクセスを防止
+    'cookie_samesite' => 'Lax', // CSRF保護
+    'use_strict_mode' => true,  // セッションIDの厳格な検証
+]);
 header('Content-Type: text/html; charset=utf-8');
 
 // 必要なファイルを読み込み
@@ -18,47 +23,52 @@ $successMessage = "";
 
 // POST処理
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $action = $_POST['action'];
-    
-    if ($action === 'add_transaction' && isset($_POST['re_date'], $_POST['price'], $_POST['label1'], $_POST['label2'])) {
-        $result = addTransaction(
-            $pdo,
-            $_POST['re_date'],
-            (int)$_POST['price'],
-            trim($_POST['label1']),
-            trim($_POST['label2'])
-        );
-        
-        if ($result['success']) {
-            $_SESSION['successMessage'] = $result['message'];
-            $_SESSION['form_tab'] = 'entry';
-            $_SESSION['form_re_date'] = $result['data']['re_date'];
-            $_SESSION['form_label1'] = $result['data']['label1'];
-            $_SESSION['form_label2'] = $result['data']['label2'];
-            header('Location: ' . $_SERVER['REQUEST_URI']);
-            exit;
-        } else {
-            $errors[] = $result['message'];
+    // CSRFトークン検証
+    if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
+        $errors[] = 'Invalid security token. Please refresh the page and try again.';
+    } else {
+        $action = $_POST['action'];
+
+        if ($action === 'add_transaction' && isset($_POST['re_date'], $_POST['price'], $_POST['label1'], $_POST['label2'])) {
+            $result = addTransaction(
+                $pdo,
+                $_POST['re_date'],
+                (int)$_POST['price'],
+                trim($_POST['label1']),
+                trim($_POST['label2'])
+            );
+
+            if ($result['success']) {
+                $_SESSION['successMessage'] = $result['message'];
+                $_SESSION['form_tab'] = 'entry';
+                $_SESSION['form_re_date'] = $result['data']['re_date'];
+                $_SESSION['form_label1'] = $result['data']['label1'];
+                $_SESSION['form_label2'] = $result['data']['label2'];
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit;
+            } else {
+                $errors[] = $result['message'];
+            }
         }
-    }
-    elseif ($action === 'add_shop' && isset($_POST['name'])) {
-        $result = addShop($pdo, $_POST['name']);
-        if ($result['success']) {
-            $_SESSION['successMessage'] = $result['message'];
-            header('Location: ' . $_SERVER['REQUEST_URI']);
-            exit;
-        } else {
-            $errors[] = $result['message'];
+        elseif ($action === 'add_shop' && isset($_POST['name'])) {
+            $result = addShop($pdo, $_POST['name']);
+            if ($result['success']) {
+                $_SESSION['successMessage'] = $result['message'];
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit;
+            } else {
+                $errors[] = $result['message'];
+            }
         }
-    }
-    elseif ($action === 'add_category' && isset($_POST['name'])) {
-        $result = addCategory($pdo, $_POST['name']);
-        if ($result['success']) {
-            $_SESSION['successMessage'] = $result['message'];
-            header('Location: ' . $_SERVER['REQUEST_URI']);
-            exit;
-        } else {
-            $errors[] = $result['message'];
+        elseif ($action === 'add_category' && isset($_POST['name'])) {
+            $result = addCategory($pdo, $_POST['name']);
+            if ($result['success']) {
+                $_SESSION['successMessage'] = $result['message'];
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit;
+            } else {
+                $errors[] = $result['message'];
+            }
         }
     }
 }
