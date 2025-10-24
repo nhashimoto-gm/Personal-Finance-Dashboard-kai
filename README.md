@@ -217,6 +217,9 @@ RewriteRule ^(.*)$ index.php [QSA,L]
 
 ## 📖 Usage
 
+> 📚 **詳細な使用要領**: [USAGE.md](./USAGE.md)をご覧ください
+> **Detailed Usage Guide**: Please refer to [USAGE.md](./USAGE.md)
+
 ### Adding a Transaction
 1. Click the **Data Entry** tab
 2. Select the transaction date
