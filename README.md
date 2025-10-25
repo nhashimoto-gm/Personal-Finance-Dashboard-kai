@@ -10,22 +10,6 @@ A comprehensive personal finance tracking dashboard built with PHP, MySQL, Boots
 
 ---
 
-## 📸 Screenshots
-
-### Dashboard
-![Dashboard Overview](screenshots/dashboard.png)
-*Main dashboard with expense analytics and charts*
-
-### Data Entry
-![Data Entry](screenshots/entry.png)
-*Quick transaction entry form*
-
-### Dark Mode
-![Dark Mode](screenshots/dark-mode.png)
-*Automatic dark mode with theme-aware charts*
-
----
-
 ## ✨ Features
 
 ### 📊 Dashboard
