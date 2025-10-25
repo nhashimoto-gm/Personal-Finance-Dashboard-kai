@@ -223,7 +223,6 @@ RewriteRule ^(.*)$ index.php [QSA,L]
 | **Database** | MySQL 5.7+ / MariaDB 10.2+ |
 | **Frontend Framework** | Bootstrap 5.3 |
 | **Charts** | Highcharts (free for personal use) |
-| **Data Visualization** | D3.js |
 | **Icons** | Bootstrap Icons |
 | **Architecture** | MVC-inspired modular design |
 
@@ -505,7 +504,6 @@ Please include:
 
 - [Bootstrap](https://getbootstrap.com/) - UI framework
 - [Highcharts](https://www.highcharts.com/) - Chart library
-- [D3.js](https://d3js.org/) - Data visualization
 - [Bootstrap Icons](https://icons.getbootstrap.com/) - Icon library
 
 ---

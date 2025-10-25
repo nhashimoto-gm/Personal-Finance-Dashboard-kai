@@ -17,7 +17,6 @@
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 
 <body>
