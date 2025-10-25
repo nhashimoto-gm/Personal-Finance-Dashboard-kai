@@ -83,7 +83,7 @@
                                                 <input type="hidden" name="action" value="delete_budget">
                                                 <input type="hidden" name="id" value="<?= $budget['id'] ?>">
                                                 <button type="submit" class="btn btn-outline-danger btn-sm"
-                                                        onclick="return confirm('<?= htmlspecialchars(translations()['ja']['confirmDelete'] ?? 'Delete this budget?') ?>')">
+                                                        onclick="return confirm('<?= htmlspecialchars(getTranslations()['en']['confirmDeleteBudget'] ?? 'Are you sure you want to delete this budget?') ?>')">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
