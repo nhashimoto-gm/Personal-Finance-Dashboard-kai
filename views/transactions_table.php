@@ -4,7 +4,7 @@
 <div class="col-md-12 mb-4">
     <div class="card" id="recentTransactionsSection">
         <div class="card-header bg-transparent">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h5 class="mb-0"><i class="bi bi-list-ul"></i> <span
                         data-i18n="recentTransactions">Recent Transactions</span></h5>
                 <div class="d-flex gap-2 flex-wrap">

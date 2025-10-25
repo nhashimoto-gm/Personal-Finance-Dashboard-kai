@@ -442,29 +442,48 @@ window.addEventListener('load', function() {
 });
 
 // Choices.js - インクリメンタルサーチ機能を持つドロップダウン
+let editShopChoices = null;
+let editCategoryChoices = null;
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Choices.jsの共通設定（日本語対応改善）
+    const choicesConfig = {
+        searchEnabled: true,
+        searchPlaceholderValue: 'Search...',
+        itemSelectText: '',
+        shouldSort: false,
+        position: 'bottom',
+        searchResultLimit: 100,
+        searchFloor: 1,
+        resetScrollPosition: false,
+        fuseOptions: {
+            threshold: 0.3,
+            distance: 100,
+            includeScore: true
+        }
+    };
+
     // ショップのセレクトボックスにChoices.jsを適用
     const shopSelect = document.querySelector('select[name="label1"]');
     if (shopSelect) {
-        new Choices(shopSelect, {
-            searchEnabled: true,
-            searchPlaceholderValue: 'Search...',
-            itemSelectText: '',
-            shouldSort: false,
-            position: 'bottom'
-        });
+        new Choices(shopSelect, choicesConfig);
     }
 
     // カテゴリのセレクトボックスにChoices.jsを適用
     const categorySelect = document.querySelector('select[name="label2"]');
     if (categorySelect) {
-        new Choices(categorySelect, {
-            searchEnabled: true,
-            searchPlaceholderValue: 'Search...',
-            itemSelectText: '',
-            shouldSort: false,
-            position: 'bottom'
-        });
+        new Choices(categorySelect, choicesConfig);
+    }
+
+    // 編集モーダルのセレクトボックスにChoices.jsを適用
+    const editShopSelect = document.getElementById('edit_label1');
+    if (editShopSelect) {
+        editShopChoices = new Choices(editShopSelect, choicesConfig);
+    }
+
+    const editCategorySelect = document.getElementById('edit_label2');
+    if (editCategorySelect) {
+        editCategoryChoices = new Choices(editCategorySelect, choicesConfig);
     }
 });
 
@@ -474,8 +493,19 @@ function editTransaction(id, date, price, shop, category) {
     document.getElementById('edit_transaction_id').value = id;
     document.getElementById('edit_re_date').value = date;
     document.getElementById('edit_price').value = price;
-    document.getElementById('edit_label1').value = shop;
-    document.getElementById('edit_label2').value = category;
+
+    // Choices.jsで値を設定
+    if (editShopChoices) {
+        editShopChoices.setChoiceByValue(shop);
+    } else {
+        document.getElementById('edit_label1').value = shop;
+    }
+
+    if (editCategoryChoices) {
+        editCategoryChoices.setChoiceByValue(category);
+    } else {
+        document.getElementById('edit_label2').value = category;
+    }
 
     // モーダルを表示
     const modal = new bootstrap.Modal(document.getElementById('editTransactionModal'));
