@@ -165,6 +165,8 @@ body {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+    align-self: flex-start !important;
+    flex-shrink: 0 !important;
     min-height: auto !important;
     height: auto !important;
     width: auto !important;
@@ -296,6 +298,8 @@ body {
     .card-header .btn-sm.btn-icon-only {
         padding: 0.15rem 0.35rem !important;
         line-height: 1 !important;
+        align-self: flex-start !important;
+        flex-shrink: 0 !important;
         min-height: auto !important;
         height: auto !important;
         width: auto !important;
@@ -332,6 +336,8 @@ body {
     .card-header .btn-sm.btn-icon-only {
         padding: 0.15rem 0.3rem !important;
         line-height: 1 !important;
+        align-self: flex-start !important;
+        flex-shrink: 0 !important;
         min-height: auto !important;
         height: auto !important;
         width: auto !important;
@@ -364,6 +370,8 @@ body {
     .card-header .btn-sm.btn-icon-only {
         padding: 0.15rem 0.25rem !important;
         line-height: 1 !important;
+        align-self: flex-start !important;
+        flex-shrink: 0 !important;
         min-height: auto !important;
         height: auto !important;
         width: auto !important;
