@@ -31,6 +31,21 @@ echo ""
 echo -e "${GREEN}新しいリポジトリURL: $NEW_REPO_URL${NC}"
 echo ""
 
+# Gitユーザー情報を入力
+echo -e "${YELLOW}Gitコミット用のユーザー情報を入力してください${NC}"
+read -p "名前 (例: Your Name): " GIT_USER_NAME
+read -p "メールアドレス (例: you@example.com): " GIT_USER_EMAIL
+
+if [ -z "$GIT_USER_NAME" ] || [ -z "$GIT_USER_EMAIL" ]; then
+    echo -e "${RED}エラー: 名前とメールアドレスの両方を入力してください${NC}"
+    exit 1
+fi
+
+echo ""
+echo -e "${GREEN}Git ユーザー名: $GIT_USER_NAME${NC}"
+echo -e "${GREEN}Git メールアドレス: $GIT_USER_EMAIL${NC}"
+echo ""
+
 # 確認
 echo -e "${YELLOW}警告: このスクリプトは以下の操作を行います:${NC}"
 echo "  1. 現在のプロジェクトをバックアップ"
@@ -69,6 +84,9 @@ echo -e "${GREEN}✓ .git ディレクトリを削除しました${NC}"
 echo ""
 echo -e "${GREEN}ステップ 3/5: 新しいgitリポジトリとして初期化しています...${NC}"
 git init
+# ローカルリポジトリ用にGitユーザー情報を設定
+git config user.name "$GIT_USER_NAME"
+git config user.email "$GIT_USER_EMAIL"
 echo -e "${GREEN}✓ gitリポジトリを初期化しました${NC}"
 
 # ステップ4: すべてのファイルを追加してコミット
