@@ -111,7 +111,7 @@
     <div class="col-12">
         <div class="card border-<?= $budget_progress['alert_level'] ?>">
             <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-piggy-bank"></i> <span data-i18n="budgetProgress">予算進捗</span> (<?= $current_year ?>年<?= $current_month ?>月)</h5>
+                <h5 class="mb-0"><i class="bi bi-piggy-bank"></i> <span data-i18n="budgetProgress">予算進捗</span> (<span id="budgetPeriod" data-year="<?= $current_year ?>" data-month="<?= $current_month ?>"></span>)</h5>
                 <?php if ($budget_progress['alert_level'] === 'danger'): ?>
                     <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> <span data-i18n="budgetOver">予算超過！</span></span>
                 <?php elseif ($budget_progress['alert_level'] === 'warning'): ?>
