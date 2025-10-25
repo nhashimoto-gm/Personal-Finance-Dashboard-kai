@@ -161,10 +161,13 @@ body {
 /* Icon-only button compact style */
 .card-header .btn-sm.btn-icon-only {
     padding: 0.15rem 0.4rem !important;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: auto !important;
+    height: auto !important;
+    width: auto !important;
 }
 
 #periodTrendSection {
@@ -293,6 +296,9 @@ body {
     .card-header .btn-sm.btn-icon-only {
         padding: 0.15rem 0.35rem !important;
         line-height: 1 !important;
+        min-height: auto !important;
+        height: auto !important;
+        width: auto !important;
     }
 }
 
@@ -326,6 +332,9 @@ body {
     .card-header .btn-sm.btn-icon-only {
         padding: 0.15rem 0.3rem !important;
         line-height: 1 !important;
+        min-height: auto !important;
+        height: auto !important;
+        width: auto !important;
     }
 }
 
@@ -355,6 +364,9 @@ body {
     .card-header .btn-sm.btn-icon-only {
         padding: 0.15rem 0.25rem !important;
         line-height: 1 !important;
+        min-height: auto !important;
+        height: auto !important;
+        width: auto !important;
     }
 }
 
