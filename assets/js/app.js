@@ -453,14 +453,9 @@ document.addEventListener('DOMContentLoaded', function() {
         itemSelectText: '',
         shouldSort: false,
         position: 'bottom',
-        searchResultLimit: 100,
+        searchResultLimit: 1000,
         searchFloor: 1,
-        resetScrollPosition: false,
-        fuseOptions: {
-            threshold: 0.3,
-            distance: 100,
-            includeScore: true
-        }
+        resetScrollPosition: false
     };
 
     // ショップのセレクトボックスにChoices.jsを適用
