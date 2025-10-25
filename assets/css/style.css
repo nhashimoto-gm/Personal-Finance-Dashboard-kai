@@ -172,6 +172,23 @@ body {
         --chart-height: 300px;
     }
 
+    /* Dashboard filter buttons - hide text on mobile */
+    .card-body form .btn .btn-text {
+        display: none;
+    }
+
+    .card-body form .btn {
+        padding: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .card-body form .btn i {
+        font-size: 1.2rem;
+        margin: 0;
+    }
+
     .table .clickable {
         min-height: auto;
         display: inline;
