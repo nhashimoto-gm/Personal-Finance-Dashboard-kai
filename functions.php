@@ -123,22 +123,34 @@ function addCategory($pdo, $name) {
     }
 }
 
-// ショップリスト取得
+// ショップリスト取得（使用頻度順）
 function getShops($pdo) {
     try {
         $tables = getTableNames();
-        $stmt = $pdo->query("SELECT label FROM {$tables['cat_1_labels']} ORDER BY label");
+        $stmt = $pdo->query("
+            SELECT c.label, COUNT(s.id) as usage_count
+            FROM {$tables['cat_1_labels']} c
+            LEFT JOIN {$tables['source']} s ON c.id = s.cat_1
+            GROUP BY c.id, c.label
+            ORDER BY usage_count DESC, c.label ASC
+        ");
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     } catch (PDOException $e) {
         return [];
     }
 }
 
-// カテゴリリスト取得
+// カテゴリリスト取得（使用頻度順）
 function getCategories($pdo) {
     try {
         $tables = getTableNames();
-        $stmt = $pdo->query("SELECT label FROM {$tables['cat_2_labels']} ORDER BY label");
+        $stmt = $pdo->query("
+            SELECT c.label, COUNT(s.id) as usage_count
+            FROM {$tables['cat_2_labels']} c
+            LEFT JOIN {$tables['source']} s ON c.id = s.cat_2
+            GROUP BY c.id, c.label
+            ORDER BY usage_count DESC, c.label ASC
+        ");
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     } catch (PDOException $e) {
         return [];
