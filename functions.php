@@ -123,7 +123,7 @@ function addCategory($pdo, $name) {
     }
 }
 
-// ショップリスト取得（使用頻度順）
+// ショップリスト取得（使用頻度順 - 直近1年間）
 function getShops($pdo) {
     try {
         $tables = getTableNames();
@@ -131,6 +131,7 @@ function getShops($pdo) {
             SELECT c.label, COUNT(s.id) as usage_count
             FROM {$tables['cat_1_labels']} c
             LEFT JOIN {$tables['source']} s ON c.id = s.cat_1
+                AND s.re_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
             GROUP BY c.id, c.label
             ORDER BY usage_count DESC, c.label ASC
         ");
@@ -140,7 +141,7 @@ function getShops($pdo) {
     }
 }
 
-// カテゴリリスト取得（使用頻度順）
+// カテゴリリスト取得（使用頻度順 - 直近1年間）
 function getCategories($pdo) {
     try {
         $tables = getTableNames();
@@ -148,6 +149,7 @@ function getCategories($pdo) {
             SELECT c.label, COUNT(s.id) as usage_count
             FROM {$tables['cat_2_labels']} c
             LEFT JOIN {$tables['source']} s ON c.id = s.cat_2
+                AND s.re_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
             GROUP BY c.id, c.label
             ORDER BY usage_count DESC, c.label ASC
         ");
