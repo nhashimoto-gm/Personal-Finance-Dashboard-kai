@@ -107,11 +107,15 @@
 
 <!-- 予算進捗 -->
 <?php if ($budget_progress): ?>
+<?php
+$month_names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+$budget_period_en = $month_names[$current_month - 1] . ' ' . $current_year;
+?>
 <div class="row mb-4">
     <div class="col-12">
         <div class="card border-<?= $budget_progress['alert_level'] ?>">
             <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-piggy-bank"></i> <span data-i18n="budgetProgress">予算進捗</span> (<span id="budgetPeriod" data-year="<?= $current_year ?>" data-month="<?= $current_month ?>"></span>)</h5>
+                <h5 class="mb-0"><i class="bi bi-piggy-bank"></i> <span data-i18n="budgetProgress">予算進捗</span> (<span id="budgetPeriod" data-year="<?= $current_year ?>" data-month="<?= $current_month ?>"><?= $budget_period_en ?></span>)</h5>
                 <?php if ($budget_progress['alert_level'] === 'danger'): ?>
                     <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> <span data-i18n="budgetOver">予算超過！</span></span>
                 <?php elseif ($budget_progress['alert_level'] === 'warning'): ?>
