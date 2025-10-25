@@ -7,31 +7,31 @@
         <div class="card">
             <div class="card-body">
                 <form method="GET" class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-3">
                         <label class="form-label" for="startDate" data-i18n="startDate">開始日</label>
                         <input type="date" class="form-control" name="start_date" id="startDate"
                             value="<?= htmlspecialchars($start_date) ?>">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-6 col-md-3">
                         <label class="form-label" for="endDate" data-i18n="endDate">終了日</label>
                         <input type="date" class="form-control" name="end_date" id="endDate"
                             value="<?= htmlspecialchars($end_date) ?>">
                     </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100" style="margin-top: 2rem;">
-                            <i class="bi bi-search"></i> <span data-i18n="filter">絞り込み</span>
+                    <div class="col-4 col-md-2">
+                        <button type="submit" class="btn btn-primary w-100" style="margin-top: 2rem;" title="Filter">
+                            <i class="bi bi-search"></i> <span class="btn-text" data-i18n="filter">絞り込み</span>
                         </button>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-4 col-md-2">
                         <button type="button" class="btn btn-secondary w-100" id="resetBtn"
-                            style="margin-top: 2rem;">
-                            <i class="bi bi-arrow-clockwise"></i> <span data-i18n="reset">リセット</span>
+                            style="margin-top: 2rem;" title="Reset">
+                            <i class="bi bi-arrow-clockwise"></i> <span class="btn-text" data-i18n="reset">リセット</span>
                         </button>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-4 col-md-2">
                         <a href="export.php?type=summary&start_date=<?= $start_date ?>&end_date=<?= $end_date ?>"
-                           class="btn btn-success w-100" style="margin-top: 2rem;">
-                            <i class="bi bi-download"></i> <span data-i18n="export">Export</span>
+                           class="btn btn-success w-100" style="margin-top: 2rem;" title="Export">
+                            <i class="bi bi-download"></i> <span class="btn-text" data-i18n="export">Export</span>
                         </a>
                     </div>
                 </form>

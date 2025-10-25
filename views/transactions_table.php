@@ -19,8 +19,8 @@
                             class="btn <?= $recent_limit == 1000 ? 'btn-primary' : 'btn-outline-primary' ?>">1000</a>
                     </div>
                     <a href="export.php?type=transactions&start_date=<?= $start_date ?>&end_date=<?= $end_date ?>&search_shop=<?= urlencode($search_shop) ?>&search_category=<?= urlencode($search_category) ?>"
-                        class="btn btn-success btn-sm">
-                        <i class="bi bi-download"></i> <span data-i18n="export">Export</span>
+                        class="btn btn-success btn-sm" title="Export" aria-label="Export">
+                        <i class="bi bi-download"></i>
                     </a>
                 </div>
             </div>
