@@ -69,7 +69,6 @@ echo -e "${GREEN}✓ .git ディレクトリを削除しました${NC}"
 echo ""
 echo -e "${GREEN}ステップ 3/5: 新しいgitリポジトリとして初期化しています...${NC}"
 git init
-git branch -M main
 echo -e "${GREEN}✓ gitリポジトリを初期化しました${NC}"
 
 # ステップ4: すべてのファイルを追加してコミット
@@ -93,6 +92,8 @@ Tech Stack:
 - Database: MySQL
 - Server: Apache"
 
+# mainブランチにリネーム
+git branch -M main
 echo -e "${GREEN}✓ 初期コミットを作成しました${NC}"
 
 # ステップ5: リモートリポジトリに接続してプッシュ
