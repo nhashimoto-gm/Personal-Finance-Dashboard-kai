@@ -105,7 +105,7 @@ Personal-Finance-Dashboard/
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/YOUR_USERNAME/Personal-Finance-Dashboard.git
+git clone https://github.com/nhashimoto-gm/Personal-Finance-Dashboard.git
 cd Personal-Finance-Dashboard
 ```
 
@@ -368,7 +368,7 @@ Contributions are welcome! Here's how you can help:
 1. **Fork** the repository
 2. **Clone** your fork:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/Personal-Finance-Dashboard.git
+   git clone https://github.com/nhashimoto-gm/Personal-Finance-Dashboard.git
    ```
 3. **Create** a feature branch:
    ```bash
@@ -444,7 +444,7 @@ Please include:
 - **Proposed Solution**: How it should work
 - **Alternatives Considered**: Other approaches you've thought of
 
-[Create an Issue](https://github.com/YOUR_USERNAME/Personal-Finance-Dashboard/issues/new)
+[Create an Issue](https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/issues/new)
 
 ---
 
@@ -477,10 +477,9 @@ Please include:
 
 ## 📧 Contact & Support
 
-- **Issues**: [GitHub Issues](https://github.com/YOUR_USERNAME/Personal-Finance-Dashboard/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/YOUR_USERNAME/Personal-Finance-Dashboard/discussions)
-- **Email**: your.email@example.com
-- **Twitter**: [@yourusername](https://twitter.com/yourusername)
+- **Issues**: [GitHub Issues](https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/discussions)
+- **Email**: 94941257+nhashimoto-gm@users.noreply.github.com
 
 ---
 
@@ -502,6 +501,6 @@ If you find this project useful, please consider:
 
 ---
 
-**Made with ❤️ by [Your Name]**
+**Made with ❤️ by NHGM**
 
 [⬆ Back to Top](#-personal-finance-dashboard)
