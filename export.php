@@ -36,21 +36,13 @@ $output = fopen('php://output', 'w');
 if ($export_type === 'transactions') {
     // トランザクションエクスポート
     $limit = 10000; // 最大10,000件
-    $transactions = getSearchResults($pdo, $search_shop, $search_category, $limit);
-
-    // フィルタを適用
-    $filtered_transactions = [];
-    foreach ($transactions as $t) {
-        if ($t['re_date'] >= $start_date && $t['re_date'] <= $end_date) {
-            $filtered_transactions[] = $t;
-        }
-    }
+    $transactions = getRecentTransactions($pdo, $start_date, $end_date, $search_shop, $search_category, $limit);
 
     // CSVヘッダー
     fputcsv($output, ['Date', 'Shop', 'Category', 'Amount']);
 
     // データ行
-    foreach ($filtered_transactions as $t) {
+    foreach ($transactions as $t) {
         fputcsv($output, [
             $t['re_date'],
             $t['label1'],
