@@ -23,8 +23,22 @@ function loadEnvironment() {
     if (!file_exists($envFilePath)) {
         die(".env_db file does not exist.");
     }
-    
-    $envVariables = parse_ini_file($envFilePath);
+
+    $envVariables = @parse_ini_file($envFilePath);
+    if ($envVariables === false) {
+        die("Failed to parse .env_db file. Please check the file format.\n" .
+            "Expected format:\n" .
+            "DB_HOST=localhost\n" .
+            "DB_USERNAME=your_username\n" .
+            "DB_PASSWORD=your_password\n" .
+            "DB_DATABASE=your_database\n\n" .
+            "Common issues:\n" .
+            "- Remove any PHP code (<?php tags)\n" .
+            "- Remove parentheses or special characters from values\n" .
+            "- Use key=value format only\n" .
+            "- Comments should start with # or ;");
+    }
+
     foreach ($envVariables as $key => $value) {
         putenv("$key=$value");
     }
