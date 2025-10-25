@@ -160,7 +160,7 @@ body {
 
 /* Icon-only button compact style */
 .card-header .btn-sm.btn-icon-only {
-    padding: 0.15rem 0.4rem;
+    padding: 0.15rem 0.4rem !important;
     line-height: 1;
     display: inline-flex;
     align-items: center;
@@ -291,8 +291,8 @@ body {
     }
 
     .card-header .btn-sm.btn-icon-only {
-        padding: 0.15rem 0.35rem;
-        line-height: 1;
+        padding: 0.15rem 0.35rem !important;
+        line-height: 1 !important;
     }
 }
 
@@ -324,8 +324,8 @@ body {
     }
 
     .card-header .btn-sm.btn-icon-only {
-        padding: 0.15rem 0.3rem;
-        line-height: 1;
+        padding: 0.15rem 0.3rem !important;
+        line-height: 1 !important;
     }
 }
 
@@ -353,8 +353,8 @@ body {
     }
 
     .card-header .btn-sm.btn-icon-only {
-        padding: 0.15rem 0.25rem;
-        line-height: 1;
+        padding: 0.15rem 0.25rem !important;
+        line-height: 1 !important;
     }
 }
 
