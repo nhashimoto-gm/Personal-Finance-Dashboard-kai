@@ -255,6 +255,14 @@ body {
         height: auto;
         padding: 0.25rem 0.4rem;
     }
+
+    .card-header .btn-sm {
+        min-height: unset;
+        height: auto;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.4rem;
+        line-height: 1.2;
+    }
 }
 
 /* 極小デバイス（iPhone SE等）*/
@@ -275,6 +283,14 @@ body {
         min-height: unset;
         padding: 0.25rem 0.35rem;
     }
+
+    .card-header .btn-sm {
+        min-height: unset;
+        height: auto;
+        font-size: 0.7rem;
+        padding: 0.25rem 0.35rem;
+        line-height: 1.2;
+    }
 }
 
 /* 超極小デバイス */
@@ -290,6 +306,14 @@ body {
     .btn-group-sm .btn {
         min-height: unset;
         padding: 0.25rem 0.3rem;
+    }
+
+    .card-header .btn-sm {
+        min-height: unset;
+        height: auto;
+        font-size: 0.65rem;
+        padding: 0.25rem 0.3rem;
+        line-height: 1.2;
     }
 }
 
