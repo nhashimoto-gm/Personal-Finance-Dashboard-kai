@@ -15,6 +15,20 @@ function switchLanguage(lang) {
         }
     });
     document.getElementById('langLabel').textContent = lang === 'en' ? 'JP' : 'EN';
+
+    // Format budget period date
+    const budgetPeriodEl = document.getElementById('budgetPeriod');
+    if (budgetPeriodEl) {
+        const year = budgetPeriodEl.getAttribute('data-year');
+        const month = budgetPeriodEl.getAttribute('data-month');
+        if (lang === 'ja') {
+            budgetPeriodEl.textContent = year + '年' + month + '月';
+        } else {
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            budgetPeriodEl.textContent = monthNames[parseInt(month) - 1] + ' ' + year;
+        }
+    }
 }
 
 // ページ読み込み時
