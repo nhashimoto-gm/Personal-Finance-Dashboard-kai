@@ -163,7 +163,14 @@ function getCategories($pdo) {
 function getTransaction($pdo, $id) {
     try {
         $tables = getTableNames();
-        $stmt = $pdo->prepare("SELECT * FROM {$tables['view1']} WHERE id = ?");
+        $stmt = $pdo->prepare("
+            SELECT s.id, s.re_date, s.cat_1, s.cat_2, s.price,
+                   c1.label as label1, c2.label as label2
+            FROM {$tables['source']} s
+            LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id
+            LEFT JOIN {$tables['cat_2_labels']} c2 ON s.cat_2 = c2.id
+            WHERE s.id = ?
+        ");
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
