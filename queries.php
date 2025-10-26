@@ -5,8 +5,8 @@
 function getSummary($pdo, $start_date, $end_date) {
     $tables = getTableNames();
     $stmt = $pdo->prepare("
-        SELECT SUM(price) as total, COUNT(*) as record_count, COUNT(DISTINCT label1) as shop_count
-        FROM {$tables['view1']}
+        SELECT SUM(price) as total, COUNT(*) as record_count, COUNT(DISTINCT cat_1) as shop_count
+        FROM {$tables['source']}
         WHERE re_date BETWEEN ? AND ?
     ");
     $stmt->execute([$start_date, $end_date]);
@@ -35,18 +35,19 @@ function getActiveDays($pdo, $start_date, $end_date) {
 function getShopData($pdo, $start_date, $end_date) {
     $tables = getTableNames();
     $stmt = $pdo->prepare("
-        SELECT cat_1, label1, SUM(price) as total
-        FROM {$tables['view1']}
-        WHERE re_date BETWEEN ? AND ?
-        GROUP BY cat_1, label1
+        SELECT s.cat_1, c1.label as label1, SUM(s.price) as total
+        FROM {$tables['source']} s
+        LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id
+        WHERE s.re_date BETWEEN ? AND ?
+        GROUP BY s.cat_1, c1.label
         ORDER BY total DESC
     ");
     $stmt->execute([$start_date, $end_date]);
     $shop_data_all = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     $shop_data_raw = [];
     $others_shop = null;
-    
+
     foreach ($shop_data_all as $d) {
         if ($d['label1'] === 'その他' || $d['label1'] === 'Others') {
             $others_shop = $d;
@@ -54,14 +55,14 @@ function getShopData($pdo, $start_date, $end_date) {
             $shop_data_raw[] = $d;
         }
     }
-    
+
     $shop_data_above_4pct = array_slice($shop_data_raw, 0, 7);
-    
+
     $unification_others_total = 0;
     for ($i = 7; $i < count($shop_data_raw); $i++) {
         $unification_others_total += (float)$shop_data_raw[$i]['total'];
     }
-    
+
     return [
         'above_4pct' => $shop_data_above_4pct,
         'below_4pct_total' => $unification_others_total,
@@ -73,10 +74,11 @@ function getShopData($pdo, $start_date, $end_date) {
 function getCategoryData($pdo, $start_date, $end_date) {
     $tables = getTableNames();
     $stmt = $pdo->prepare("
-        SELECT cat_2, label2, SUM(price) as total
-        FROM {$tables['view1']}
-        WHERE re_date BETWEEN ? AND ?
-        GROUP BY cat_2, label2
+        SELECT s.cat_2, c2.label as label2, SUM(s.price) as total
+        FROM {$tables['source']} s
+        LEFT JOIN {$tables['cat_2_labels']} c2 ON s.cat_2 = c2.id
+        WHERE s.re_date BETWEEN ? AND ?
+        GROUP BY s.cat_2, c2.label
         ORDER BY total DESC
         LIMIT 10
     ");
@@ -106,23 +108,25 @@ function getPeriodData($pdo, $period_range) {
     if ($period_is_monthly) {
         $period_query = "
             SELECT
-                DATE_FORMAT(re_date, '%Y-%m') as period,
-                label1 as shop_name,
-                SUM(price) as total
-            FROM {$tables['view1']}
-            WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
-            GROUP BY DATE_FORMAT(re_date, '%Y-%m'), label1
+                DATE_FORMAT(s.re_date, '%Y-%m') as period,
+                c1.label as shop_name,
+                SUM(s.price) as total
+            FROM {$tables['source']} s
+            LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id
+            WHERE s.re_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+            GROUP BY DATE_FORMAT(s.re_date, '%Y-%m'), c1.label
             ORDER BY period, shop_name
         ";
     } else {
         $period_query = "
             SELECT
-                YEAR(re_date) as period,
-                label1 as shop_name,
-                SUM(price) as total
-            FROM {$tables['view1']}
-            WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
-            GROUP BY YEAR(re_date), label1
+                YEAR(s.re_date) as period,
+                c1.label as shop_name,
+                SUM(s.price) as total
+            FROM {$tables['source']} s
+            LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id
+            WHERE s.re_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+            GROUP BY YEAR(s.re_date), c1.label
             ORDER BY period, shop_name
         ";
     }
@@ -135,20 +139,24 @@ function getPeriodData($pdo, $period_range) {
 // 最新取引履歴取得
 function getRecentTransactions($pdo, $start_date, $end_date, $search_shop, $search_category, $recent_limit) {
     $tables = getTableNames();
-    $recent_sql = "SELECT id, re_date, label1, label2, price FROM {$tables['view1']} WHERE re_date BETWEEN ? AND ?";
+    $recent_sql = "SELECT s.id, s.re_date, c1.label as label1, c2.label as label2, s.price
+                   FROM {$tables['source']} s
+                   LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id
+                   LEFT JOIN {$tables['cat_2_labels']} c2 ON s.cat_2 = c2.id
+                   WHERE s.re_date BETWEEN ? AND ?";
     $recent_params = [$start_date, $end_date];
 
     if (!empty($search_shop)) {
-        $recent_sql .= " AND label1 = ?";
+        $recent_sql .= " AND c1.label = ?";
         $recent_params[] = $search_shop;
     }
 
     if (!empty($search_category)) {
-        $recent_sql .= " AND label2 = ?";
+        $recent_sql .= " AND c2.label = ?";
         $recent_params[] = $search_category;
     }
 
-    $recent_sql .= " ORDER BY re_date DESC, id DESC LIMIT " . (int)$recent_limit;
+    $recent_sql .= " ORDER BY s.re_date DESC, s.id DESC LIMIT " . (int)$recent_limit;
 
     $stmt = $pdo->prepare($recent_sql);
     $stmt->execute($recent_params);
@@ -162,20 +170,24 @@ function getSearchResults($pdo, $search_shop, $search_category, $search_limit) {
     }
 
     $tables = getTableNames();
-    $search_sql = "SELECT id, re_date, label1, label2, price FROM {$tables['view1']} WHERE 1=1";
+    $search_sql = "SELECT s.id, s.re_date, c1.label as label1, c2.label as label2, s.price
+                   FROM {$tables['source']} s
+                   LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id
+                   LEFT JOIN {$tables['cat_2_labels']} c2 ON s.cat_2 = c2.id
+                   WHERE 1=1";
     $params = [];
 
     if (!empty($search_shop)) {
-        $search_sql .= " AND label1 = ?";
+        $search_sql .= " AND c1.label = ?";
         $params[] = $search_shop;
     }
 
     if (!empty($search_category)) {
-        $search_sql .= " AND label2 = ?";
+        $search_sql .= " AND c2.label = ?";
         $params[] = $search_category;
     }
 
-    $search_sql .= " ORDER BY re_date DESC, id DESC LIMIT " . (int)$search_limit;
+    $search_sql .= " ORDER BY s.re_date DESC, s.id DESC LIMIT " . (int)$search_limit;
 
     $stmt = $pdo->prepare($search_sql);
     $stmt->execute($params);
