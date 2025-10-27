@@ -7,6 +7,8 @@ A comprehensive personal finance tracking dashboard built with PHP, MySQL, Boots
 [![MySQL](https://img.shields.io/badge/MySQL-5.7+-orange.svg)](https://www.mysql.com/)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
 [![Highcharts](https://img.shields.io/badge/Highcharts-Latest-00A1E4?logo=highcharts&logoColor=white)](https://www.highcharts.com/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
+[![Chart.js](https://img.shields.io/badge/Chart.js-4-FF6384?logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
 
 ---
 
@@ -40,6 +42,17 @@ A comprehensive personal finance tracking dashboard built with PHP, MySQL, Boots
 - **Smart Alerts** - Warning at 80%, danger at 100% of budget
 - **Budget vs Actual** - Real-time comparison with remaining balance
 
+### 📈 Advanced Analytics Dashboard
+- **17-Year Data Visualization** - Comprehensive view from 2008 to present
+- **Yearly Trend Analysis** - Annual spending patterns with bar charts
+- **Monthly Tracking** - Recent 12-month spending trends
+- **Shop Breakdown** - Top 10 shops pie chart analysis
+- **Category Distribution** - Horizontal bar chart for expense categories
+- **Statistical Summary** - Total expenses, monthly average, transaction count
+- **Trend Analysis** - Moving averages and seasonal patterns
+- **Weekday Analysis** - Spending patterns by day of the week
+- **Responsive Charts** - Interactive Chart.js visualizations
+
 ### 📤 Data Import/Export
 - **CSV Export** - Export transactions, summaries, and analytics
 - **Excel Compatible** - UTF-8 BOM encoding for seamless Excel import
@@ -71,11 +84,19 @@ Personal-Finance-Dashboard/
 ├── view.php                 # Main view template
 ├── database.sql             # Database schema & sample data
 ├── .env_db.example          # Environment variables template
+├── api/
+│   └── analytics-api.php   # REST API for analytics data
+├── analytics/
+│   └── index.html          # Advanced analytics dashboard (React)
 ├── assets/
 │   ├── css/
 │   │   └── style.css       # Responsive stylesheets
 │   └── js/
 │       └── app.js          # Chart rendering & interactivity
+├── docs/
+│   ├── ANALYTICS.md        # Analytics documentation
+│   ├── README_ANALYTICS.md # Analytics integration guide
+│   └── USAGE.md            # Detailed usage guide
 └── views/
     ├── dashboard.php        # Dashboard view
     ├── entry.php           # Data entry form
@@ -206,8 +227,10 @@ RewriteRule ^(.*)$ index.php [QSA,L]
 | **Backend** | PHP 7.4+ with PDO |
 | **Database** | MySQL 5.7+ / MariaDB 10.2+ |
 | **Frontend Framework** | Bootstrap 5.3 |
-| **Charts** | Highcharts (free for personal use) |
+| **Charts** | Highcharts (main dashboard), Chart.js 4 (analytics) |
+| **JavaScript Library** | React 18 (analytics dashboard) |
 | **Icons** | Bootstrap Icons |
+| **API** | RESTful API for analytics data |
 | **Architecture** | MVC-inspired modular design |
 
 ---
@@ -235,6 +258,16 @@ RewriteRule ^(.*)$ index.php [QSA,L]
    - **Line Charts**: Zoom and pan
 5. Click shop badges or category names in the transaction table to filter
 6. Switch period views (12mo/2yr/5yr/10yr) for trend analysis
+
+### Using Advanced Analytics
+1. Click the **Advanced Analytics** tab or access directly at `/analytics/`
+2. View comprehensive statistics:
+   - **Overview**: 17-year summary with yearly and monthly trends
+   - **Trends**: Detailed monthly spending patterns
+   - **Breakdown**: Shop and category distribution analysis
+   - **Insights**: Weekday analysis and seasonal patterns
+3. Navigate between tabs for different visualization perspectives
+4. All charts are interactive and responsive
 
 ### Managing Master Data
 1. Navigate to the **Master** tab
@@ -455,15 +488,19 @@ Please include:
 - [x] **Export to CSV/Excel** - Export transactions and summaries with UTF-8 BOM support
 - [x] **Budget Planning & Alerts** - Set monthly budgets with visual progress tracking
 - [x] **Import from CSV** - Bulk import transactions with validation
+- [x] **Advanced Analytics Dashboard** - React-based analytics with Chart.js visualizations
+- [x] **REST API** - Analytics API endpoints for data retrieval
+- [x] **17-Year Data Analysis** - Comprehensive historical data visualization
+- [x] **Trend & Pattern Analysis** - Moving averages, weekday, and seasonal patterns
 
 ### Version 1.2 (Planned)
 - [ ] Transaction memo/notes field
 - [ ] Recurring transactions (auto-generated)
-- [ ] REST API endpoints
 - [ ] User authentication & multi-user support
 - [ ] Transaction categories hierarchy
 - [ ] Advanced filtering options
 - [ ] Email notifications for budget alerts
+- [ ] PDF/Excel report generation from analytics
 
 ### Version 2.0 (Future)
 - [ ] Multi-currency support
@@ -486,7 +523,9 @@ Please include:
 ## 🙏 Acknowledgments
 
 - [Bootstrap](https://getbootstrap.com/) - UI framework
-- [Highcharts](https://www.highcharts.com/) - Chart library
+- [Highcharts](https://www.highcharts.com/) - Main dashboard chart library
+- [Chart.js](https://www.chartjs.org/) - Analytics dashboard visualization
+- [React](https://reactjs.org/) - Analytics dashboard framework
 - [Bootstrap Icons](https://icons.getbootstrap.com/) - Icon library
 
 ---
