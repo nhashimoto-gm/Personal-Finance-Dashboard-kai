@@ -215,6 +215,9 @@ function handleShop($pdo) {
     $end_date = $_GET['end_date'] ?? date('Y-m-d');
     $limit = (int)($_GET['limit'] ?? 20);
 
+    // LIMIT値のバリデーション（1-100の範囲）
+    $limit = max(1, min(100, $limit));
+
     // デバッグ: テーブル名とパラメータを確認
     error_log("Shop API Debug - Tables: " . json_encode($tables));
     error_log("Shop API Debug - Params: start_date={$start_date}, end_date={$end_date}, limit={$limit}");
@@ -225,7 +228,8 @@ function handleShop($pdo) {
     $count = $countStmt->fetch();
     error_log("Shop API Debug - Source records in date range: " . $count['count']);
 
-    $stmt = $pdo->prepare("
+    // LIMIT句はバインドパラメータではなく直接埋め込む（整数として検証済み）
+    $sql = "
         SELECT
             s.cat_1,
             c1.label as shop_name,
@@ -239,9 +243,11 @@ function handleShop($pdo) {
         WHERE s.re_date BETWEEN ? AND ?
         GROUP BY s.cat_1, c1.label
         ORDER BY total DESC
-        LIMIT ?
-    ");
-    $stmt->execute([$start_date, $end_date, $limit]);
+        LIMIT {$limit}
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$start_date, $end_date]);
     $data = $stmt->fetchAll();
 
     error_log("Shop API Debug - Result count: " . count($data));
