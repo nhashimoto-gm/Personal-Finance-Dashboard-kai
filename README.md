@@ -43,7 +43,7 @@ A comprehensive personal finance tracking dashboard built with PHP, MySQL, Boots
 - **Budget vs Actual** - Real-time comparison with remaining balance
 
 ### 📈 Advanced Analytics Dashboard
-- **17-Year Data Visualization** - Comprehensive view from 2008 to present
+- **Long-Year Data Visualization** - Comprehensive view from to present
 - **Yearly Trend Analysis** - Annual spending patterns with bar charts
 - **Monthly Tracking** - Recent 12-month spending trends
 - **Shop Breakdown** - Top 10 shops pie chart analysis
