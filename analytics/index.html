@@ -437,7 +437,10 @@
 
         // Number formatting
         function formatNumber(num) {
-            return num.toLocaleString();
+            // Ensure num is a number
+            const value = typeof num === 'string' ? parseFloat(num) : num;
+            if (isNaN(value)) return '0';
+            return Math.round(value).toLocaleString('en-US');
         }
 
         function formatCurrency(num, unit = 'K') {
@@ -1005,7 +1008,9 @@
                         data: sortedData.map(d => d.avg_expense),
                         backgroundColor: 'rgba(255, 159, 64, 0.8)',
                         borderColor: 'rgba(255, 159, 64, 1)',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        barPercentage: 0.9,
+                        categoryPercentage: 0.8
                     }]
                 },
                 options: {
@@ -1024,9 +1029,11 @@
                     },
                     scales: {
                         x: {
-                            offset: false,
                             grid: {
                                 offset: false
+                            },
+                            ticks: {
+                                autoSkip: false
                             }
                         },
                         y: {
@@ -1068,7 +1075,9 @@
                         backgroundColor: 'rgba(75, 192, 192, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        borderWidth: 2
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }]
                 },
                 options: {
@@ -1087,9 +1096,13 @@
                     },
                     scales: {
                         x: {
-                            offset: false,
                             grid: {
                                 offset: false
+                            },
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 45,
+                                minRotation: 0
                             }
                         },
                         y: {
