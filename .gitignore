@@ -23,4 +23,3 @@ debug.log
 
 # PHP
 vendor/
-composer.lock
