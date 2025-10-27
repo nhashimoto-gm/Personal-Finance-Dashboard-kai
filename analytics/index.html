@@ -34,6 +34,10 @@
             margin-bottom: 1rem;
             box-shadow: 0 2px 8px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08);
             border: 1px solid rgba(255,255,255,0.1);
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .stat-card:hover {
@@ -291,7 +295,8 @@
                 vs6MonthsAgo: 'vs 6 months ago',
                 vs12MonthsAgo: 'vs 12 months ago',
                 vsLastMonth: 'vs last month',
-                comparison: 'Comparison'
+                comparison: 'Comparison',
+                avgAmountNote: 'Note: Avg Amount represents the monthly average per shop/category.'
             },
             ja: {
                 navTitle: '家計簿ダッシュボード',
@@ -361,7 +366,8 @@
                 vs6MonthsAgo: '6か月前比',
                 vs12MonthsAgo: '12か月前比',
                 vsLastMonth: '前月比',
-                comparison: '比較'
+                comparison: '比較',
+                avgAmountNote: '※Avg Amountは店舗・カテゴリごとの月平均を表します。'
             }
         };
 
@@ -684,7 +690,9 @@
                 </tr>`;
             });
 
-            html += '</tbody></table></div>';
+            html += '</tbody></table>';
+            html += `<small class="text-muted ms-2">${t.avgAmountNote}</small>`;
+            html += '</div>';
             return html;
         }
 
@@ -710,7 +718,9 @@
                 </tr>`;
             });
 
-            html += '</tbody></table></div>';
+            html += '</tbody></table>';
+            html += `<small class="text-muted ms-2">${t.avgAmountNote}</small>`;
+            html += '</div>';
             return html;
         }
 
@@ -857,7 +867,23 @@
                             position: 'right',
                             labels: {
                                 boxWidth: 12,
-                                font: { size: 11 }
+                                font: { size: 11 },
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        return data.labels.map((label, i) => {
+                                            const value = data.datasets[0].data[i];
+                                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                            return {
+                                                text: `${label} ${percentage}%`,
+                                                fillStyle: data.datasets[0].backgroundColor[i],
+                                                hidden: false,
+                                                index: i
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
                             }
                         },
                         tooltip: {
@@ -978,6 +1004,12 @@
                         }
                     },
                     scales: {
+                        x: {
+                            offset: true,
+                            grid: {
+                                offset: true
+                            }
+                        },
                         y: {
                             ticks: {
                                 callback: v => formatCurrency(v)
@@ -1035,6 +1067,12 @@
                         }
                     },
                     scales: {
+                        x: {
+                            offset: false,
+                            grid: {
+                                offset: false
+                            }
+                        },
                         y: {
                             ticks: {
                                 callback: v => formatCurrency(v)
