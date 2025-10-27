@@ -215,6 +215,16 @@ function handleShop($pdo) {
     $end_date = $_GET['end_date'] ?? date('Y-m-d');
     $limit = (int)($_GET['limit'] ?? 20);
 
+    // デバッグ: テーブル名とパラメータを確認
+    error_log("Shop API Debug - Tables: " . json_encode($tables));
+    error_log("Shop API Debug - Params: start_date={$start_date}, end_date={$end_date}, limit={$limit}");
+
+    // まずデータ件数を確認
+    $countStmt = $pdo->prepare("SELECT COUNT(*) as count FROM {$tables['source']} WHERE re_date BETWEEN ? AND ?");
+    $countStmt->execute([$start_date, $end_date]);
+    $count = $countStmt->fetch();
+    error_log("Shop API Debug - Source records in date range: " . $count['count']);
+
     $stmt = $pdo->prepare("
         SELECT
             s.cat_1,
@@ -234,9 +244,21 @@ function handleShop($pdo) {
     $stmt->execute([$start_date, $end_date, $limit]);
     $data = $stmt->fetchAll();
 
+    error_log("Shop API Debug - Result count: " . count($data));
+    if (count($data) > 0) {
+        error_log("Shop API Debug - First record: " . json_encode($data[0]));
+    }
+
     echo json_encode([
         'success' => true,
-        'data' => $data
+        'data' => $data,
+        'debug' => [
+            'start_date' => $start_date,
+            'end_date' => $end_date,
+            'limit' => $limit,
+            'record_count' => count($data),
+            'source_records' => $count['count']
+        ]
     ]);
 }
 

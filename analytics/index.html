@@ -463,6 +463,12 @@
                 ]);
 
                 console.log('API Responses:', { summaryRes, monthlyRes, yearlyRes, shopRes, categoryRes });
+                console.log('Shop API Response:', shopRes);
+                console.log('Shop data detail:', shopRes.data);
+                console.log('Shop data length:', shopRes.data?.length || 0);
+                if (shopRes.debug) {
+                    console.log('Shop API Debug Info:', shopRes.debug);
+                }
 
                 if (!summaryRes.success) {
                     throw new Error('Summary API failed: ' + (summaryRes.error || 'Unknown error'));
