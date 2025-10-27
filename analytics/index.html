@@ -223,6 +223,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Version: 2024-10-27-v2 - Fixed number formatting with thousand separators
+        console.log('Analytics Dashboard v2024-10-27-v2 loaded');
+
         const API_BASE_URL = '../api/analytics-api.php';
 
         // Translations
@@ -437,9 +440,19 @@
 
         // Number formatting
         function formatNumber(num) {
-            // Ensure num is a number
-            const value = typeof num === 'string' ? parseFloat(num) : num;
-            if (isNaN(value)) return '0';
+            // Handle null, undefined, or empty values
+            if (num === null || num === undefined || num === '') return '0';
+
+            // Remove any existing commas if it's a string
+            const cleanValue = typeof num === 'string' ? num.replace(/,/g, '') : num;
+
+            // Convert to number
+            const value = parseFloat(cleanValue);
+
+            // Check if it's a valid number
+            if (isNaN(value) || !isFinite(value)) return '0';
+
+            // Round and format with thousand separators
             return Math.round(value).toLocaleString('en-US');
         }
 
