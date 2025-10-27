@@ -1,5 +1,5 @@
 <?php
-// index.php - メインファイル
+// index.php - メインファイル（Multi-Account対応）
 
 // セキュアなセッション設定
 session_start([
@@ -14,6 +14,19 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/queries.php';
 require_once __DIR__ . '/translations.php';
+
+// 認証チェック - ログインしていない場合はlogin.phpにリダイレクト
+requireLogin('login.php');
+
+// セッションタイムアウトチェック（30分）
+if (checkSessionTimeout()) {
+    header('Location: login.php');
+    exit;
+}
+
+// 現在のユーザーIDを取得
+$user_id = getCurrentUserId();
+$current_user = getCurrentUser();
 
 // データベース接続
 $pdo = getDatabaseConnection();
@@ -41,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             if ($action === 'add_transaction' && isset($_POST['re_date'], $_POST['price'], $_POST['label1'], $_POST['label2'])) {
                 $result = addTransaction(
                     $pdo,
+                    $user_id,
                     $_POST['re_date'],
                     (int)$_POST['price'],
                     trim($_POST['label1']),
@@ -60,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 }
             }
             elseif ($action === 'add_shop' && isset($_POST['name'])) {
-                $result = addShop($pdo, $_POST['name']);
+                $result = addShop($pdo, $user_id, $_POST['name']);
                 if ($result['success']) {
                     $_SESSION['successMessage'] = $result['message'];
                     header('Location: ' . $_SERVER['REQUEST_URI']);
@@ -70,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 }
             }
             elseif ($action === 'add_category' && isset($_POST['name'])) {
-                $result = addCategory($pdo, $_POST['name']);
+                $result = addCategory($pdo, $user_id, $_POST['name']);
                 if ($result['success']) {
                     $_SESSION['successMessage'] = $result['message'];
                     header('Location: ' . $_SERVER['REQUEST_URI']);
@@ -82,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             elseif ($action === 'update_transaction' && isset($_POST['id'], $_POST['re_date'], $_POST['price'], $_POST['label1'], $_POST['label2'])) {
                 $result = updateTransaction(
                     $pdo,
+                    $user_id,
                     (int)$_POST['id'],
                     $_POST['re_date'],
                     (int)$_POST['price'],
@@ -98,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 }
             }
             elseif ($action === 'delete_transaction' && isset($_POST['id'])) {
-                $result = deleteTransaction($pdo, (int)$_POST['id']);
+                $result = deleteTransaction($pdo, $user_id, (int)$_POST['id']);
                 if ($result['success']) {
                     $_SESSION['successMessage'] = $result['message'];
                     header('Location: ' . $_SERVER['REQUEST_URI']);
@@ -111,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $target_id = isset($_POST['target_id']) && $_POST['target_id'] !== '' ? (int)$_POST['target_id'] : null;
                 $result = setBudget(
                     $pdo,
+                    $user_id,
                     $_POST['budget_type'],
                     $target_id,
                     (int)$_POST['target_year'],
@@ -127,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 }
             }
             elseif ($action === 'delete_budget' && isset($_POST['id'])) {
-                $result = deleteBudget($pdo, (int)$_POST['id']);
+                $result = deleteBudget($pdo, $user_id, (int)$_POST['id']);
                 if ($result['success']) {
                     $_SESSION['successMessage'] = $result['message'];
                     header('Location: ' . $_SERVER['REQUEST_URI']);
@@ -155,33 +171,33 @@ $search_category = isset($_GET['search_category']) ? $_GET['search_category'] : 
 $search_limit = isset($_GET['search_limit']) ? $_GET['search_limit'] : '100';
 $recent_limit = isset($_GET['recent_limit']) ? $_GET['recent_limit'] : '20';
 
-// データ取得
-$summary = getSummary($pdo, $start_date, $end_date);
+// データ取得（ユーザー固有）
+$summary = getSummary($pdo, $user_id, $start_date, $end_date);
 $total = $summary['total'];
 $record_count = $summary['record_count'];
 $shop_count = $summary['shop_count'];
 
-$active_days = getActiveDays($pdo, $start_date, $end_date);
+$active_days = getActiveDays($pdo, $user_id, $start_date, $end_date);
 
-$shop_data_result = getShopData($pdo, $start_date, $end_date);
+$shop_data_result = getShopData($pdo, $user_id, $start_date, $end_date);
 $shop_data_above_4pct = $shop_data_result['above_4pct'];
 $shop_data_below_4pct_total = $shop_data_result['below_4pct_total'];
 $others_shop = $shop_data_result['others_shop'];
 
-$category_data = getCategoryData($pdo, $start_date, $end_date);
-$daily_data = getDailyData($pdo, $start_date, $end_date);
-$period_data = getPeriodData($pdo, $period_range);
-$recent_transactions = getRecentTransactions($pdo, $start_date, $end_date, $search_shop, $search_category, $recent_limit);
-$search_results = getSearchResults($pdo, $search_shop, $search_category, $search_limit);
+$category_data = getCategoryData($pdo, $user_id, $start_date, $end_date);
+$daily_data = getDailyData($pdo, $user_id, $start_date, $end_date);
+$period_data = getPeriodData($pdo, $user_id, $period_range);
+$recent_transactions = getRecentTransactions($pdo, $user_id, $start_date, $end_date, $search_shop, $search_category, $recent_limit);
+$search_results = getSearchResults($pdo, $user_id, $search_shop, $search_category, $search_limit);
 
-$shops = getShops($pdo);
-$categories = getCategories($pdo);
+$shops = getShops($pdo, $user_id);
+$categories = getCategories($pdo, $user_id);
 
-// 予算データ取得（当月）
+// 予算データ取得（当月・ユーザー固有）
 $current_year = (int)date('Y');
 $current_month = (int)date('m');
-$budget_progress = getBudgetProgress($pdo, $current_year, $current_month);
-$all_budgets = getBudgets($pdo);
+$budget_progress = getBudgetProgress($pdo, $user_id, $current_year, $current_month);
+$all_budgets = getBudgets($pdo, $user_id);
 
 // ビュー読み込み
 require_once __DIR__ . '/view.php';
