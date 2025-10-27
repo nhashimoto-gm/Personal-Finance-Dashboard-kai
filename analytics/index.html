@@ -343,14 +343,19 @@
             if (charts.shop) charts.shop.destroy();
 
             const canvas = document.getElementById('shopChart');
-            if (!canvas || !data.length) return;
+            if (!canvas || !data || !data.length) {
+                console.log('shopChart: canvas or data not available', { canvas: !!canvas, dataLength: data?.length });
+                return;
+            }
+
+            console.log('Rendering shopChart with data:', data);
 
             charts.shop = new Chart(canvas, {
                 type: 'doughnut',
                 data: {
                     labels: data.map(d => d.shop_name),
                     datasets: [{
-                        data: data.map(d => d.total),
+                        data: data.map(d => parseFloat(d.total)),
                         backgroundColor: [
                             '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
                             '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#36A2EB'
@@ -369,6 +374,16 @@
                         legend: {
                             labels: {
                                 color: '#dee2e6'
+                            },
+                            position: 'right'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    return label + ': ¥' + value.toLocaleString();
+                                }
                             }
                         }
                     }
