@@ -237,8 +237,7 @@ RewriteRule ^(.*)$ index.php [QSA,L]
 
 ## 📖 Usage
 
-> 📚 **詳細な使用要領**: [USAGE.md](./docs/USAGE.md)をご覧ください
-> **Detailed Usage Guide**: Please refer to [USAGE.md](./docs/USAGE.md)
+> 📚 **Detailed Usage Guide**: Please refer to [USAGE.md](./docs/USAGE.md)
 
 ### Adding a Transaction
 1. Click the **Data Entry** tab
