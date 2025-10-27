@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="ja" data-bs-theme="dark">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>家計簿分析ダッシュボード</title>
+    <title>Advanced Analytics Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -15,8 +15,14 @@
             background-color: #212529;
             color: #dee2e6;
             min-height: 100vh;
-            padding-top: 80px;
         }
+
+        /* Light theme */
+        [data-bs-theme="light"] body {
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+
         .stat-card {
             background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
             color: white;
@@ -25,69 +31,340 @@
             text-align: center;
             transition: transform 0.2s;
             margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+
         .stat-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
+
         .stat-value {
             font-size: 2rem;
             font-weight: bold;
             margin: 0.5rem 0;
         }
+
         .stat-label {
             font-size: 0.9rem;
             opacity: 0.9;
         }
+
+        .stat-sublabel {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 0.25rem;
+        }
+
         .chart-container {
             background: #2b3035;
             border-radius: 12px;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+
+        [data-bs-theme="light"] .chart-container {
+            background: white;
+            border: 1px solid #dee2e6;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
         canvas {
-            max-height: 450px;
+            max-height: 400px;
         }
-        .back-button {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
+
+        .filter-section {
+            background: #2b3035;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
+
+        [data-bs-theme="light"] .filter-section {
+            background: white;
+            border: 1px solid #dee2e6;
+        }
+
+        .navbar {
+            margin-bottom: 1.5rem;
+        }
+
+        .data-table {
+            font-size: 0.9rem;
+        }
+
+        .data-table th {
+            background: rgba(13, 110, 253, 0.1);
+        }
+
+        .trend-up {
+            color: #dc3545;
+        }
+
+        .trend-down {
+            color: #198754;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #0d6efd;
+        }
+
         #root {
-            min-height: 200px;
+            min-height: 400px;
         }
+
         @media (max-width: 768px) {
             .stat-value {
                 font-size: 1.5rem;
+            }
+            .chart-container {
+                padding: 1rem;
             }
         }
     </style>
 </head>
 <body>
-    <a href="../index.php" class="btn btn-outline-light back-button">
-        <i class="bi bi-arrow-left"></i> 戻る
-    </a>
-    <div class="container-fluid py-4">
+    <!-- Navigation Bar (matching main dashboard) -->
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1" style="cursor: pointer;" onclick="window.location.href='../index.php';">
+                <i class="bi bi-wallet2"></i>
+                <span id="navTitle">Personal Finance Dashboard</span>
+            </span>
+            <div>
+                <button class="btn btn-outline-light btn-sm me-2" id="langToggle">
+                    <i class="bi bi-translate"></i> <span id="langLabel">JP</span>
+                </button>
+                <button class="btn btn-outline-light btn-sm me-2" id="themeToggle">
+                    <i class="bi bi-moon-fill" id="themeIcon"></i>
+                </button>
+                <a href="../index.php" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-arrow-left"></i> <span id="backBtn">Back</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <!-- Loading/Error State -->
         <div id="root">
             <div class="text-center p-5">
-                <div class="spinner-border text-primary" role="status"></div>
-                <p class="mt-3">データを読み込んでいます...</p>
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3" id="loadingText">Loading data...</p>
             </div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const API_BASE_URL = '../api/analytics-api.php';
 
-        // Chart.jsインスタンスを保持
-        const charts = {
-            yearly: null,
-            monthly: null,
-            shop: null,
-            category: null
+        // Translations
+        const translations = {
+            en: {
+                navTitle: 'Personal Finance Dashboard',
+                pageTitle: 'Advanced Analytics Dashboard',
+                back: 'Back',
+                loadingText: 'Loading data...',
+                errorOccurred: 'An Error Occurred',
+                noData: 'No Data Available',
+                noDataMessage: 'No data found to display.',
+                reload: 'Reload',
+                totalExpense: 'Total Expense',
+                avgMonthlyExpense: 'Avg Monthly Expense',
+                totalTransactions: 'Total Transactions',
+                uniqueShops: 'Unique Shops',
+                period: 'Period',
+                months: 'months',
+                years: 'years',
+                days: 'days',
+                categories: 'categories',
+                yearlyTrend: 'Yearly Expense Trend',
+                monthlyTrend: 'Recent 12 Months Trend',
+                shopBreakdown: 'Shop-wise Breakdown',
+                categoryBreakdown: 'Category-wise Breakdown',
+                weekdayAnalysis: 'Weekday Analysis',
+                seasonalPattern: 'Seasonal Pattern',
+                topShops: 'Top 10 Shops',
+                topCategories: 'Top 10 Categories',
+                statistics: 'Statistical Analysis',
+                filters: 'Filters',
+                selectPeriod: 'Select Period',
+                customPeriod: 'Custom Period',
+                allTime: 'All Time',
+                last12Months: 'Last 12 Months',
+                last6Months: 'Last 6 Months',
+                thisYear: 'This Year',
+                lastYear: 'Last Year',
+                apply: 'Apply',
+                reset: 'Reset',
+                shop: 'Shop',
+                category: 'Category',
+                amount: 'Amount',
+                transactions: 'Transactions',
+                avgAmount: 'Avg Amount',
+                percentage: 'Percentage',
+                dayOfWeek: 'Day of Week',
+                avgExpense: 'Avg Expense',
+                month: 'Month',
+                january: 'January',
+                february: 'February',
+                march: 'March',
+                april: 'April',
+                may: 'May',
+                june: 'June',
+                july: 'July',
+                august: 'August',
+                september: 'September',
+                october: 'October',
+                november: 'November',
+                december: 'December',
+                sunday: 'Sunday',
+                monday: 'Monday',
+                tuesday: 'Tuesday',
+                wednesday: 'Wednesday',
+                thursday: 'Thursday',
+                friday: 'Friday',
+                saturday: 'Saturday'
+            },
+            ja: {
+                navTitle: '家計簿ダッシュボード',
+                pageTitle: '高度な分析ダッシュボード',
+                back: '戻る',
+                loadingText: 'データを読み込んでいます...',
+                errorOccurred: 'エラーが発生しました',
+                noData: 'データがありません',
+                noDataMessage: '表示するデータが見つかりませんでした。',
+                reload: '再読み込み',
+                totalExpense: '総支出額',
+                avgMonthlyExpense: '月平均支出',
+                totalTransactions: '総取引数',
+                uniqueShops: '利用店舗数',
+                period: '期間',
+                months: 'ヶ月',
+                years: '年',
+                days: '日',
+                categories: 'カテゴリ',
+                yearlyTrend: '年別支出推移',
+                monthlyTrend: '直近12ヶ月の推移',
+                shopBreakdown: 'ショップ別内訳',
+                categoryBreakdown: 'カテゴリ別内訳',
+                weekdayAnalysis: '曜日別分析',
+                seasonalPattern: '季節性パターン',
+                topShops: 'トップ10店舗',
+                topCategories: 'トップ10カテゴリ',
+                statistics: '統計分析',
+                filters: 'フィルター',
+                selectPeriod: '期間を選択',
+                customPeriod: 'カスタム期間',
+                allTime: '全期間',
+                last12Months: '直近12ヶ月',
+                last6Months: '直近6ヶ月',
+                thisYear: '今年',
+                lastYear: '去年',
+                apply: '適用',
+                reset: 'リセット',
+                shop: 'ショップ',
+                category: 'カテゴリ',
+                amount: '金額',
+                transactions: '取引数',
+                avgAmount: '平均金額',
+                percentage: '割合',
+                dayOfWeek: '曜日',
+                avgExpense: '平均支出',
+                month: '月',
+                january: '1月',
+                february: '2月',
+                march: '3月',
+                april: '4月',
+                may: '5月',
+                june: '6月',
+                july: '7月',
+                august: '8月',
+                september: '9月',
+                october: '10月',
+                november: '11月',
+                december: '12月',
+                sunday: '日曜日',
+                monday: '月曜日',
+                tuesday: '火曜日',
+                wednesday: '水曜日',
+                thursday: '木曜日',
+                friday: '金曜日',
+                saturday: '土曜日'
+            }
         };
 
-        // API呼び出し
+        let currentLang = 'en';
+        let charts = {};
+        let cachedData = null;
+
+        // Chart.js defaults
+        Chart.defaults.color = '#dee2e6';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
+
+        // Language toggle
+        function switchLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('langLabel').textContent = lang === 'en' ? 'JP' : 'EN';
+            updateUILanguage();
+            if (cachedData) {
+                renderDashboard(cachedData);
+            }
+        }
+
+        function updateUILanguage() {
+            const t = translations[currentLang];
+            document.getElementById('navTitle').textContent = t.navTitle;
+            document.getElementById('backBtn').textContent = t.back;
+            document.getElementById('loadingText').textContent = t.loadingText;
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-bs-theme', newTheme);
+            document.getElementById('themeIcon').className = newTheme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+
+            // Update Chart.js theme
+            updateChartTheme(newTheme);
+
+            // Re-render charts if data exists
+            if (cachedData) {
+                renderAllCharts(cachedData);
+            }
+        }
+
+        function updateChartTheme(theme) {
+            const textColor = theme === 'dark' ? '#dee2e6' : '#212529';
+            const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+
+            Chart.defaults.color = textColor;
+            Chart.defaults.borderColor = gridColor;
+        }
+
+        // API calls
         async function fetchData(action, params = {}) {
             try {
                 const queryString = new URLSearchParams({ action, ...params }).toString();
@@ -99,7 +376,7 @@
             }
         }
 
-        // 数値フォーマット
+        // Number formatting
         function formatNumber(num) {
             return num.toLocaleString();
         }
@@ -111,166 +388,269 @@
             return `¥${(num / 1000).toFixed(0)}K`;
         }
 
-        // エラー表示
+        // Error display
         function showError(message) {
+            const t = translations[currentLang];
             const root = document.getElementById('root');
             root.innerHTML = `
                 <div class="text-center p-5">
                     <div class="alert alert-danger" role="alert">
-                        <h4 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> エラーが発生しました</h4>
+                        <h4 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> ${t.errorOccurred}</h4>
                         <p>${message}</p>
                         <hr />
-                        <p class="mb-0">
-                            ブラウザのコンソールを確認してください。<br />
-                            <button class="btn btn-primary mt-2" onclick="loadAllData()">再読み込み</button>
-                        </p>
+                        <button class="btn btn-primary mt-2" onclick="loadAllData()">${t.reload}</button>
                     </div>
                 </div>
             `;
         }
 
-        // データなし表示
+        // No data display
         function showNoData() {
+            const t = translations[currentLang];
             const root = document.getElementById('root');
             root.innerHTML = `
                 <div class="text-center p-5">
                     <div class="alert alert-warning" role="alert">
-                        <h4 class="alert-heading"><i class="bi bi-info-circle"></i> データがありません</h4>
-                        <p>表示するデータが見つかりませんでした。</p>
+                        <h4 class="alert-heading"><i class="bi bi-info-circle"></i> ${t.noData}</h4>
+                        <p>${t.noDataMessage}</p>
                     </div>
                 </div>
             `;
         }
 
-        // メインコンテンツを表示
+        // Main dashboard render
         function renderDashboard(data) {
-            const { summary, monthlyData, yearlyData, shopData, categoryData } = data;
+            cachedData = data;
+            const { summary, monthlyData, yearlyData, shopData, categoryData, weekdayStats, seasonalStats } = data;
+            const t = translations[currentLang];
 
             const root = document.getElementById('root');
             root.innerHTML = `
                 <header class="text-center mb-4">
-                    <h1 class="display-4"><i class="bi bi-graph-up-arrow"></i> 家計簿分析ダッシュボード</h1>
-                    <p class="lead text-muted">${summary.period?.start || 'N/A'} 〜 ${summary.period?.end || 'N/A'} （${summary.period?.total_years || 0}年間）</p>
+                    <h1 class="display-5"><i class="bi bi-graph-up-arrow"></i> ${t.pageTitle}</h1>
+                    <p class="lead text-muted">
+                        ${summary.period?.start || 'N/A'} ~ ${summary.period?.end || 'N/A'}
+                        (${summary.period?.total_years || 0} ${t.years})
+                    </p>
                 </header>
+
+                <!-- Summary Cards -->
                 <div class="row mb-4">
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-sm-6">
                         <div class="stat-card">
-                            <div class="stat-label">総支出額</div>
+                            <div class="stat-label">${t.totalExpense}</div>
                             <div class="stat-value">${formatCurrency(summary.totals?.expense || 0, 'M')}</div>
-                            <div class="stat-label">${summary.period?.total_months || 0}ヶ月分</div>
+                            <div class="stat-sublabel">${summary.period?.total_months || 0} ${t.months}</div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-sm-6">
                         <div class="stat-card">
-                            <div class="stat-label">月平均支出</div>
+                            <div class="stat-label">${t.avgMonthlyExpense}</div>
                             <div class="stat-value">${formatCurrency(summary.averages?.monthly_expense || 0)}</div>
-                            <div class="stat-label">${summary.period?.total_years || 0}年間の平均</div>
+                            <div class="stat-sublabel">${summary.period?.total_years || 0} ${t.years} average</div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-sm-6">
                         <div class="stat-card">
-                            <div class="stat-label">総取引数</div>
+                            <div class="stat-label">${t.totalTransactions}</div>
                             <div class="stat-value">${formatNumber(summary.totals?.transactions || 0)}</div>
-                            <div class="stat-label">${summary.totals?.active_days || 0}日間</div>
+                            <div class="stat-sublabel">${summary.totals?.active_days || 0} ${t.days}</div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-sm-6">
                         <div class="stat-card">
-                            <div class="stat-label">利用店舗数</div>
+                            <div class="stat-label">${t.uniqueShops}</div>
                             <div class="stat-value">${summary.diversity?.unique_shops || 0}</div>
-                            <div class="stat-label">${summary.diversity?.unique_categories || 0}カテゴリ</div>
+                            <div class="stat-sublabel">${summary.diversity?.unique_categories || 0} ${t.categories}</div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Main Charts -->
+                <h2 class="section-title">${t.statistics}</h2>
                 <div class="row">
                     <div class="col-lg-6">
                         <div class="chart-container">
-                            <div style="height: 350px">
-                                <canvas id="yearlyChart"></canvas>
+                            <div class="chart-header">
+                                <h3 class="chart-title">${t.yearlyTrend}</h3>
                             </div>
+                            <canvas id="yearlyChart"></canvas>
                         </div>
                     </div>
                     <div class="col-lg-6">
                         <div class="chart-container">
-                            <div style="height: 350px">
-                                <canvas id="monthlyChart"></canvas>
+                            <div class="chart-header">
+                                <h3 class="chart-title">${t.monthlyTrend}</h3>
                             </div>
+                            <canvas id="monthlyChart"></canvas>
                         </div>
                     </div>
                 </div>
+
                 <div class="row">
                     <div class="col-lg-6">
                         <div class="chart-container">
-                            <div style="height: 350px">
-                                <canvas id="shopChart"></canvas>
+                            <div class="chart-header">
+                                <h3 class="chart-title">${t.shopBreakdown}</h3>
                             </div>
+                            <canvas id="shopChart"></canvas>
                         </div>
                     </div>
                     <div class="col-lg-6">
                         <div class="chart-container">
-                            <div style="height: 350px">
-                                <canvas id="categoryChart"></canvas>
+                            <div class="chart-header">
+                                <h3 class="chart-title">${t.categoryBreakdown}</h3>
                             </div>
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Analysis -->
+                <h2 class="section-title">${t.weekdayAnalysis}</h2>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3 class="chart-title">${t.weekdayAnalysis}</h3>
+                            </div>
+                            <canvas id="weekdayChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3 class="chart-title">${t.seasonalPattern}</h3>
+                            </div>
+                            <canvas id="seasonalChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Tables -->
+                <h2 class="section-title">${t.topShops}</h2>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h3 class="chart-title mb-3">${t.topShops}</h3>
+                            ${renderShopTable(shopData, t)}
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h3 class="chart-title mb-3">${t.topCategories}</h3>
+                            ${renderCategoryTable(categoryData, t)}
                         </div>
                     </div>
                 </div>
             `;
 
-            // チャートをレンダリング
+            // Render all charts
+            renderAllCharts(data);
+        }
+
+        function renderShopTable(data, t) {
+            if (!data || data.length === 0) return '<p class="text-muted">No data</p>';
+
+            let html = '<div class="table-responsive"><table class="table table-sm data-table">';
+            html += `<thead><tr>
+                <th>#</th>
+                <th>${t.shop}</th>
+                <th class="text-end">${t.amount}</th>
+                <th class="text-end">${t.transactions}</th>
+                <th class="text-end">${t.avgAmount}</th>
+            </tr></thead><tbody>`;
+
+            data.slice(0, 10).forEach((item, index) => {
+                html += `<tr>
+                    <td>${index + 1}</td>
+                    <td>${item.shop_name || 'N/A'}</td>
+                    <td class="text-end">¥${formatNumber(item.total)}</td>
+                    <td class="text-end">${formatNumber(item.transaction_count)}</td>
+                    <td class="text-end">¥${formatNumber(item.avg_amount)}</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        function renderCategoryTable(data, t) {
+            if (!data || data.length === 0) return '<p class="text-muted">No data</p>';
+
+            let html = '<div class="table-responsive"><table class="table table-sm data-table">';
+            html += `<thead><tr>
+                <th>#</th>
+                <th>${t.category}</th>
+                <th class="text-end">${t.amount}</th>
+                <th class="text-end">${t.transactions}</th>
+                <th class="text-end">${t.avgAmount}</th>
+            </tr></thead><tbody>`;
+
+            data.slice(0, 10).forEach((item, index) => {
+                html += `<tr>
+                    <td>${index + 1}</td>
+                    <td>${item.category_name || 'N/A'}</td>
+                    <td class="text-end">¥${formatNumber(item.total)}</td>
+                    <td class="text-end">${formatNumber(item.transaction_count)}</td>
+                    <td class="text-end">¥${formatNumber(item.avg_amount)}</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        function renderAllCharts(data) {
+            const { yearlyData, monthlyData, shopData, categoryData, weekdayStats, seasonalStats } = data;
+
             renderYearlyChart(yearlyData);
             renderMonthlyChart(monthlyData);
             renderShopChart(shopData);
             renderCategoryChart(categoryData);
+            renderWeekdayChart(weekdayStats);
+            renderSeasonalChart(seasonalStats);
         }
 
-        // 年別支出チャート
-        function renderYearlyChart(data) {
-            if (charts.yearly) charts.yearly.destroy();
+        function destroyChart(chartId) {
+            if (charts[chartId]) {
+                charts[chartId].destroy();
+                charts[chartId] = null;
+            }
+        }
 
+        function renderYearlyChart(data) {
+            destroyChart('yearly');
             const canvas = document.getElementById('yearlyChart');
-            if (!canvas || !data.length) return;
+            if (!canvas || !data || !data.length) return;
 
             charts.yearly = new Chart(canvas, {
                 type: 'bar',
                 data: {
                     labels: data.map(d => d.year),
                     datasets: [{
-                        label: '年間支出',
+                        label: translations[currentLang].totalExpense,
                         data: data.map(d => d.total_expense),
-                        backgroundColor: 'rgba(13, 110, 253, 0.8)'
+                        backgroundColor: 'rgba(13, 110, 253, 0.8)',
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        title: {
-                            display: true,
-                            text: '年別支出推移',
-                            color: '#dee2e6'
-                        },
-                        legend: {
-                            labels: {
-                                color: '#dee2e6'
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `¥${formatNumber(context.parsed.y)}`
                             }
                         }
                     },
                     scales: {
                         y: {
                             ticks: {
-                                callback: v => formatCurrency(v, 'M'),
-                                color: '#dee2e6'
-                            },
-                            grid: {
-                                color: 'rgba(255,255,255,0.1)'
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                color: '#dee2e6'
-                            },
-                            grid: {
-                                color: 'rgba(255,255,255,0.1)'
+                                callback: v => formatCurrency(v, 'M')
                             }
                         }
                     }
@@ -278,12 +658,10 @@
             });
         }
 
-        // 月別支出チャート
         function renderMonthlyChart(data) {
-            if (charts.monthly) charts.monthly.destroy();
-
+            destroyChart('monthly');
             const canvas = document.getElementById('monthlyChart');
-            if (!canvas || !data.length) return;
+            if (!canvas || !data || !data.length) return;
 
             const recentData = data.slice(-12);
 
@@ -292,45 +670,30 @@
                 data: {
                     labels: recentData.map(d => d.month),
                     datasets: [{
-                        label: '月次支出',
+                        label: translations[currentLang].avgMonthlyExpense,
                         data: recentData.map(d => d.expense),
                         borderColor: 'rgb(13, 202, 240)',
                         backgroundColor: 'rgba(13, 202, 240, 0.1)',
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        borderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        title: {
-                            display: true,
-                            text: '直近12ヶ月の推移',
-                            color: '#dee2e6'
-                        },
-                        legend: {
-                            labels: {
-                                color: '#dee2e6'
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `¥${formatNumber(context.parsed.y)}`
                             }
                         }
                     },
                     scales: {
                         y: {
                             ticks: {
-                                callback: v => formatCurrency(v),
-                                color: '#dee2e6'
-                            },
-                            grid: {
-                                color: 'rgba(255,255,255,0.1)'
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                color: '#dee2e6'
-                            },
-                            grid: {
-                                color: 'rgba(255,255,255,0.1)'
+                                callback: v => formatCurrency(v)
                             }
                         }
                     }
@@ -338,24 +701,19 @@
             });
         }
 
-        // ショップ別チャート
         function renderShopChart(data) {
-            if (charts.shop) charts.shop.destroy();
-
+            destroyChart('shop');
             const canvas = document.getElementById('shopChart');
-            if (!canvas || !data || !data.length) {
-                console.log('shopChart: canvas or data not available', { canvas: !!canvas, dataLength: data?.length });
-                return;
-            }
+            if (!canvas || !data || !data.length) return;
 
-            console.log('Rendering shopChart with data:', data);
+            const topData = data.slice(0, 10);
 
             charts.shop = new Chart(canvas, {
                 type: 'doughnut',
                 data: {
-                    labels: data.map(d => d.shop_name),
+                    labels: topData.map(d => d.shop_name),
                     datasets: [{
-                        data: data.map(d => parseFloat(d.total)),
+                        data: topData.map(d => parseFloat(d.total)),
                         backgroundColor: [
                             '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
                             '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#36A2EB'
@@ -366,23 +724,19 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        title: {
-                            display: true,
-                            text: 'ショップ別支出',
-                            color: '#dee2e6'
-                        },
                         legend: {
+                            position: 'right',
                             labels: {
-                                color: '#dee2e6'
-                            },
-                            position: 'right'
+                                boxWidth: 12,
+                                font: { size: 11 }
+                            }
                         },
                         tooltip: {
                             callbacks: {
-                                label: function(context) {
+                                label: (context) => {
                                     const label = context.label || '';
                                     const value = context.parsed || 0;
-                                    return label + ': ¥' + value.toLocaleString();
+                                    return `${label}: ¥${formatNumber(value)}`;
                                 }
                             }
                         }
@@ -391,12 +745,10 @@
             });
         }
 
-        // カテゴリ別チャート
         function renderCategoryChart(data) {
-            if (charts.category) charts.category.destroy();
-
+            destroyChart('category');
             const canvas = document.getElementById('categoryChart');
-            if (!canvas || !data.length) return;
+            if (!canvas || !data || !data.length) return;
 
             const topData = data.slice(0, 10);
 
@@ -405,9 +757,11 @@
                 data: {
                     labels: topData.map(d => d.category_name),
                     datasets: [{
-                        label: '支出額',
+                        label: translations[currentLang].amount,
                         data: topData.map(d => d.total),
-                        backgroundColor: 'rgba(111, 66, 193, 0.8)'
+                        backgroundColor: 'rgba(111, 66, 193, 0.8)',
+                        borderColor: 'rgba(111, 66, 193, 1)',
+                        borderWidth: 1
                     }]
                 },
                 options: {
@@ -415,33 +769,17 @@
                     maintainAspectRatio: false,
                     indexAxis: 'y',
                     plugins: {
-                        title: {
-                            display: true,
-                            text: 'カテゴリ別支出',
-                            color: '#dee2e6'
-                        },
-                        legend: {
-                            labels: {
-                                color: '#dee2e6'
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `¥${formatNumber(context.parsed.x)}`
                             }
                         }
                     },
                     scales: {
                         x: {
                             ticks: {
-                                callback: v => formatCurrency(v),
-                                color: '#dee2e6'
-                            },
-                            grid: {
-                                color: 'rgba(255,255,255,0.1)'
-                            }
-                        },
-                        y: {
-                            ticks: {
-                                color: '#dee2e6'
-                            },
-                            grid: {
-                                color: 'rgba(255,255,255,0.1)'
+                                callback: v => formatCurrency(v)
                             }
                         }
                     }
@@ -449,26 +787,111 @@
             });
         }
 
-        // 全データを読み込み
+        function renderWeekdayChart(data) {
+            destroyChart('weekday');
+            const canvas = document.getElementById('weekdayChart');
+            if (!canvas || !data || !data.length) return;
+
+            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const t = translations[currentLang];
+
+            // Sort by day_num
+            const sortedData = [...data].sort((a, b) => a.day_num - b.day_num);
+
+            charts.weekday = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: sortedData.map((d, i) => t[dayNames[i]] || d.day_of_week),
+                    datasets: [{
+                        label: t.avgExpense,
+                        data: sortedData.map(d => d.avg_expense),
+                        backgroundColor: 'rgba(255, 159, 64, 0.8)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${t.avgExpense}: ¥${formatNumber(context.parsed.y)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: v => formatCurrency(v)
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderSeasonalChart(data) {
+            destroyChart('seasonal');
+            const canvas = document.getElementById('seasonalChart');
+            if (!canvas || !data || !data.length) return;
+
+            const monthNames = ['january', 'february', 'march', 'april', 'may', 'june',
+                              'july', 'august', 'september', 'october', 'november', 'december'];
+            const t = translations[currentLang];
+
+            charts.seasonal = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: data.map((d, i) => t[monthNames[i]] || d.month),
+                    datasets: [{
+                        label: t.avgExpense,
+                        data: data.map(d => d.avg_expense),
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${t.avgExpense}: ¥${formatNumber(context.parsed.y)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: v => formatCurrency(v)
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load all data
         async function loadAllData() {
             try {
                 console.log('Loading analytics data...');
 
-                const [summaryRes, monthlyRes, yearlyRes, shopRes, categoryRes] = await Promise.all([
+                const [summaryRes, monthlyRes, yearlyRes, shopRes, categoryRes, statsRes] = await Promise.all([
                     fetchData('summary'),
                     fetchData('monthly'),
                     fetchData('yearly'),
-                    fetchData('shop', { limit: 10 }),
-                    fetchData('category')
+                    fetchData('shop', { limit: 20 }),
+                    fetchData('category'),
+                    fetchData('stats')
                 ]);
 
-                console.log('API Responses:', { summaryRes, monthlyRes, yearlyRes, shopRes, categoryRes });
-                console.log('Shop API Response:', shopRes);
-                console.log('Shop data detail:', shopRes.data);
-                console.log('Shop data length:', shopRes.data?.length || 0);
-                if (shopRes.debug) {
-                    console.log('Shop API Debug Info:', shopRes.debug);
-                }
+                console.log('API Responses:', { summaryRes, monthlyRes, yearlyRes, shopRes, categoryRes, statsRes });
 
                 if (!summaryRes.success) {
                     throw new Error('Summary API failed: ' + (summaryRes.error || 'Unknown error'));
@@ -484,7 +907,9 @@
                     monthlyData: monthlyRes.success ? monthlyRes.data : [],
                     yearlyData: yearlyRes.success ? yearlyRes.data : [],
                     shopData: shopRes.success ? shopRes.data : [],
-                    categoryData: categoryRes.success ? categoryRes.data : []
+                    categoryData: categoryRes.success ? categoryRes.data : [],
+                    weekdayStats: statsRes.success && statsRes.data ? statsRes.data.weekday : [],
+                    seasonalStats: statsRes.success && statsRes.data ? statsRes.data.seasonal : []
                 });
 
                 console.log('Dashboard rendered successfully');
@@ -494,9 +919,17 @@
             }
         }
 
-        // ページ読み込み時に実行
+        // Event listeners
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM loaded, starting application...');
+            // Language toggle
+            document.getElementById('langToggle').addEventListener('click', () => {
+                switchLanguage(currentLang === 'en' ? 'ja' : 'en');
+            });
+
+            // Theme toggle
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+            // Load data
             loadAllData();
         });
     </script>
