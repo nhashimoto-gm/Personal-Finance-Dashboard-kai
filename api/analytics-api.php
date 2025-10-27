@@ -112,6 +112,53 @@ function handleSummary($pdo) {
         $interval = $start->diff($end);
         $total_months = ($interval->y * 12) + $interval->m + 1;
 
+        // 比較データの取得
+        $currentMonth = date('Y-m');
+        $lastMonth = date('Y-m', strtotime('-1 month'));
+        $sixMonthsAgo = date('Y-m', strtotime('-6 months'));
+        $twelveMonthsAgo = date('Y-m', strtotime('-12 months'));
+
+        // 当月の支出
+        $currentStmt = $pdo->prepare("
+            SELECT COALESCE(SUM(price), 0) as total
+            FROM {$tables['source']}
+            WHERE DATE_FORMAT(re_date, '%Y-%m') = ?
+        ");
+        $currentStmt->execute([$currentMonth]);
+        $currentMonthExpense = $currentStmt->fetch()['total'];
+
+        // 前月の支出
+        $lastStmt = $pdo->prepare("
+            SELECT COALESCE(SUM(price), 0) as total
+            FROM {$tables['source']}
+            WHERE DATE_FORMAT(re_date, '%Y-%m') = ?
+        ");
+        $lastStmt->execute([$lastMonth]);
+        $lastMonthExpense = $lastStmt->fetch()['total'];
+
+        // 6か月前の支出
+        $sixStmt = $pdo->prepare("
+            SELECT COALESCE(SUM(price), 0) as total
+            FROM {$tables['source']}
+            WHERE DATE_FORMAT(re_date, '%Y-%m') = ?
+        ");
+        $sixStmt->execute([$sixMonthsAgo]);
+        $sixMonthsAgoExpense = $sixStmt->fetch()['total'];
+
+        // 12か月前の支出
+        $twelveStmt = $pdo->prepare("
+            SELECT COALESCE(SUM(price), 0) as total
+            FROM {$tables['source']}
+            WHERE DATE_FORMAT(re_date, '%Y-%m') = ?
+        ");
+        $twelveStmt->execute([$twelveMonthsAgo]);
+        $twelveMonthsAgoExpense = $twelveStmt->fetch()['total'];
+
+        // パーセンテージ計算
+        $vsLastMonth = $lastMonthExpense > 0 ? (($currentMonthExpense - $lastMonthExpense) / $lastMonthExpense) * 100 : 0;
+        $vsSixMonths = $sixMonthsAgoExpense > 0 ? (($currentMonthExpense - $sixMonthsAgoExpense) / $sixMonthsAgoExpense) * 100 : 0;
+        $vsTwelveMonths = $twelveMonthsAgoExpense > 0 ? (($currentMonthExpense - $twelveMonthsAgoExpense) / $twelveMonthsAgoExpense) * 100 : 0;
+
         echo json_encode([
             'success' => true,
             'data' => [
@@ -134,6 +181,15 @@ function handleSummary($pdo) {
                 'diversity' => [
                     'unique_shops' => (int)$summary['unique_shops'],
                     'unique_categories' => (int)$summary['unique_categories']
+                ],
+                'comparisons' => [
+                    'current_month' => (int)$currentMonthExpense,
+                    'last_month' => (int)$lastMonthExpense,
+                    'six_months_ago' => (int)$sixMonthsAgoExpense,
+                    'twelve_months_ago' => (int)$twelveMonthsAgoExpense,
+                    'current_vs_last_month' => round($vsLastMonth, 2),
+                    'current_vs_six_months' => round($vsSixMonths, 2),
+                    'current_vs_twelve_months' => round($vsTwelveMonths, 2)
                 ]
             ]
         ]);

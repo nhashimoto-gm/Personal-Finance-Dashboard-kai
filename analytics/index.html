@@ -26,17 +26,18 @@
         .stat-card {
             background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
             color: white;
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 1.5rem;
             text-align: center;
-            transition: transform 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             margin-bottom: 1rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 16px rgba(13,110,253,0.3), 0 4px 8px rgba(0,0,0,0.15);
         }
 
         .stat-value {
@@ -58,15 +59,27 @@
 
         .chart-container {
             background: #2b3035;
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .chart-container:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 2px 6px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
         }
 
         [data-bs-theme="light"] .chart-container {
             background: white;
-            border: 1px solid #dee2e6;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        [data-bs-theme="light"] .chart-container:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
         }
 
         .chart-header {
@@ -104,10 +117,26 @@
 
         .data-table {
             font-size: 0.9rem;
+            border-radius: 8px;
+            overflow: hidden;
         }
 
         .data-table th {
-            background: rgba(13, 110, 253, 0.1);
+            background: rgba(13, 110, 253, 0.15);
+            font-weight: 600;
+            border-bottom: 2px solid rgba(13, 110, 253, 0.3);
+        }
+
+        .data-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(13, 110, 253, 0.05);
+        }
+
+        [data-bs-theme="light"] .data-table tbody tr:hover {
+            background: rgba(13, 110, 253, 0.08);
         }
 
         .trend-up {
@@ -121,9 +150,22 @@
         .section-title {
             font-size: 1.5rem;
             font-weight: 600;
-            margin: 2rem 0 1rem 0;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #0d6efd;
+            margin: 2rem 0 1.5rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid #0d6efd;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #0d6efd, #0dcaf0);
+            border-radius: 2px;
         }
 
         #root {
@@ -155,9 +197,9 @@
                 <button class="btn btn-outline-light btn-sm me-2" id="themeToggle">
                     <i class="bi bi-moon-fill" id="themeIcon"></i>
                 </button>
-                <a href="../index.php" class="btn btn-outline-light btn-sm">
-                    <i class="bi bi-arrow-left"></i> <span id="backBtn">Back</span>
-                </a>
+                <button onclick="window.close()" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-x-lg"></i> <span id="closeBtn">Close</span>
+                </button>
             </div>
         </div>
     </nav>
@@ -183,7 +225,7 @@
             en: {
                 navTitle: 'Personal Finance Dashboard',
                 pageTitle: 'Advanced Analytics Dashboard',
-                back: 'Back',
+                close: 'Close',
                 loadingText: 'Loading data...',
                 errorOccurred: 'An Error Occurred',
                 noData: 'No Data Available',
@@ -244,12 +286,16 @@
                 wednesday: 'Wednesday',
                 thursday: 'Thursday',
                 friday: 'Friday',
-                saturday: 'Saturday'
+                saturday: 'Saturday',
+                vs6MonthsAgo: 'vs 6 months ago',
+                vs12MonthsAgo: 'vs 12 months ago',
+                vsLastMonth: 'vs last month',
+                comparison: 'Comparison'
             },
             ja: {
                 navTitle: '家計簿ダッシュボード',
                 pageTitle: '高度な分析ダッシュボード',
-                back: '戻る',
+                close: '閉じる',
                 loadingText: 'データを読み込んでいます...',
                 errorOccurred: 'エラーが発生しました',
                 noData: 'データがありません',
@@ -310,7 +356,11 @@
                 wednesday: '水曜日',
                 thursday: '木曜日',
                 friday: '金曜日',
-                saturday: '土曜日'
+                saturday: '土曜日',
+                vs6MonthsAgo: '6か月前比',
+                vs12MonthsAgo: '12か月前比',
+                vsLastMonth: '前月比',
+                comparison: '比較'
             }
         };
 
@@ -335,7 +385,7 @@
         function updateUILanguage() {
             const t = translations[currentLang];
             document.getElementById('navTitle').textContent = t.navTitle;
-            document.getElementById('backBtn').textContent = t.back;
+            document.getElementById('closeBtn').textContent = t.close;
             document.getElementById('loadingText').textContent = t.loadingText;
         }
 
@@ -386,6 +436,22 @@
                 return `¥${(num / 1000000).toFixed(1)}M`;
             }
             return `¥${(num / 1000).toFixed(0)}K`;
+        }
+
+        // Comparison rendering
+        function renderComparison(percentage, label) {
+            if (percentage === undefined || percentage === null) return '';
+
+            const isIncrease = percentage > 0;
+            const icon = isIncrease ? '▲' : '▼';
+            const colorClass = isIncrease ? 'trend-up' : 'trend-down';
+            const absPercentage = Math.abs(percentage).toFixed(1);
+
+            return `
+                <div class="stat-sublabel mt-2 ${colorClass}">
+                    ${icon} ${absPercentage}% ${label || ''}
+                </div>
+            `;
         }
 
         // Error display
@@ -448,6 +514,7 @@
                             <div class="stat-label">${t.avgMonthlyExpense}</div>
                             <div class="stat-value">${formatCurrency(summary.averages?.monthly_expense || 0)}</div>
                             <div class="stat-sublabel">${summary.period?.total_years || 0} ${t.years} average</div>
+                            ${renderComparison(summary.comparisons?.current_vs_last_month, t.vsLastMonth)}
                         </div>
                     </div>
                     <div class="col-md-3 col-sm-6">
@@ -462,6 +529,42 @@
                             <div class="stat-label">${t.uniqueShops}</div>
                             <div class="stat-value">${summary.diversity?.unique_shops || 0}</div>
                             <div class="stat-sublabel">${summary.diversity?.unique_categories || 0} ${t.categories}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparison Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h3 class="chart-title mb-3"><i class="bi bi-bar-chart"></i> ${t.comparison} - ${t.vs6MonthsAgo}</h3>
+                            <div class="row">
+                                <div class="col-6 text-center p-3 border-end">
+                                    <div class="text-muted mb-2">6 ${t.months} ago</div>
+                                    <div class="h4">${formatCurrency(summary.comparisons?.six_months_ago || 0)}</div>
+                                </div>
+                                <div class="col-6 text-center p-3">
+                                    <div class="text-muted mb-2">Current</div>
+                                    <div class="h4">${formatCurrency(summary.comparisons?.current_month || 0)}</div>
+                                    ${renderComparison(summary.comparisons?.current_vs_six_months, t.vs6MonthsAgo)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h3 class="chart-title mb-3"><i class="bi bi-bar-chart"></i> ${t.comparison} - ${t.vs12MonthsAgo}</h3>
+                            <div class="row">
+                                <div class="col-6 text-center p-3 border-end">
+                                    <div class="text-muted mb-2">12 ${t.months} ago</div>
+                                    <div class="h4">${formatCurrency(summary.comparisons?.twelve_months_ago || 0)}</div>
+                                </div>
+                                <div class="col-6 text-center p-3">
+                                    <div class="text-muted mb-2">Current</div>
+                                    <div class="h4">${formatCurrency(summary.comparisons?.current_month || 0)}</div>
+                                    ${renderComparison(summary.comparisons?.current_vs_twelve_months, t.vs12MonthsAgo)}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -603,6 +706,15 @@
 
         function renderAllCharts(data) {
             const { yearlyData, monthlyData, shopData, categoryData, weekdayStats, seasonalStats } = data;
+
+            console.log('Rendering charts with data:', {
+                yearlyData: yearlyData?.length,
+                monthlyData: monthlyData?.length,
+                shopData: shopData?.length,
+                categoryData: categoryData?.length,
+                weekdayStats: weekdayStats?.length,
+                seasonalStats: seasonalStats?.length
+            });
 
             renderYearlyChart(yearlyData);
             renderMonthlyChart(monthlyData);
@@ -788,9 +900,17 @@
         }
 
         function renderWeekdayChart(data) {
+            console.log('Rendering weekday chart with data:', data);
             destroyChart('weekday');
             const canvas = document.getElementById('weekdayChart');
-            if (!canvas || !data || !data.length) return;
+            if (!canvas) {
+                console.error('Weekday chart canvas not found!');
+                return;
+            }
+            if (!data || !data.length) {
+                console.warn('No weekday data available');
+                return;
+            }
 
             const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
             const t = translations[currentLang];
@@ -833,9 +953,17 @@
         }
 
         function renderSeasonalChart(data) {
+            console.log('Rendering seasonal chart with data:', data);
             destroyChart('seasonal');
             const canvas = document.getElementById('seasonalChart');
-            if (!canvas || !data || !data.length) return;
+            if (!canvas) {
+                console.error('Seasonal chart canvas not found!');
+                return;
+            }
+            if (!data || !data.length) {
+                console.warn('No seasonal data available');
+                return;
+            }
 
             const monthNames = ['january', 'february', 'march', 'april', 'may', 'june',
                               'july', 'august', 'september', 'october', 'november', 'december'];
