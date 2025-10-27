@@ -223,8 +223,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Version: 2024-10-27-v3 - Fixed string-to-number conversion for all data
-        console.log('%c Analytics Dashboard v2024-10-27-v3 loaded ', 'background: #0d6efd; color: white; font-weight: bold; padding: 5px;');
+        // Version: 2024-10-27-v4 - Fixed language switching to update all page content
+        console.log('%c Analytics Dashboard v2024-10-27-v4 loaded ', 'background: #0d6efd; color: white; font-weight: bold; padding: 5px;');
 
         const API_BASE_URL = '../api/analytics-api.php';
 
@@ -376,7 +376,8 @@
             }
         };
 
-        let currentLang = 'en';
+        // Load language from localStorage or default to 'en'
+        let currentLang = localStorage.getItem('dashboardLang') || 'en';
         let charts = {};
         let cachedData = null;
 
@@ -387,8 +388,15 @@
         // Language toggle
         function switchLanguage(lang) {
             currentLang = lang;
+            // Save language preference to localStorage
+            localStorage.setItem('dashboardLang', lang);
+
             document.getElementById('langLabel').textContent = lang === 'en' ? 'JP' : 'EN';
             updateUILanguage();
+
+            // Update page title
+            document.title = translations[currentLang].pageTitle;
+
             if (cachedData) {
                 renderDashboard(cachedData);
             }
@@ -1178,6 +1186,11 @@
 
         // Event listeners
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize UI with saved language
+            document.getElementById('langLabel').textContent = currentLang === 'en' ? 'JP' : 'EN';
+            document.title = translations[currentLang].pageTitle;
+            updateUILanguage();
+
             // Language toggle
             document.getElementById('langToggle').addEventListener('click', () => {
                 switchLanguage(currentLang === 'en' ? 'ja' : 'en');
