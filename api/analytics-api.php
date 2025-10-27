@@ -18,107 +18,131 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // データベース接続（既存の関数を使用）
-$pdo = getDatabaseConnection();
-$action = $_GET['action'] ?? 'summary';
+try {
+    $pdo = getDatabaseConnection();
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $action = $_GET['action'] ?? 'summary';
 
-// エンドポイント処理
-switch ($action) {
-    case 'summary':
-        handleSummary($pdo);
-        break;
+    // エンドポイント処理
+    switch ($action) {
+        case 'summary':
+            handleSummary($pdo);
+            break;
 
-    case 'monthly':
-        handleMonthly($pdo);
-        break;
+        case 'monthly':
+            handleMonthly($pdo);
+            break;
 
-    case 'yearly':
-        handleYearly($pdo);
-        break;
+        case 'yearly':
+            handleYearly($pdo);
+            break;
 
-    case 'shop':
-        handleShop($pdo);
-        break;
+        case 'shop':
+            handleShop($pdo);
+            break;
 
-    case 'category':
-        handleCategory($pdo);
-        break;
+        case 'category':
+            handleCategory($pdo);
+            break;
 
-    case 'daily':
-        handleDaily($pdo);
-        break;
+        case 'daily':
+            handleDaily($pdo);
+            break;
 
-    case 'trends':
-        handleTrends($pdo);
-        break;
+        case 'trends':
+            handleTrends($pdo);
+            break;
 
-    case 'period':
-        handlePeriod($pdo);
-        break;
+        case 'period':
+            handlePeriod($pdo);
+            break;
 
-    case 'stats':
-        handleStatistics($pdo);
-        break;
+        case 'stats':
+            handleStatistics($pdo);
+            break;
 
-    default:
-        echo json_encode(['success' => false, 'error' => 'Invalid action']);
+        default:
+            echo json_encode(['success' => false, 'error' => 'Invalid action']);
+    }
+} catch (Exception $e) {
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage(),
+        'action' => $action ?? 'unknown'
+    ]);
 }
 
 /**
  * サマリー情報取得
  */
 function handleSummary($pdo) {
-    $tables = getTableNames();
-    $start_date = $_GET['start_date'] ?? '2008-01-01';
-    $end_date = $_GET['end_date'] ?? date('Y-m-d');
+    try {
+        $tables = getTableNames();
+        $start_date = $_GET['start_date'] ?? '2008-01-01';
+        $end_date = $_GET['end_date'] ?? date('Y-m-d');
 
-    // 全期間統計
-    $stmt = $pdo->prepare("
-        SELECT
-            MIN(re_date) as earliest_date,
-            MAX(re_date) as latest_date,
-            SUM(price) as total_expense,
-            COUNT(*) as total_transactions,
-            COUNT(DISTINCT re_date) as active_days,
-            COUNT(DISTINCT cat_1) as unique_shops,
-            COUNT(DISTINCT cat_2) as unique_categories,
-            ROUND(AVG(price)) as avg_transaction
-        FROM {$tables['source']}
-        WHERE re_date BETWEEN ? AND ?
-    ");
-    $stmt->execute([$start_date, $end_date]);
-    $summary = $stmt->fetch();
+        // 全期間統計
+        $stmt = $pdo->prepare("
+            SELECT
+                MIN(re_date) as earliest_date,
+                MAX(re_date) as latest_date,
+                SUM(price) as total_expense,
+                COUNT(*) as total_transactions,
+                COUNT(DISTINCT re_date) as active_days,
+                COUNT(DISTINCT cat_1) as unique_shops,
+                COUNT(DISTINCT cat_2) as unique_categories,
+                ROUND(AVG(price)) as avg_transaction
+            FROM {$tables['source']}
+            WHERE re_date BETWEEN ? AND ?
+        ");
+        $stmt->execute([$start_date, $end_date]);
+        $summary = $stmt->fetch();
 
-    // 月数計算
-    $start = new DateTime($summary['earliest_date']);
-    $end = new DateTime($summary['latest_date']);
-    $interval = $start->diff($end);
-    $total_months = ($interval->y * 12) + $interval->m + 1;
+        if (!$summary || !$summary['earliest_date']) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'No data found in database'
+            ]);
+            return;
+        }
 
-    echo json_encode([
-        'success' => true,
-        'data' => [
-            'period' => [
-                'start' => $summary['earliest_date'],
-                'end' => $summary['latest_date'],
-                'total_months' => $total_months,
-                'total_years' => round($total_months / 12, 1)
-            ],
-            'totals' => [
-                'expense' => (int)$summary['total_expense'],
-                'transactions' => (int)$summary['total_transactions'],
-                'active_days' => (int)$summary['active_days']
-            ],
-            'averages' => [
-                'monthly_expense' => round($summary['total_expense'] / $total_months),
-                'daily_expense' => round($summary['total_expense'] / $summary['active_days']),
-                'transaction_amount' => (int)$summary['avg_transaction']
-            ],
-            'diversity' => [
-                'unique_shops' => (int)$summary['unique_shops'],
-                'unique_categories' => (int)$summary['unique_categories']
+        // 月数計算
+        $start = new DateTime($summary['earliest_date']);
+        $end = new DateTime($summary['latest_date']);
+        $interval = $start->diff($end);
+        $total_months = ($interval->y * 12) + $interval->m + 1;
+
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'period' => [
+                    'start' => $summary['earliest_date'],
+                    'end' => $summary['latest_date'],
+                    'total_months' => $total_months,
+                    'total_years' => round($total_months / 12, 1)
+                ],
+                'totals' => [
+                    'expense' => (int)$summary['total_expense'],
+                    'transactions' => (int)$summary['total_transactions'],
+                    'active_days' => (int)$summary['active_days']
+                ],
+                'averages' => [
+                    'monthly_expense' => round($summary['total_expense'] / $total_months),
+                    'daily_expense' => round($summary['total_expense'] / $summary['active_days']),
+                    'transaction_amount' => (int)$summary['avg_transaction']
+                ],
+                'diversity' => [
+                    'unique_shops' => (int)$summary['unique_shops'],
+                    'unique_categories' => (int)$summary['unique_categories']
+                ]
             ]
-        ]
-    ]);
+        ]);
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Summary API error: ' . $e->getMessage()
+        ]);
+    }
 }
 
 /**
