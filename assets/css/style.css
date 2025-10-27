@@ -189,10 +189,83 @@ body {
     scroll-margin-top: 50px;
 }
 
+/* Recent Transactions table column widths */
+#recentTransactionsSection .table {
+    table-layout: fixed;
+}
+
+#recentTransactionsSection .table thead th:nth-child(1) {
+    width: 12%;
+}
+
+#recentTransactionsSection .table thead th:nth-child(2) {
+    width: 25%;
+}
+
+#recentTransactionsSection .table thead th:nth-child(3) {
+    width: 25%;
+}
+
+#recentTransactionsSection .table thead th:nth-child(4) {
+    width: 18%;
+}
+
+#recentTransactionsSection .table thead th:nth-child(5) {
+    width: 20%;
+}
+
+#recentTransactionsSection .table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#recentTransactionsSection .table td .badge {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+#recentTransactionsSection .table td .btn-group {
+    white-space: nowrap;
+}
+
+#recentTransactionsSection .table td:nth-child(5) {
+    white-space: nowrap;
+}
+
 /* モバイル対応 */
 @media (max-width: 768px) {
     :root {
         --chart-height: 300px;
+    }
+
+    /* Recent Transactions table - adjust column widths for mobile */
+    #recentTransactionsSection .table thead th:nth-child(1) {
+        width: 18%;
+    }
+
+    #recentTransactionsSection .table thead th:nth-child(2) {
+        width: 28%;
+    }
+
+    #recentTransactionsSection .table thead th:nth-child(3) {
+        width: 0%;
+        display: none;
+    }
+
+    #recentTransactionsSection .table tbody td:nth-child(3) {
+        display: none;
+    }
+
+    #recentTransactionsSection .table thead th:nth-child(4) {
+        width: 25%;
+    }
+
+    #recentTransactionsSection .table thead th:nth-child(5) {
+        width: 29%;
     }
 
     /* Dashboard filter buttons - hide text on mobile */
