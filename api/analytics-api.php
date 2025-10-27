@@ -472,50 +472,61 @@ function handlePeriod($pdo) {
  * 統計分析データ
  */
 function handleStatistics($pdo) {
-    $tables = getTableNames();
+    try {
+        $tables = getTableNames();
 
-    // 曜日別統計
-    $stmt = $pdo->query("
-        SELECT
-            DAYNAME(re_date) as day_of_week,
-            DAYOFWEEK(re_date) as day_num,
-            ROUND(AVG(daily_total)) as avg_expense,
-            COUNT(*) as day_count
-        FROM (
-            SELECT re_date, SUM(price) as daily_total
-            FROM {$tables['source']}
-            GROUP BY re_date
-        ) daily
-        GROUP BY DAYNAME(re_date), DAYOFWEEK(re_date)
-        ORDER BY day_num
-    ");
-    $weekday_stats = $stmt->fetchAll();
-
-    // 月別季節性
-    $stmt = $pdo->query("
-        SELECT
-            MONTH(re_date) as month,
-            ROUND(AVG(monthly_total)) as avg_expense,
-            COUNT(*) as year_count
-        FROM (
+        // 曜日別統計
+        $stmt = $pdo->query("
             SELECT
-                DATE_FORMAT(re_date, '%Y-%m') as ym,
-                MONTH(re_date) as month,
-                SUM(price) as monthly_total
-            FROM {$tables['source']}
-            GROUP BY DATE_FORMAT(re_date, '%Y-%m')
-        ) monthly
-        GROUP BY MONTH(re_date)
-        ORDER BY month
-    ");
-    $seasonal_stats = $stmt->fetchAll();
+                DAYNAME(daily.re_date) as day_of_week,
+                DAYOFWEEK(daily.re_date) as day_num,
+                ROUND(AVG(daily.daily_total)) as avg_expense,
+                COUNT(*) as day_count
+            FROM (
+                SELECT re_date, SUM(price) as daily_total
+                FROM {$tables['source']}
+                GROUP BY re_date
+            ) daily
+            GROUP BY DAYOFWEEK(daily.re_date), DAYNAME(daily.re_date)
+            ORDER BY day_num
+        ");
+        $weekday_stats = $stmt->fetchAll();
 
-    echo json_encode([
-        'success' => true,
-        'data' => [
-            'weekday' => $weekday_stats,
-            'seasonal' => $seasonal_stats
-        ]
-    ]);
+        // 月別季節性
+        $stmt = $pdo->query("
+            SELECT
+                monthly.month,
+                ROUND(AVG(monthly.monthly_total)) as avg_expense,
+                COUNT(*) as year_count
+            FROM (
+                SELECT
+                    DATE_FORMAT(re_date, '%Y-%m') as ym,
+                    MONTH(re_date) as month,
+                    SUM(price) as monthly_total
+                FROM {$tables['source']}
+                GROUP BY DATE_FORMAT(re_date, '%Y-%m'), MONTH(re_date)
+            ) monthly
+            GROUP BY monthly.month
+            ORDER BY monthly.month
+        ");
+        $seasonal_stats = $stmt->fetchAll();
+
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'weekday' => $weekday_stats,
+                'seasonal' => $seasonal_stats
+            ]
+        ]);
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Statistics API error: ' . $e->getMessage(),
+            'data' => [
+                'weekday' => [],
+                'seasonal' => []
+            ]
+        ]);
+    }
 }
 ?>
