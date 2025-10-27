@@ -223,8 +223,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Version: 2024-10-27-v2 - Fixed number formatting with thousand separators
-        console.log('Analytics Dashboard v2024-10-27-v2 loaded');
+        // Version: 2024-10-27-v3 - Fixed string-to-number conversion for all data
+        console.log('%c Analytics Dashboard v2024-10-27-v3 loaded ', 'background: #0d6efd; color: white; font-weight: bold; padding: 5px;');
 
         const API_BASE_URL = '../api/analytics-api.php';
 
@@ -698,14 +698,15 @@
             </tr></thead><tbody>`;
 
             data.slice(0, 10).forEach((item, index) => {
-                const percentage = total > 0 ? ((parseFloat(item.total) / total) * 100).toFixed(1) : 0;
+                const itemTotal = parseFloat(item.total) || 0;
+                const percentage = total > 0 ? ((itemTotal / total) * 100).toFixed(1) : 0;
                 html += `<tr>
                     <td>${index + 1}</td>
                     <td>${item.shop_name || 'N/A'}</td>
-                    <td class="text-end">${formatNumber(item.total)}</td>
+                    <td class="text-end">${formatNumber(itemTotal)}</td>
                     <td class="text-end">${percentage}%</td>
-                    <td class="text-end">${formatNumber(item.transaction_count)}</td>
-                    <td class="text-end">${formatNumber(item.avg_amount)}</td>
+                    <td class="text-end">${formatNumber(parseFloat(item.transaction_count) || 0)}</td>
+                    <td class="text-end">${formatNumber(parseFloat(item.avg_amount) || 0)}</td>
                 </tr>`;
             });
 
@@ -731,9 +732,9 @@
                 html += `<tr>
                     <td>${index + 1}</td>
                     <td>${item.category_name || 'N/A'}</td>
-                    <td class="text-end">${formatNumber(item.total)}</td>
-                    <td class="text-end">${formatNumber(item.transaction_count)}</td>
-                    <td class="text-end">${formatNumber(item.avg_amount)}</td>
+                    <td class="text-end">${formatNumber(parseFloat(item.total) || 0)}</td>
+                    <td class="text-end">${formatNumber(parseFloat(item.transaction_count) || 0)}</td>
+                    <td class="text-end">${formatNumber(parseFloat(item.avg_amount) || 0)}</td>
                 </tr>`;
             });
 
@@ -1008,8 +1009,10 @@
             const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
             const t = translations[currentLang];
 
-            // Sort by day_num (1=Sunday, 2=Monday, etc.)
-            const sortedData = [...data].sort((a, b) => a.day_num - b.day_num);
+            // Filter out null values and sort by day_num (1=Sunday, 2=Monday, etc.)
+            const sortedData = [...data]
+                .filter(d => d.day_num !== null && d.avg_expense !== null)
+                .sort((a, b) => a.day_num - b.day_num);
 
             charts.weekday = new Chart(canvas, {
                 type: 'bar',
@@ -1018,7 +1021,7 @@
                     labels: sortedData.map(d => t[dayNames[d.day_num - 1]] || d.day_of_week),
                     datasets: [{
                         label: t.avgExpense,
-                        data: sortedData.map(d => d.avg_expense),
+                        data: sortedData.map(d => parseFloat(d.avg_expense) || 0),
                         backgroundColor: 'rgba(255, 159, 64, 0.8)',
                         borderColor: 'rgba(255, 159, 64, 1)',
                         borderWidth: 1,
@@ -1076,14 +1079,17 @@
                               'july', 'august', 'september', 'october', 'november', 'december'];
             const t = translations[currentLang];
 
+            // Filter out null values
+            const validData = data.filter(d => d.month !== null && d.avg_expense !== null);
+
             charts.seasonal = new Chart(canvas, {
                 type: 'line',
                 data: {
                     // Month is 1-12, so use month - 1 for array index
-                    labels: data.map(d => t[monthNames[d.month - 1]] || d.month),
+                    labels: validData.map(d => t[monthNames[d.month - 1]] || d.month),
                     datasets: [{
                         label: t.avgExpense,
-                        data: data.map(d => d.avg_expense),
+                        data: validData.map(d => parseFloat(d.avg_expense) || 0),
                         borderColor: 'rgb(75, 192, 192)',
                         backgroundColor: 'rgba(75, 192, 192, 0.1)',
                         fill: true,
