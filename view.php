@@ -79,6 +79,11 @@
                     <i class="bi bi-gear"></i> <span data-i18n="tabManagement">マスター</span>
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" href="analytics/index.html" target="_blank">
+                    <i class="bi bi-graph-up-arrow"></i> <span data-i18n="tabAnalytics">高度な分析</span> <i class="bi bi-box-arrow-up-right ms-1" style="font-size: 0.8em;"></i>
+                </a>
+            </li>
         </ul>
     </div>
 
