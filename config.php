@@ -205,5 +205,307 @@ function getRateLimitInfo($action = 'default') {
     ];
 }
 
+// ============================================================
+// 認証関数（Multi-Account Support）
+// ============================================================
+
+/**
+ * ユーザー登録
+ * @param PDO $pdo データベース接続
+ * @param string $username ユーザー名
+ * @param string $email メールアドレス
+ * @param string $password パスワード
+ * @param string|null $fullName フルネーム（任意）
+ * @return array ['success' => bool, 'message' => string, 'user_id' => int|null]
+ */
+function registerUser($pdo, $username, $email, $password, $fullName = null) {
+    // 入力検証
+    if (empty($username) || empty($email) || empty($password)) {
+        return ['success' => false, 'message' => 'All required fields must be filled', 'user_id' => null];
+    }
+
+    // ユーザー名の検証（3-50文字、英数字とアンダースコアのみ）
+    if (!preg_match('/^[a-zA-Z0-9_]{3,50}$/', $username)) {
+        return ['success' => false, 'message' => 'Username must be 3-50 characters (alphanumeric and underscore only)', 'user_id' => null];
+    }
+
+    // メールアドレスの検証
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return ['success' => false, 'message' => 'Invalid email address', 'user_id' => null];
+    }
+
+    // パスワードの強度チェック（最低8文字）
+    if (strlen($password) < 8) {
+        return ['success' => false, 'message' => 'Password must be at least 8 characters', 'user_id' => null];
+    }
+
+    try {
+        // ユーザー名とメールアドレスの重複チェック
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+        $stmt->execute([$username, $email]);
+        if ($stmt->fetch()) {
+            return ['success' => false, 'message' => 'Username or email already exists', 'user_id' => null];
+        }
+
+        // パスワードをハッシュ化
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+        // ユーザーを挿入
+        $stmt = $pdo->prepare(
+            "INSERT INTO users (username, email, password_hash, full_name, is_active) VALUES (?, ?, ?, ?, 1)"
+        );
+        $stmt->execute([$username, $email, $passwordHash, $fullName]);
+
+        $userId = $pdo->lastInsertId();
+
+        return ['success' => true, 'message' => 'User registered successfully', 'user_id' => $userId];
+
+    } catch (PDOException $e) {
+        error_log("User registration error: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Registration failed: ' . $e->getMessage(), 'user_id' => null];
+    }
+}
+
+/**
+ * ユーザーログイン
+ * @param PDO $pdo データベース接続
+ * @param string $username ユーザー名またはメールアドレス
+ * @param string $password パスワード
+ * @return array ['success' => bool, 'message' => string, 'user' => array|null]
+ */
+function loginUser($pdo, $username, $password) {
+    if (empty($username) || empty($password)) {
+        return ['success' => false, 'message' => 'Username and password are required', 'user' => null];
+    }
+
+    try {
+        // ユーザー名またはメールアドレスでユーザーを検索
+        $stmt = $pdo->prepare(
+            "SELECT id, username, email, password_hash, full_name, is_active
+             FROM users
+             WHERE (username = ? OR email = ?) AND is_active = 1"
+        );
+        $stmt->execute([$username, $username]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            return ['success' => false, 'message' => 'Invalid credentials', 'user' => null];
+        }
+
+        // パスワード検証
+        if (!password_verify($password, $user['password_hash'])) {
+            return ['success' => false, 'message' => 'Invalid credentials', 'user' => null];
+        }
+
+        // セッション開始
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        // セッション固定攻撃対策
+        session_regenerate_id(true);
+
+        // ユーザー情報をセッションに保存
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['email'] = $user['email'];
+        $_SESSION['full_name'] = $user['full_name'];
+        $_SESSION['logged_in'] = true;
+        $_SESSION['login_time'] = time();
+
+        // パスワードハッシュを除外して返す
+        unset($user['password_hash']);
+
+        return ['success' => true, 'message' => 'Login successful', 'user' => $user];
+
+    } catch (PDOException $e) {
+        error_log("Login error: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Login failed', 'user' => null];
+    }
+}
+
+/**
+ * ユーザーログアウト
+ */
+function logoutUser() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    // セッション変数をクリア
+    $_SESSION = [];
+
+    // セッションクッキーを削除
+    if (isset($_COOKIE[session_name()])) {
+        setcookie(session_name(), '', time() - 3600, '/');
+    }
+
+    // セッションを破棄
+    session_destroy();
+}
+
+/**
+ * ログイン状態をチェック
+ * @return bool ログインしている場合true
+ */
+function isLoggedIn() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true && isset($_SESSION['user_id']);
+}
+
+/**
+ * 現在のユーザーIDを取得
+ * @return int|null ログインしている場合はユーザーID、それ以外はnull
+ */
+function getCurrentUserId() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    return isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+}
+
+/**
+ * 現在のユーザー情報を取得
+ * @return array|null ユーザー情報の連想配列、ログインしていない場合はnull
+ */
+function getCurrentUser() {
+    if (!isLoggedIn()) {
+        return null;
+    }
+
+    return [
+        'id' => $_SESSION['user_id'] ?? null,
+        'username' => $_SESSION['username'] ?? null,
+        'email' => $_SESSION['email'] ?? null,
+        'full_name' => $_SESSION['full_name'] ?? null
+    ];
+}
+
+/**
+ * 認証が必要なページの保護（リダイレクト）
+ * @param string $redirectTo リダイレクト先（デフォルト: login.php）
+ */
+function requireLogin($redirectTo = 'login.php') {
+    if (!isLoggedIn()) {
+        header('Location: ' . $redirectTo);
+        exit;
+    }
+}
+
+/**
+ * ユーザー情報を更新
+ * @param PDO $pdo データベース接続
+ * @param int $userId ユーザーID
+ * @param array $data 更新データ（'email', 'full_name'など）
+ * @return array ['success' => bool, 'message' => string]
+ */
+function updateUserProfile($pdo, $userId, $data) {
+    $allowedFields = ['email', 'full_name'];
+    $updates = [];
+    $params = [];
+
+    foreach ($data as $field => $value) {
+        if (in_array($field, $allowedFields)) {
+            if ($field === 'email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                return ['success' => false, 'message' => 'Invalid email address'];
+            }
+            $updates[] = "$field = ?";
+            $params[] = $value;
+        }
+    }
+
+    if (empty($updates)) {
+        return ['success' => false, 'message' => 'No valid fields to update'];
+    }
+
+    $params[] = $userId;
+
+    try {
+        $sql = "UPDATE users SET " . implode(', ', $updates) . " WHERE id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        // セッション情報も更新
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        foreach ($data as $field => $value) {
+            if (in_array($field, $allowedFields)) {
+                $_SESSION[$field] = $value;
+            }
+        }
+
+        return ['success' => true, 'message' => 'Profile updated successfully'];
+
+    } catch (PDOException $e) {
+        error_log("Profile update error: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Update failed'];
+    }
+}
+
+/**
+ * パスワードを変更
+ * @param PDO $pdo データベース接続
+ * @param int $userId ユーザーID
+ * @param string $currentPassword 現在のパスワード
+ * @param string $newPassword 新しいパスワード
+ * @return array ['success' => bool, 'message' => string]
+ */
+function changePassword($pdo, $userId, $currentPassword, $newPassword) {
+    if (strlen($newPassword) < 8) {
+        return ['success' => false, 'message' => 'New password must be at least 8 characters'];
+    }
+
+    try {
+        // 現在のパスワードを検証
+        $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user || !password_verify($currentPassword, $user['password_hash'])) {
+            return ['success' => false, 'message' => 'Current password is incorrect'];
+        }
+
+        // 新しいパスワードをハッシュ化
+        $newPasswordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+
+        // パスワードを更新
+        $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
+        $stmt->execute([$newPasswordHash, $userId]);
+
+        return ['success' => true, 'message' => 'Password changed successfully'];
+
+    } catch (PDOException $e) {
+        error_log("Password change error: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Password change failed'];
+    }
+}
+
+/**
+ * セッションタイムアウトをチェック（30分）
+ * @param int $timeout タイムアウト時間（秒）デフォルト: 1800秒（30分）
+ * @return bool タイムアウトした場合true
+ */
+function checkSessionTimeout($timeout = 1800) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    if (isset($_SESSION['login_time'])) {
+        if (time() - $_SESSION['login_time'] > $timeout) {
+            logoutUser();
+            return true;
+        }
+        // アクティビティがあればログイン時刻を更新
+        $_SESSION['login_time'] = time();
+    }
+
+    return false;
+}
+
 // 設定初期化
 loadEnvironment();

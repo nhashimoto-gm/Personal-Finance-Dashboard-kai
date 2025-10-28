@@ -2,7 +2,12 @@
 // functions.php - ビジネスロジック
 
 // トランザクション追加
-function addTransaction($pdo, $re_date, $price, $label1, $label2) {
+function addTransaction($pdo, $user_id, $re_date, $price, $label1, $label2) {
+    // ユーザーID検証
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return ['success' => false, 'message' => 'Invalid user ID'];
+    }
+
     // 基本検証
     if (empty($re_date) || empty($label1) || empty($label2)) {
         return ['success' => false, 'message' => 'Please enter all required fields'];
@@ -27,14 +32,14 @@ function addTransaction($pdo, $re_date, $price, $label1, $label2) {
     try {
         $tables = getTableNames();
 
-        // cat_1 IDを取得
-        $stmt = $pdo->prepare("SELECT id FROM {$tables['cat_1_labels']} WHERE label = ?");
-        $stmt->execute([$label1]);
+        // cat_1 IDを取得（ユーザー固有）
+        $stmt = $pdo->prepare("SELECT id FROM {$tables['cat_1_labels']} WHERE label = ? AND user_id = ?");
+        $stmt->execute([$label1, $user_id]);
         $cat_1_result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // cat_2 IDを取得
-        $stmt = $pdo->prepare("SELECT id FROM {$tables['cat_2_labels']} WHERE label = ?");
-        $stmt->execute([$label2]);
+        // cat_2 IDを取得（ユーザー固有）
+        $stmt = $pdo->prepare("SELECT id FROM {$tables['cat_2_labels']} WHERE label = ? AND user_id = ?");
+        $stmt->execute([$label2, $user_id]);
         $cat_2_result = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$cat_1_result || !$cat_2_result) {
@@ -44,8 +49,8 @@ function addTransaction($pdo, $re_date, $price, $label1, $label2) {
         $cat_1 = $cat_1_result['id'];
         $cat_2 = $cat_2_result['id'];
 
-        $stmt = $pdo->prepare("INSERT INTO {$tables['source']} (re_date, cat_1, cat_2, price) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$re_date, $cat_1, $cat_2, $price]);
+        $stmt = $pdo->prepare("INSERT INTO {$tables['source']} (user_id, re_date, cat_1, cat_2, price) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$user_id, $re_date, $cat_1, $cat_2, $price]);
 
         return [
             'success' => true,
@@ -64,7 +69,12 @@ function addTransaction($pdo, $re_date, $price, $label1, $label2) {
 }
 
 // ショップ追加
-function addShop($pdo, $name) {
+function addShop($pdo, $user_id, $name) {
+    // ユーザーID検証
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return ['success' => false, 'message' => 'Invalid user ID'];
+    }
+
     $shopName = trim($name);
     if (empty($shopName)) {
         return ['success' => false, 'message' => 'Shop name is required'];
@@ -77,8 +87,8 @@ function addShop($pdo, $name) {
 
     try {
         $tables = getTableNames();
-        $stmt = $pdo->prepare("INSERT INTO {$tables['cat_1_labels']} (label) VALUES (?)");
-        $stmt->execute([$shopName]);
+        $stmt = $pdo->prepare("INSERT INTO {$tables['cat_1_labels']} (user_id, label) VALUES (?, ?)");
+        $stmt->execute([$user_id, $shopName]);
         return ['success' => true, 'message' => 'Shop added successfully'];
     } catch (PDOException $e) {
         // エラーをログに記録
@@ -94,7 +104,12 @@ function addShop($pdo, $name) {
 }
 
 // カテゴリ追加
-function addCategory($pdo, $name) {
+function addCategory($pdo, $user_id, $name) {
+    // ユーザーID検証
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return ['success' => false, 'message' => 'Invalid user ID'];
+    }
+
     $categoryName = trim($name);
     if (empty($categoryName)) {
         return ['success' => false, 'message' => 'Category name is required'];
@@ -107,8 +122,8 @@ function addCategory($pdo, $name) {
 
     try {
         $tables = getTableNames();
-        $stmt = $pdo->prepare("INSERT INTO {$tables['cat_2_labels']} (label) VALUES (?)");
-        $stmt->execute([$categoryName]);
+        $stmt = $pdo->prepare("INSERT INTO {$tables['cat_2_labels']} (user_id, label) VALUES (?, ?)");
+        $stmt->execute([$user_id, $categoryName]);
         return ['success' => true, 'message' => 'Category added successfully'];
     } catch (PDOException $e) {
         // エラーをログに記録
@@ -124,17 +139,25 @@ function addCategory($pdo, $name) {
 }
 
 // ショップリスト取得（使用頻度順 - 直近1年間）
-function getShops($pdo) {
+function getShops($pdo, $user_id) {
+    // ユーザーID検証
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return [];
+    }
+
     try {
         $tables = getTableNames();
-        $stmt = $pdo->query("
+        $stmt = $pdo->prepare("
             SELECT c.label, COUNT(s.id) as usage_count
             FROM {$tables['cat_1_labels']} c
             LEFT JOIN {$tables['source']} s ON c.id = s.cat_1
                 AND s.re_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+                AND s.user_id = ?
+            WHERE c.user_id = ?
             GROUP BY c.id, c.label
             ORDER BY usage_count DESC, c.label ASC
         ");
+        $stmt->execute([$user_id, $user_id]);
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     } catch (PDOException $e) {
         return [];
@@ -142,17 +165,25 @@ function getShops($pdo) {
 }
 
 // カテゴリリスト取得（使用頻度順 - 直近1年間）
-function getCategories($pdo) {
+function getCategories($pdo, $user_id) {
+    // ユーザーID検証
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return [];
+    }
+
     try {
         $tables = getTableNames();
-        $stmt = $pdo->query("
+        $stmt = $pdo->prepare("
             SELECT c.label, COUNT(s.id) as usage_count
             FROM {$tables['cat_2_labels']} c
             LEFT JOIN {$tables['source']} s ON c.id = s.cat_2
                 AND s.re_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+                AND s.user_id = ?
+            WHERE c.user_id = ?
             GROUP BY c.id, c.label
             ORDER BY usage_count DESC, c.label ASC
         ");
+        $stmt->execute([$user_id, $user_id]);
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     } catch (PDOException $e) {
         return [];
@@ -160,7 +191,12 @@ function getCategories($pdo) {
 }
 
 // トランザクション取得（単一）
-function getTransaction($pdo, $id) {
+function getTransaction($pdo, $user_id, $id) {
+    // ユーザーID検証
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return null;
+    }
+
     try {
         $tables = getTableNames();
         $stmt = $pdo->prepare("
@@ -169,9 +205,9 @@ function getTransaction($pdo, $id) {
             FROM {$tables['source']} s
             LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id
             LEFT JOIN {$tables['cat_2_labels']} c2 ON s.cat_2 = c2.id
-            WHERE s.id = ?
+            WHERE s.id = ? AND s.user_id = ?
         ");
-        $stmt->execute([$id]);
+        $stmt->execute([$id, $user_id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         error_log('Transaction fetch error: ' . $e->getMessage());
@@ -180,7 +216,12 @@ function getTransaction($pdo, $id) {
 }
 
 // トランザクション更新
-function updateTransaction($pdo, $id, $re_date, $price, $label1, $label2) {
+function updateTransaction($pdo, $user_id, $id, $re_date, $price, $label1, $label2) {
+    // ユーザーID検証
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return ['success' => false, 'message' => 'Invalid user ID'];
+    }
+
     // 基本検証
     if (empty($re_date) || empty($label1) || empty($label2)) {
         return ['success' => false, 'message' => 'Please enter all required fields'];
@@ -205,14 +246,21 @@ function updateTransaction($pdo, $id, $re_date, $price, $label1, $label2) {
     try {
         $tables = getTableNames();
 
-        // cat_1 IDを取得
-        $stmt = $pdo->prepare("SELECT id FROM {$tables['cat_1_labels']} WHERE label = ?");
-        $stmt->execute([$label1]);
+        // トランザクションの所有権を確認
+        $stmt = $pdo->prepare("SELECT id FROM {$tables['source']} WHERE id = ? AND user_id = ?");
+        $stmt->execute([$id, $user_id]);
+        if (!$stmt->fetch()) {
+            return ['success' => false, 'message' => 'Transaction not found or access denied'];
+        }
+
+        // cat_1 IDを取得（ユーザー固有）
+        $stmt = $pdo->prepare("SELECT id FROM {$tables['cat_1_labels']} WHERE label = ? AND user_id = ?");
+        $stmt->execute([$label1, $user_id]);
         $cat_1_result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // cat_2 IDを取得
-        $stmt = $pdo->prepare("SELECT id FROM {$tables['cat_2_labels']} WHERE label = ?");
-        $stmt->execute([$label2]);
+        // cat_2 IDを取得（ユーザー固有）
+        $stmt = $pdo->prepare("SELECT id FROM {$tables['cat_2_labels']} WHERE label = ? AND user_id = ?");
+        $stmt->execute([$label2, $user_id]);
         $cat_2_result = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$cat_1_result || !$cat_2_result) {
@@ -222,8 +270,8 @@ function updateTransaction($pdo, $id, $re_date, $price, $label1, $label2) {
         $cat_1 = $cat_1_result['id'];
         $cat_2 = $cat_2_result['id'];
 
-        $stmt = $pdo->prepare("UPDATE {$tables['source']} SET re_date = ?, cat_1 = ?, cat_2 = ?, price = ? WHERE id = ?");
-        $stmt->execute([$re_date, $cat_1, $cat_2, $price, $id]);
+        $stmt = $pdo->prepare("UPDATE {$tables['source']} SET re_date = ?, cat_1 = ?, cat_2 = ?, price = ? WHERE id = ? AND user_id = ?");
+        $stmt->execute([$re_date, $cat_1, $cat_2, $price, $id, $user_id]);
 
         return ['success' => true, 'message' => 'Transaction updated successfully'];
     } catch (PDOException $e) {
@@ -233,7 +281,12 @@ function updateTransaction($pdo, $id, $re_date, $price, $label1, $label2) {
 }
 
 // トランザクション削除
-function deleteTransaction($pdo, $id) {
+function deleteTransaction($pdo, $user_id, $id) {
+    // ユーザーID検証
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return ['success' => false, 'message' => 'Invalid user ID'];
+    }
+
     if (!is_numeric($id) || (int)$id <= 0) {
         return ['success' => false, 'message' => 'Invalid transaction ID'];
     }
@@ -241,16 +294,16 @@ function deleteTransaction($pdo, $id) {
     try {
         $tables = getTableNames();
 
-        // トランザクションが存在するか確認
-        $stmt = $pdo->prepare("SELECT id FROM {$tables['source']} WHERE id = ?");
-        $stmt->execute([$id]);
+        // トランザクションが存在し、ユーザーが所有しているか確認
+        $stmt = $pdo->prepare("SELECT id FROM {$tables['source']} WHERE id = ? AND user_id = ?");
+        $stmt->execute([$id, $user_id]);
         if (!$stmt->fetch()) {
-            return ['success' => false, 'message' => 'Transaction not found'];
+            return ['success' => false, 'message' => 'Transaction not found or access denied'];
         }
 
         // 削除実行
-        $stmt = $pdo->prepare("DELETE FROM {$tables['source']} WHERE id = ?");
-        $stmt->execute([$id]);
+        $stmt = $pdo->prepare("DELETE FROM {$tables['source']} WHERE id = ? AND user_id = ?");
+        $stmt->execute([$id, $user_id]);
 
         return ['success' => true, 'message' => 'Transaction deleted successfully'];
     } catch (PDOException $e) {
@@ -260,7 +313,12 @@ function deleteTransaction($pdo, $id) {
 }
 
 // 予算追加または更新
-function setBudget($pdo, $budget_type, $target_id, $target_year, $target_month, $amount) {
+function setBudget($pdo, $user_id, $budget_type, $target_id, $target_year, $target_month, $amount) {
+    // ユーザーID検証
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return ['success' => false, 'message' => 'Invalid user ID'];
+    }
+
     // バリデーション
     if (!in_array($budget_type, ['monthly', 'category', 'shop'])) {
         return ['success' => false, 'message' => 'Invalid budget type'];
@@ -281,20 +339,20 @@ function setBudget($pdo, $budget_type, $target_id, $target_year, $target_month, 
     try {
         $tables = getTableNames();
 
-        // 予算が既に存在するかチェック
-        $stmt = $pdo->prepare("SELECT id FROM {$tables['budgets']} WHERE budget_type = ? AND target_id <=> ? AND target_year = ? AND target_month = ?");
-        $stmt->execute([$budget_type, $target_id, $target_year, $target_month]);
+        // 予算が既に存在するかチェック（ユーザー固有）
+        $stmt = $pdo->prepare("SELECT id FROM {$tables['budgets']} WHERE user_id = ? AND budget_type = ? AND target_id <=> ? AND target_year = ? AND target_month = ?");
+        $stmt->execute([$user_id, $budget_type, $target_id, $target_year, $target_month]);
         $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($existing) {
             // 更新
-            $stmt = $pdo->prepare("UPDATE {$tables['budgets']} SET amount = ? WHERE id = ?");
-            $stmt->execute([$amount, $existing['id']]);
+            $stmt = $pdo->prepare("UPDATE {$tables['budgets']} SET amount = ? WHERE id = ? AND user_id = ?");
+            $stmt->execute([$amount, $existing['id'], $user_id]);
             $message = 'Budget updated successfully';
         } else {
             // 新規追加
-            $stmt = $pdo->prepare("INSERT INTO {$tables['budgets']} (budget_type, target_id, target_year, target_month, amount) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$budget_type, $target_id, $target_year, $target_month, $amount]);
+            $stmt = $pdo->prepare("INSERT INTO {$tables['budgets']} (user_id, budget_type, target_id, target_year, target_month, amount) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$user_id, $budget_type, $target_id, $target_year, $target_month, $amount]);
             $message = 'Budget added successfully';
         }
 
@@ -306,7 +364,12 @@ function setBudget($pdo, $budget_type, $target_id, $target_year, $target_month, 
 }
 
 // 予算削除
-function deleteBudget($pdo, $id) {
+function deleteBudget($pdo, $user_id, $id) {
+    // ユーザーID検証
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return ['success' => false, 'message' => 'Invalid user ID'];
+    }
+
     if (!is_numeric($id) || (int)$id <= 0) {
         return ['success' => false, 'message' => 'Invalid budget ID'];
     }
@@ -314,8 +377,13 @@ function deleteBudget($pdo, $id) {
     try {
         $tables = getTableNames();
 
-        $stmt = $pdo->prepare("DELETE FROM {$tables['budgets']} WHERE id = ?");
-        $stmt->execute([$id]);
+        // 予算の所有権を確認してから削除
+        $stmt = $pdo->prepare("DELETE FROM {$tables['budgets']} WHERE id = ? AND user_id = ?");
+        $stmt->execute([$id, $user_id]);
+
+        if ($stmt->rowCount() === 0) {
+            return ['success' => false, 'message' => 'Budget not found or access denied'];
+        }
 
         return ['success' => true, 'message' => 'Budget deleted successfully'];
     } catch (PDOException $e) {
