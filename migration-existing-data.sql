@@ -5,8 +5,8 @@
 -- このスクリプトは既存の2ユーザー分のテーブルを統合します
 --
 -- 既存テーブル:
---   User 1: source, cat_1_labels, cat_2_labels
---   User 2: source_hiromi, cat_11_labels, cat_12_labels
+--   User 1: source, cat_1_labels, cat_2_labels, budgets1
+--   User 2: source_hiromi, cat_11_labels, cat_12_labels, budgets11
 --
 -- 実行前の確認事項:
 -- 1. データベースのバックアップを取得してください
@@ -269,8 +269,8 @@ SELECT
   amount,
   COALESCE(created_at, NOW()),
   COALESCE(updated_at, NOW())
-FROM `budgets`
-WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'budgets')
+FROM `budgets1`
+WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'budgets1')
 ON DUPLICATE KEY UPDATE `budgets_new`.`amount` = VALUES(`amount`);
 
 -- User 2のbudgetsデータ（存在する場合）
@@ -284,8 +284,8 @@ SELECT
   amount,
   COALESCE(created_at, NOW()),
   COALESCE(updated_at, NOW())
-FROM `budgets_hiromi`
-WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'budgets_hiromi')
+FROM `budgets11`
+WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'budgets11')
 ON DUPLICATE KEY UPDATE `budgets_new`.`amount` = VALUES(`amount`);
 
 -- ============================================================
@@ -306,9 +306,9 @@ RENAME TABLE `source` TO `source_backup_user1`;
 RENAME TABLE `cat_1_labels` TO `cat_1_labels_backup_user1`;
 RENAME TABLE `cat_2_labels` TO `cat_2_labels_backup_user1`;
 
--- budgetsテーブルが存在する場合はバックアップ
-SET @table_exists = (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'budgets');
-SET @sql = IF(@table_exists > 0, 'RENAME TABLE `budgets` TO `budgets_backup_user1`', 'SELECT "budgets table does not exist" as message');
+-- budgets1テーブルが存在する場合はバックアップ
+SET @table_exists = (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'budgets1');
+SET @sql = IF(@table_exists > 0, 'RENAME TABLE `budgets1` TO `budgets1_backup_user1`', 'SELECT "budgets1 table does not exist" as message');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -318,9 +318,9 @@ RENAME TABLE `source_hiromi` TO `source_backup_user2`;
 RENAME TABLE `cat_11_labels` TO `cat_11_labels_backup_user2`;
 RENAME TABLE `cat_12_labels` TO `cat_12_labels_backup_user2`;
 
--- budgets_hiromiテーブルが存在する場合はバックアップ
-SET @table_exists = (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'budgets_hiromi');
-SET @sql = IF(@table_exists > 0, 'RENAME TABLE `budgets_hiromi` TO `budgets_backup_user2`', 'SELECT "budgets_hiromi table does not exist" as message');
+-- budgets11テーブルが存在する場合はバックアップ
+SET @table_exists = (SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'budgets11');
+SET @sql = IF(@table_exists > 0, 'RENAME TABLE `budgets11` TO `budgets11_backup_user2`', 'SELECT "budgets11 table does not exist" as message');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -372,7 +372,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- - source_backup_user1, source_backup_user2
 -- - cat_1_labels_backup_user1, cat_11_labels_backup_user2
 -- - cat_2_labels_backup_user1, cat_12_labels_backup_user2
--- - budgets_backup_user1, budgets_backup_user2 (存在する場合)
+-- - budgets1_backup_user1, budgets11_backup_user2 (存在する場合)
 -- - monthly_summary_cache_backup (存在する場合)
 --
 -- 新しいテーブル:
@@ -409,7 +409,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- DROP TABLE source_backup_user1, source_backup_user2;
 -- DROP TABLE cat_1_labels_backup_user1, cat_11_labels_backup_user2;
 -- DROP TABLE cat_2_labels_backup_user1, cat_12_labels_backup_user2;
--- DROP TABLE IF EXISTS budgets_backup_user1, budgets_backup_user2;
+-- DROP TABLE IF EXISTS budgets1_backup_user1, budgets11_backup_user2;
 -- DROP TABLE IF EXISTS monthly_summary_cache_backup;
 --
 -- ============================================================
