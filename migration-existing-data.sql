@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS `budgets_new` (
 INSERT INTO `cat_1_labels_new` (`user_id`, `label`)
 SELECT @user1_id, `label`
 FROM `cat_1_labels`
-ON DUPLICATE KEY UPDATE label=label;
+ON DUPLICATE KEY UPDATE `cat_1_labels_new`.`label` = VALUES(`label`);
 
 -- User 1のcat_1_labelsのIDマッピングテーブルを作成（一時テーブル）
 CREATE TEMPORARY TABLE cat_1_mapping_user1 (
@@ -168,7 +168,7 @@ INNER JOIN cat_1_labels_new new ON old.label = new.label AND new.user_id = @user
 INSERT INTO `cat_1_labels_new` (`user_id`, `label`)
 SELECT @user2_id, `label`
 FROM `cat_11_labels`
-ON DUPLICATE KEY UPDATE label=label;
+ON DUPLICATE KEY UPDATE `cat_1_labels_new`.`label` = VALUES(`label`);
 
 -- User 2のcat_1_labelsのIDマッピングテーブルを作成（一時テーブル）
 CREATE TEMPORARY TABLE cat_1_mapping_user2 (
@@ -189,7 +189,7 @@ INNER JOIN cat_1_labels_new new ON old.label = new.label AND new.user_id = @user
 INSERT INTO `cat_2_labels_new` (`user_id`, `label`)
 SELECT @user1_id, `label`
 FROM `cat_2_labels`
-ON DUPLICATE KEY UPDATE label=label;
+ON DUPLICATE KEY UPDATE `cat_2_labels_new`.`label` = VALUES(`label`);
 
 -- User 1のcat_2_labelsのIDマッピングテーブルを作成（一時テーブル）
 CREATE TEMPORARY TABLE cat_2_mapping_user1 (
@@ -210,7 +210,7 @@ INNER JOIN cat_2_labels_new new ON old.label = new.label AND new.user_id = @user
 INSERT INTO `cat_2_labels_new` (`user_id`, `label`)
 SELECT @user2_id, `label`
 FROM `cat_12_labels`
-ON DUPLICATE KEY UPDATE label=label;
+ON DUPLICATE KEY UPDATE `cat_2_labels_new`.`label` = VALUES(`label`);
 
 -- User 2のcat_2_labelsのIDマッピングテーブルを作成（一時テーブル）
 CREATE TEMPORARY TABLE cat_2_mapping_user2 (
@@ -271,7 +271,7 @@ SELECT
   COALESCE(updated_at, NOW())
 FROM `budgets`
 WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'budgets')
-ON DUPLICATE KEY UPDATE amount=amount;
+ON DUPLICATE KEY UPDATE `budgets_new`.`amount` = VALUES(`amount`);
 
 -- User 2のbudgetsデータ（存在する場合）
 INSERT INTO `budgets_new` (`user_id`, `budget_type`, `target_id`, `target_year`, `target_month`, `amount`, `created_at`, `updated_at`)
@@ -286,7 +286,7 @@ SELECT
   COALESCE(updated_at, NOW())
 FROM `budgets_hiromi`
 WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'budgets_hiromi')
-ON DUPLICATE KEY UPDATE amount=amount;
+ON DUPLICATE KEY UPDATE `budgets_new`.`amount` = VALUES(`amount`);
 
 -- ============================================================
 -- STEP 11: 一時テーブルのクリーンアップ
