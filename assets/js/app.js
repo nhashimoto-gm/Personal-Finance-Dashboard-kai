@@ -498,12 +498,14 @@ function deleteTransaction(id) {
 // ============================================================
 
 function showAddRecurringExpenseDialog() {
+    const t = translations[currentLang] || translations['en'];
+
     const html = `
         <div class="modal fade" id="recurringExpenseModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Add Recurring Expense</h5>
+                        <h5 class="modal-title">${t.addRecurringExpense || 'Add Recurring Expense'}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <form method="POST" action="">
@@ -512,48 +514,48 @@ function showAddRecurringExpenseDialog() {
                             <input type="hidden" name="action" value="add_recurring_expense">
 
                             <div class="mb-3">
-                                <label class="form-label">Name</label>
+                                <label class="form-label">${t.name || 'Name'}</label>
                                 <input type="text" class="form-control" name="name" required>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Shop</label>
+                                <label class="form-label">${t.shop || 'Shop'}</label>
                                 <select class="form-select" name="cat_1" required>
                                     ${getShopOptions()}
                                 </select>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Category</label>
+                                <label class="form-label">${t.category || 'Category'}</label>
                                 <select class="form-select" name="cat_2" required>
                                     ${getCategoryOptions()}
                                 </select>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Amount</label>
+                                <label class="form-label">${t.amount || 'Amount'}</label>
                                 <input type="number" class="form-control" name="price" required min="1">
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Day of Month (1-31)</label>
+                                <label class="form-label">${t.dayOfMonth || 'Day of Month'} (1-31)</label>
                                 <input type="number" class="form-control" name="day_of_month" required min="1" max="31">
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Start Date</label>
+                                <label class="form-label">${t.startDateLabel || 'Start Date'}</label>
                                 <input type="date" class="form-control" name="start_date" required>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">End Date (Optional)</label>
+                                <label class="form-label">${t.endDateLabel || 'End Date (Optional)'}</label>
                                 <input type="date" class="form-control" name="end_date">
-                                <small class="text-muted">Leave empty for ongoing expenses</small>
+                                <small class="text-muted">${t.leaveEmptyOngoing || 'Leave empty for ongoing expenses'}</small>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Add</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${t.cancel || 'Cancel'}</button>
+                            <button type="submit" class="btn btn-primary">${t.add || 'Add'}</button>
                         </div>
                     </form>
                 </div>
@@ -574,6 +576,8 @@ function showAddRecurringExpenseDialog() {
 }
 
 function editRecurringExpense(id) {
+    const t = translations[currentLang] || translations['en'];
+
     // Get expense data from table row
     const row = event.target.closest('tr');
     const cells = row.querySelectorAll('td');
@@ -583,14 +587,14 @@ function editRecurringExpense(id) {
     const shopName = cells[1].textContent;
     const categoryName = cells[2].textContent;
     const price = cells[3].textContent.replace('¥', '').replace(/,/g, '');
-    const dayOfMonth = cells[4].textContent.replace('日', '');
+    const dayOfMonth = cells[4].textContent.replace('日', '').replace('Day', '').trim();
     const periodText = cells[5].textContent;
 
     // Parse dates
     const dates = periodText.split('~').map(d => d.trim());
     const startDate = dates[0];
     let endDate = '';
-    if (dates[1] && !dates[1].includes('継続中') && !dates[1].includes('ongoing')) {
+    if (dates[1] && !dates[1].includes('継続中') && !dates[1].includes('ongoing') && !dates[1].includes('Ongoing')) {
         endDate = dates[1];
     }
 
@@ -599,7 +603,7 @@ function editRecurringExpense(id) {
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Edit Recurring Expense</h5>
+                        <h5 class="modal-title">${t.editRecurringExpense || 'Edit Recurring Expense'}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <form method="POST" action="">
@@ -609,48 +613,48 @@ function editRecurringExpense(id) {
                             <input type="hidden" name="id" value="${id}">
 
                             <div class="mb-3">
-                                <label class="form-label">Name</label>
+                                <label class="form-label">${t.name || 'Name'}</label>
                                 <input type="text" class="form-control" name="name" value="${name}" required>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Shop</label>
+                                <label class="form-label">${t.shop || 'Shop'}</label>
                                 <select class="form-select" name="cat_1" required>
                                     ${getShopOptions(shopName)}
                                 </select>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Category</label>
+                                <label class="form-label">${t.category || 'Category'}</label>
                                 <select class="form-select" name="cat_2" required>
                                     ${getCategoryOptions(categoryName)}
                                 </select>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Amount</label>
+                                <label class="form-label">${t.amount || 'Amount'}</label>
                                 <input type="number" class="form-control" name="price" value="${price}" required min="1">
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Day of Month (1-31)</label>
+                                <label class="form-label">${t.dayOfMonth || 'Day of Month'} (1-31)</label>
                                 <input type="number" class="form-control" name="day_of_month" value="${dayOfMonth}" required min="1" max="31">
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Start Date</label>
+                                <label class="form-label">${t.startDateLabel || 'Start Date'}</label>
                                 <input type="date" class="form-control" name="start_date" value="${startDate}" required>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">End Date (Optional)</label>
+                                <label class="form-label">${t.endDateLabel || 'End Date (Optional)'}</label>
                                 <input type="date" class="form-control" name="end_date" value="${endDate}">
-                                <small class="text-muted">Leave empty for ongoing expenses</small>
+                                <small class="text-muted">${t.leaveEmptyOngoing || 'Leave empty for ongoing expenses'}</small>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Update</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${t.cancel || 'Cancel'}</button>
+                            <button type="submit" class="btn btn-primary">${t.update || 'Update'}</button>
                         </div>
                     </form>
                 </div>
@@ -671,7 +675,8 @@ function editRecurringExpense(id) {
 }
 
 function toggleRecurringExpense(id) {
-    if (confirm('Are you sure you want to toggle the status of this recurring expense?')) {
+    const t = translations[currentLang] || translations['en'];
+    if (confirm(t.confirmToggle || 'Are you sure you want to toggle the status of this recurring expense?')) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '';
@@ -701,7 +706,8 @@ function toggleRecurringExpense(id) {
 }
 
 function deleteRecurringExpense(id) {
-    if (confirm('Are you sure you want to delete this recurring expense? This action cannot be undone.')) {
+    const t = translations[currentLang] || translations['en'];
+    if (confirm(t.confirmDeleteRecurring || 'Are you sure you want to delete this recurring expense? This action cannot be undone.')) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '';
