@@ -430,7 +430,7 @@ function getRecurringExpenses($pdo, $user_id, $include_inactive = false) {
 }
 
 // Add a new recurring expense
-function addRecurringExpense($pdo, $user_id, $name, $cat_1, $cat_2, $price, $day_of_month, $start_date, $end_date = null) {
+function addRecurringExpense($pdo, $user_id, $name, $label1, $label2, $price, $day_of_month, $start_date, $end_date = null) {
     if (!is_numeric($user_id) || (int)$user_id <= 0) {
         return ['success' => false, 'message' => 'Invalid user ID'];
     }
@@ -438,6 +438,9 @@ function addRecurringExpense($pdo, $user_id, $name, $cat_1, $cat_2, $price, $day
     // Validate inputs
     if (empty($name)) {
         return ['success' => false, 'message' => 'Name is required'];
+    }
+    if (empty($label1) || empty($label2)) {
+        return ['success' => false, 'message' => 'Shop and category are required'];
     }
     if (!is_numeric($price) || (int)$price <= 0) {
         return ['success' => false, 'message' => 'Price must be positive'];
@@ -447,6 +450,25 @@ function addRecurringExpense($pdo, $user_id, $name, $cat_1, $cat_2, $price, $day
     }
 
     try {
+        $tables = getTableNames();
+
+        // Convert label1 to cat_1 ID
+        $stmt = $pdo->prepare("SELECT id FROM {$tables['cat_1_labels']} WHERE label = ? AND user_id = ?");
+        $stmt->execute([$label1, $user_id]);
+        $cat_1_result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Convert label2 to cat_2 ID
+        $stmt = $pdo->prepare("SELECT id FROM {$tables['cat_2_labels']} WHERE label = ? AND user_id = ?");
+        $stmt->execute([$label2, $user_id]);
+        $cat_2_result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$cat_1_result || !$cat_2_result) {
+            return ['success' => false, 'message' => 'Selected shop or category not found'];
+        }
+
+        $cat_1 = $cat_1_result['id'];
+        $cat_2 = $cat_2_result['id'];
+
         $stmt = $pdo->prepare("
             INSERT INTO recurring_expenses
             (user_id, name, cat_1, cat_2, price, day_of_month, start_date, end_date, is_active)
@@ -456,8 +478,8 @@ function addRecurringExpense($pdo, $user_id, $name, $cat_1, $cat_2, $price, $day
         $stmt->execute([
             $user_id,
             trim($name),
-            (int)$cat_1,
-            (int)$cat_2,
+            $cat_1,
+            $cat_2,
             (int)$price,
             (int)$day_of_month,
             $start_date,
@@ -476,7 +498,7 @@ function addRecurringExpense($pdo, $user_id, $name, $cat_1, $cat_2, $price, $day
 }
 
 // Update a recurring expense
-function updateRecurringExpense($pdo, $user_id, $id, $name, $cat_1, $cat_2, $price, $day_of_month, $start_date, $end_date = null, $is_active = 1) {
+function updateRecurringExpense($pdo, $user_id, $id, $name, $label1, $label2, $price, $day_of_month, $start_date, $end_date = null, $is_active = 1) {
     if (!is_numeric($user_id) || (int)$user_id <= 0) {
         return ['success' => false, 'message' => 'Invalid user ID'];
     }
@@ -484,6 +506,9 @@ function updateRecurringExpense($pdo, $user_id, $id, $name, $cat_1, $cat_2, $pri
     // Validate inputs
     if (empty($name)) {
         return ['success' => false, 'message' => 'Name is required'];
+    }
+    if (empty($label1) || empty($label2)) {
+        return ['success' => false, 'message' => 'Shop and category are required'];
     }
     if (!is_numeric($price) || (int)$price <= 0) {
         return ['success' => false, 'message' => 'Price must be positive'];
@@ -493,6 +518,25 @@ function updateRecurringExpense($pdo, $user_id, $id, $name, $cat_1, $cat_2, $pri
     }
 
     try {
+        $tables = getTableNames();
+
+        // Convert label1 to cat_1 ID
+        $stmt = $pdo->prepare("SELECT id FROM {$tables['cat_1_labels']} WHERE label = ? AND user_id = ?");
+        $stmt->execute([$label1, $user_id]);
+        $cat_1_result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Convert label2 to cat_2 ID
+        $stmt = $pdo->prepare("SELECT id FROM {$tables['cat_2_labels']} WHERE label = ? AND user_id = ?");
+        $stmt->execute([$label2, $user_id]);
+        $cat_2_result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$cat_1_result || !$cat_2_result) {
+            return ['success' => false, 'message' => 'Selected shop or category not found'];
+        }
+
+        $cat_1 = $cat_1_result['id'];
+        $cat_2 = $cat_2_result['id'];
+
         $stmt = $pdo->prepare("
             UPDATE recurring_expenses
             SET name = ?, cat_1 = ?, cat_2 = ?, price = ?, day_of_month = ?,
@@ -502,8 +546,8 @@ function updateRecurringExpense($pdo, $user_id, $id, $name, $cat_1, $cat_2, $pri
 
         $stmt->execute([
             trim($name),
-            (int)$cat_1,
-            (int)$cat_2,
+            $cat_1,
+            $cat_2,
             (int)$price,
             (int)$day_of_month,
             $start_date,

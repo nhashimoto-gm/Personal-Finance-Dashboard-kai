@@ -162,6 +162,8 @@
         window.endDate = '<?= htmlspecialchars($end_date) ?>';
         window.recentLimit = '<?= htmlspecialchars($recent_limit) ?>';
         window.activeTab = '<?= isset($_SESSION['form_tab']) ? $_SESSION['form_tab'] : '' ?>';
+        window.shopsData = <?= json_encode($shops) ?>;
+        window.categoriesData = <?= json_encode($categories) ?>;
 
         const chartData = {
             shop_data_above_4pct: <?= json_encode($shop_data_above_4pct) ?>,

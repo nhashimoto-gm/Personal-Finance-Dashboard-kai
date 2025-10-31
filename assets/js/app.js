@@ -520,14 +520,14 @@ function showAddRecurringExpenseDialog() {
 
                             <div class="mb-3">
                                 <label class="form-label">${t.shop || 'Shop'}</label>
-                                <select class="form-select" name="cat_1" required>
+                                <select class="form-select" name="label1" required>
                                     ${getShopOptions()}
                                 </select>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">${t.category || 'Category'}</label>
-                                <select class="form-select" name="cat_2" required>
+                                <select class="form-select" name="label2" required>
                                     ${getCategoryOptions()}
                                 </select>
                             </div>
@@ -619,14 +619,14 @@ function editRecurringExpense(id) {
 
                             <div class="mb-3">
                                 <label class="form-label">${t.shop || 'Shop'}</label>
-                                <select class="form-select" name="cat_1" required>
+                                <select class="form-select" name="label1" required>
                                     ${getShopOptions(shopName)}
                                 </select>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">${t.category || 'Category'}</label>
-                                <select class="form-select" name="cat_2" required>
+                                <select class="form-select" name="label2" required>
                                     ${getCategoryOptions(categoryName)}
                                 </select>
                             </div>
@@ -737,24 +737,28 @@ function deleteRecurringExpense(id) {
 }
 
 function getShopOptions(selectedShop = '') {
-    const shopSelect = document.querySelector('select[name="label1"]');
-    if (!shopSelect) return '<option value="">No shops available</option>';
+    // Use global shops data from PHP
+    if (!window.shopsData || window.shopsData.length === 0) {
+        return '<option value="">No shops available</option>';
+    }
 
-    const options = Array.from(shopSelect.options).map(opt => {
-        const selected = opt.textContent === selectedShop ? 'selected' : '';
-        return `<option value="${opt.value}" ${selected}>${opt.textContent}</option>`;
+    const options = window.shopsData.map(shop => {
+        const selected = shop === selectedShop ? 'selected' : '';
+        return `<option value="${shop}" ${selected}>${shop}</option>`;
     }).join('');
 
     return options;
 }
 
 function getCategoryOptions(selectedCategory = '') {
-    const categorySelect = document.querySelector('select[name="label2"]');
-    if (!categorySelect) return '<option value="">No categories available</option>';
+    // Use global categories data from PHP
+    if (!window.categoriesData || window.categoriesData.length === 0) {
+        return '<option value="">No categories available</option>';
+    }
 
-    const options = Array.from(categorySelect.options).map(opt => {
-        const selected = opt.textContent === selectedCategory ? 'selected' : '';
-        return `<option value="${opt.value}" ${selected}>${opt.textContent}</option>`;
+    const options = window.categoriesData.map(category => {
+        const selected = category === selectedCategory ? 'selected' : '';
+        return `<option value="${category}" ${selected}>${category}</option>`;
     }).join('');
 
     return options;
