@@ -152,14 +152,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $errors[] = $result['message'];
                 }
             }
-            elseif ($action === 'add_recurring_expense' && isset($_POST['name'], $_POST['cat_1'], $_POST['cat_2'], $_POST['price'], $_POST['day_of_month'], $_POST['start_date'])) {
+            elseif ($action === 'add_recurring_expense' && isset($_POST['name'], $_POST['label1'], $_POST['label2'], $_POST['price'], $_POST['day_of_month'], $_POST['start_date'])) {
                 $end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
                 $result = addRecurringExpense(
                     $pdo,
                     $user_id,
                     $_POST['name'],
-                    (int)$_POST['cat_1'],
-                    (int)$_POST['cat_2'],
+                    $_POST['label1'],
+                    $_POST['label2'],
                     (int)$_POST['price'],
                     (int)$_POST['day_of_month'],
                     $_POST['start_date'],
@@ -173,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $errors[] = $result['message'];
                 }
             }
-            elseif ($action === 'update_recurring_expense' && isset($_POST['id'], $_POST['name'], $_POST['cat_1'], $_POST['cat_2'], $_POST['price'], $_POST['day_of_month'], $_POST['start_date'])) {
+            elseif ($action === 'update_recurring_expense' && isset($_POST['id'], $_POST['name'], $_POST['label1'], $_POST['label2'], $_POST['price'], $_POST['day_of_month'], $_POST['start_date'])) {
                 $end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
                 $is_active = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 1;
                 $result = updateRecurringExpense(
@@ -181,8 +181,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $user_id,
                     (int)$_POST['id'],
                     $_POST['name'],
-                    (int)$_POST['cat_1'],
-                    (int)$_POST['cat_2'],
+                    $_POST['label1'],
+                    $_POST['label2'],
                     (int)$_POST['price'],
                     (int)$_POST['day_of_month'],
                     $_POST['start_date'],
