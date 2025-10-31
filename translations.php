@@ -81,7 +81,25 @@ function getTranslations() {
             'csvFile' => 'CSVファイル',
             'csvFormat' => '形式: 日付,ショップ,カテゴリ,金額 (YYYY-MM-DD形式)',
             'importButton' => 'インポート',
-            'csvInstructions' => 'CSVファイル形式の説明'
+            'csvInstructions' => 'CSVファイル形式の説明',
+            'recurringExpenses' => '定期支出管理',
+            'recurringExpense' => '定期支出',
+            'addRecurringExpense' => '定期支出を追加',
+            'editRecurringExpense' => '定期支出を編集',
+            'name' => '名前',
+            'dayOfMonth' => '支払日',
+            'day' => '日',
+            'period' => '期間',
+            'status' => '状態',
+            'active' => '有効',
+            'inactive' => '無効',
+            'ongoing' => '継続中',
+            'noRecurringExpenses' => '定期支出が登録されていません',
+            'confirmToggle' => '本当にこの定期支出の状態を切り替えますか？',
+            'confirmDeleteRecurring' => '本当にこの定期支出を削除しますか？この操作は元に戻せません。',
+            'leaveEmptyOngoing' => '継続中の場合は空欄のまま',
+            'startDateLabel' => '開始日',
+            'endDateLabel' => '終了日（任意）'
         ],
         'en' => [
             'title' => 'Personal Finance Dashboard',
@@ -161,7 +179,25 @@ function getTranslations() {
             'csvFile' => 'CSV File',
             'csvFormat' => 'Format: Date,Shop,Category,Amount (YYYY-MM-DD format)',
             'importButton' => 'Import',
-            'csvInstructions' => 'CSV File Format Instructions'
+            'csvInstructions' => 'CSV File Format Instructions',
+            'recurringExpenses' => 'Recurring Expenses',
+            'recurringExpense' => 'Recurring Expense',
+            'addRecurringExpense' => 'Add Recurring Expense',
+            'editRecurringExpense' => 'Edit Recurring Expense',
+            'name' => 'Name',
+            'dayOfMonth' => 'Payment Day',
+            'day' => 'Day',
+            'period' => 'Period',
+            'status' => 'Status',
+            'active' => 'Active',
+            'inactive' => 'Inactive',
+            'ongoing' => 'Ongoing',
+            'noRecurringExpenses' => 'No recurring expenses registered',
+            'confirmToggle' => 'Are you sure you want to toggle the status of this recurring expense?',
+            'confirmDeleteRecurring' => 'Are you sure you want to delete this recurring expense? This action cannot be undone.',
+            'leaveEmptyOngoing' => 'Leave empty for ongoing expenses',
+            'startDateLabel' => 'Start Date',
+            'endDateLabel' => 'End Date (Optional)'
         ]
     ];
 }
