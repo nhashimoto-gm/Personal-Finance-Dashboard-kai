@@ -92,6 +92,18 @@ body {
     z-index: 1030;
 }
 
+.navbar .container-fluid {
+    overflow: visible;
+}
+
+.navbar .dropdown-menu {
+    max-width: 300px;
+}
+
+.navbar .dropdown {
+    position: relative;
+}
+
 [data-bs-theme="light"] .stat-card:hover {
     box-shadow: var(--elevation-3);
 }
@@ -240,6 +252,20 @@ body {
 @media (max-width: 768px) {
     :root {
         --chart-height: 300px;
+    }
+
+    /* ユーザー情報ドロップダウンメニューのモバイル対応 */
+    .navbar .dropdown-menu {
+        position: absolute !important;
+        right: 0 !important;
+        left: auto !important;
+        transform: none !important;
+        margin-top: 0.5rem;
+    }
+
+    .navbar .dropdown-menu-end {
+        right: 0 !important;
+        left: auto !important;
     }
 
     /* Recent Transactions table - adjust column widths for mobile */
@@ -399,6 +425,15 @@ body {
 
 /* 極小デバイス（iPhone SE等）*/
 @media (max-width: 400px) {
+    /* ユーザー情報ドロップダウンメニューのモバイル対応 */
+    .navbar .dropdown-menu {
+        position: absolute !important;
+        right: 0 !important;
+        left: auto !important;
+        min-width: 200px;
+        max-width: calc(100vw - 20px);
+    }
+
     .btn-group .btn,
     .btn-group .btn-sm {
         font-size: 0.7rem;
@@ -446,6 +481,15 @@ body {
 
 /* 超極小デバイス */
 @media (max-width: 360px) {
+    /* ユーザー情報ドロップダウンメニューのモバイル対応 */
+    .navbar .dropdown-menu {
+        position: absolute !important;
+        right: 0 !important;
+        left: auto !important;
+        min-width: 180px;
+        max-width: calc(100vw - 15px);
+    }
+
     .btn-group .btn,
     .btn-group .btn-sm {
         font-size: 0.65rem;
