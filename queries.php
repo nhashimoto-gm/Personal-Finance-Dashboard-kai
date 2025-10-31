@@ -143,7 +143,9 @@ function getPeriodData($pdo, $user_id, $period_range) {
                 SUM(s.price) as total
             FROM {$tables['source']} s
             LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id
-            WHERE s.user_id = ? AND s.re_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL ? MONTH), '%Y-%m-01')
+            WHERE s.user_id = ?
+                AND s.re_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL ? MONTH), '%Y-%m-01')
+                AND s.re_date <= LAST_DAY(CURDATE())
             GROUP BY DATE_FORMAT(s.re_date, '%Y-%m'), c1.label
             ORDER BY period, shop_name
         ";
@@ -155,7 +157,9 @@ function getPeriodData($pdo, $user_id, $period_range) {
                 SUM(s.price) as total
             FROM {$tables['source']} s
             LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id
-            WHERE s.user_id = ? AND s.re_date >= CONCAT(YEAR(DATE_SUB(CURDATE(), INTERVAL ? MONTH)), '-01-01')
+            WHERE s.user_id = ?
+                AND s.re_date >= CONCAT(YEAR(DATE_SUB(CURDATE(), INTERVAL ? MONTH)), '-01-01')
+                AND s.re_date <= CONCAT(YEAR(CURDATE()), '-12-31')
             GROUP BY YEAR(s.re_date), c1.label
             ORDER BY period, shop_name
         ";
