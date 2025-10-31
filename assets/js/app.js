@@ -492,3 +492,264 @@ function deleteTransaction(id) {
         form.submit();
     }
 }
+
+// ============================================================
+// Recurring Expenses Functions
+// ============================================================
+
+function showAddRecurringExpenseDialog() {
+    const html = `
+        <div class="modal fade" id="recurringExpenseModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Recurring Expense</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST" action="">
+                        <div class="modal-body">
+                            <input type="hidden" name="csrf_token" value="${document.querySelector('input[name=csrf_token]').value}">
+                            <input type="hidden" name="action" value="add_recurring_expense">
+
+                            <div class="mb-3">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" name="name" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Shop</label>
+                                <select class="form-select" name="cat_1" required>
+                                    ${getShopOptions()}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Category</label>
+                                <select class="form-select" name="cat_2" required>
+                                    ${getCategoryOptions()}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Amount</label>
+                                <input type="number" class="form-control" name="price" required min="1">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Day of Month (1-31)</label>
+                                <input type="number" class="form-control" name="day_of_month" required min="1" max="31">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" class="form-control" name="start_date" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">End Date (Optional)</label>
+                                <input type="date" class="form-control" name="end_date">
+                                <small class="text-muted">Leave empty for ongoing expenses</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    document.body.appendChild(temp.firstElementChild);
+
+    const modal = new bootstrap.Modal(document.getElementById('recurringExpenseModal'));
+    modal.show();
+
+    document.getElementById('recurringExpenseModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function editRecurringExpense(id) {
+    // Get expense data from table row
+    const row = event.target.closest('tr');
+    const cells = row.querySelectorAll('td');
+
+    // Parse data from the row
+    const name = cells[0].textContent;
+    const shopName = cells[1].textContent;
+    const categoryName = cells[2].textContent;
+    const price = cells[3].textContent.replace('¥', '').replace(/,/g, '');
+    const dayOfMonth = cells[4].textContent.replace('日', '');
+    const periodText = cells[5].textContent;
+
+    // Parse dates
+    const dates = periodText.split('~').map(d => d.trim());
+    const startDate = dates[0];
+    let endDate = '';
+    if (dates[1] && !dates[1].includes('継続中') && !dates[1].includes('ongoing')) {
+        endDate = dates[1];
+    }
+
+    const html = `
+        <div class="modal fade" id="editRecurringExpenseModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Recurring Expense</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST" action="">
+                        <div class="modal-body">
+                            <input type="hidden" name="csrf_token" value="${document.querySelector('input[name=csrf_token]').value}">
+                            <input type="hidden" name="action" value="update_recurring_expense">
+                            <input type="hidden" name="id" value="${id}">
+
+                            <div class="mb-3">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" name="name" value="${name}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Shop</label>
+                                <select class="form-select" name="cat_1" required>
+                                    ${getShopOptions(shopName)}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Category</label>
+                                <select class="form-select" name="cat_2" required>
+                                    ${getCategoryOptions(categoryName)}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Amount</label>
+                                <input type="number" class="form-control" name="price" value="${price}" required min="1">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Day of Month (1-31)</label>
+                                <input type="number" class="form-control" name="day_of_month" value="${dayOfMonth}" required min="1" max="31">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" class="form-control" name="start_date" value="${startDate}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">End Date (Optional)</label>
+                                <input type="date" class="form-control" name="end_date" value="${endDate}">
+                                <small class="text-muted">Leave empty for ongoing expenses</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    document.body.appendChild(temp.firstElementChild);
+
+    const modal = new bootstrap.Modal(document.getElementById('editRecurringExpenseModal'));
+    modal.show();
+
+    document.getElementById('editRecurringExpenseModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function toggleRecurringExpense(id) {
+    if (confirm('Are you sure you want to toggle the status of this recurring expense?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '';
+
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = document.querySelector('input[name=csrf_token]').value;
+
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'toggle_recurring_expense';
+
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'id';
+        idInput.value = id;
+
+        form.appendChild(csrfInput);
+        form.appendChild(actionInput);
+        form.appendChild(idInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function deleteRecurringExpense(id) {
+    if (confirm('Are you sure you want to delete this recurring expense? This action cannot be undone.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '';
+
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = document.querySelector('input[name=csrf_token]').value;
+
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'delete_recurring_expense';
+
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'id';
+        idInput.value = id;
+
+        form.appendChild(csrfInput);
+        form.appendChild(actionInput);
+        form.appendChild(idInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function getShopOptions(selectedShop = '') {
+    const shopSelect = document.querySelector('select[name="label1"]');
+    if (!shopSelect) return '<option value="">No shops available</option>';
+
+    const options = Array.from(shopSelect.options).map(opt => {
+        const selected = opt.textContent === selectedShop ? 'selected' : '';
+        return `<option value="${opt.value}" ${selected}>${opt.textContent}</option>`;
+    }).join('');
+
+    return options;
+}
+
+function getCategoryOptions(selectedCategory = '') {
+    const categorySelect = document.querySelector('select[name="label2"]');
+    if (!categorySelect) return '<option value="">No categories available</option>';
+
+    const options = Array.from(categorySelect.options).map(opt => {
+        const selected = opt.textContent === selectedCategory ? 'selected' : '';
+        return `<option value="${opt.value}" ${selected}>${opt.textContent}</option>`;
+    }).join('');
+
+    return options;
+}

@@ -152,6 +152,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $errors[] = $result['message'];
                 }
             }
+            elseif ($action === 'add_recurring_expense' && isset($_POST['name'], $_POST['cat_1'], $_POST['cat_2'], $_POST['price'], $_POST['day_of_month'], $_POST['start_date'])) {
+                $end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
+                $result = addRecurringExpense(
+                    $pdo,
+                    $user_id,
+                    $_POST['name'],
+                    (int)$_POST['cat_1'],
+                    (int)$_POST['cat_2'],
+                    (int)$_POST['price'],
+                    (int)$_POST['day_of_month'],
+                    $_POST['start_date'],
+                    $end_date
+                );
+                if ($result['success']) {
+                    $_SESSION['successMessage'] = $result['message'];
+                    header('Location: ' . $_SERVER['REQUEST_URI']);
+                    exit;
+                } else {
+                    $errors[] = $result['message'];
+                }
+            }
+            elseif ($action === 'update_recurring_expense' && isset($_POST['id'], $_POST['name'], $_POST['cat_1'], $_POST['cat_2'], $_POST['price'], $_POST['day_of_month'], $_POST['start_date'])) {
+                $end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
+                $is_active = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 1;
+                $result = updateRecurringExpense(
+                    $pdo,
+                    $user_id,
+                    (int)$_POST['id'],
+                    $_POST['name'],
+                    (int)$_POST['cat_1'],
+                    (int)$_POST['cat_2'],
+                    (int)$_POST['price'],
+                    (int)$_POST['day_of_month'],
+                    $_POST['start_date'],
+                    $end_date,
+                    $is_active
+                );
+                if ($result['success']) {
+                    $_SESSION['successMessage'] = $result['message'];
+                    header('Location: ' . $_SERVER['REQUEST_URI']);
+                    exit;
+                } else {
+                    $errors[] = $result['message'];
+                }
+            }
+            elseif ($action === 'toggle_recurring_expense' && isset($_POST['id'])) {
+                $result = toggleRecurringExpense($pdo, $user_id, (int)$_POST['id']);
+                if ($result['success']) {
+                    $_SESSION['successMessage'] = $result['message'];
+                    header('Location: ' . $_SERVER['REQUEST_URI']);
+                    exit;
+                } else {
+                    $errors[] = $result['message'];
+                }
+            }
+            elseif ($action === 'delete_recurring_expense' && isset($_POST['id'])) {
+                $result = deleteRecurringExpense($pdo, $user_id, (int)$_POST['id']);
+                if ($result['success']) {
+                    $_SESSION['successMessage'] = $result['message'];
+                    header('Location: ' . $_SERVER['REQUEST_URI']);
+                    exit;
+                } else {
+                    $errors[] = $result['message'];
+                }
+            }
         }
     }
 }
@@ -192,6 +257,7 @@ $search_results = getSearchResults($pdo, $user_id, $search_shop, $search_categor
 
 $shops = getShops($pdo, $user_id);
 $categories = getCategories($pdo, $user_id);
+$recurring_expenses = getRecurringExpenses($pdo, $user_id, true);
 
 // 予算データ取得（当月・ユーザー固有）
 $current_year = (int)date('Y');
