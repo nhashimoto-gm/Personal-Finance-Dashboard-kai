@@ -9,6 +9,8 @@ function getSummary($pdo, $user_id, $start_date, $end_date) {
     }
 
     $tables = getTableNames();
+
+    // Get actual transaction summary
     $stmt = $pdo->prepare("
         SELECT SUM(price) as total, COUNT(*) as record_count, COUNT(DISTINCT cat_1) as shop_count
         FROM {$tables['source']}
@@ -17,10 +19,35 @@ function getSummary($pdo, $user_id, $start_date, $end_date) {
     $stmt->execute([$user_id, $start_date, $end_date]);
     $summary = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    $total = (float)($summary['total'] ?? 0);
+    $record_count = (int)($summary['record_count'] ?? 0);
+    $shop_ids = [];
+
+    // Get shop IDs from actual transactions
+    $stmt = $pdo->prepare("
+        SELECT DISTINCT cat_1
+        FROM {$tables['source']}
+        WHERE user_id = ? AND re_date BETWEEN ? AND ?
+    ");
+    $stmt->execute([$user_id, $start_date, $end_date]);
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $shop_ids[$row['cat_1']] = true;
+    }
+
+    // Get recurring expense instances
+    $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $start_date, $end_date);
+
+    // Add recurring expenses to totals
+    foreach ($recurring_instances as $instance) {
+        $total += $instance['price'];
+        $record_count++;
+        $shop_ids[$instance['cat_1']] = true;
+    }
+
     return [
-        'total' => $summary['total'] ?? 0,
-        'record_count' => $summary['record_count'] ?? 0,
-        'shop_count' => $summary['shop_count'] ?? 0
+        'total' => $total,
+        'record_count' => $record_count,
+        'shop_count' => count($shop_ids)
     ];
 }
 
@@ -32,13 +59,26 @@ function getActiveDays($pdo, $user_id, $start_date, $end_date) {
     }
 
     $tables = getTableNames();
+    $active_dates = [];
+
+    // Get dates from actual transactions
     $stmt = $pdo->prepare("
-        SELECT COUNT(DISTINCT re_date) as active_days
+        SELECT DISTINCT re_date
         FROM {$tables['source']}
         WHERE user_id = ? AND re_date BETWEEN ? AND ?
     ");
     $stmt->execute([$user_id, $start_date, $end_date]);
-    return $stmt->fetch(PDO::FETCH_ASSOC)['active_days'] ?? 1;
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $active_dates[$row['re_date']] = true;
+    }
+
+    // Get dates from recurring expenses
+    $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $start_date, $end_date);
+    foreach ($recurring_instances as $instance) {
+        $active_dates[$instance['date']] = true;
+    }
+
+    return count($active_dates) > 0 ? count($active_dates) : 1;
 }
 
 // ショップ別集計取得
@@ -49,6 +89,8 @@ function getShopData($pdo, $user_id, $start_date, $end_date) {
     }
 
     $tables = getTableNames();
+
+    // Get actual transaction shop data
     $stmt = $pdo->prepare("
         SELECT s.cat_1, c1.label as label1, SUM(s.price) as total
         FROM {$tables['source']} s
@@ -60,10 +102,42 @@ function getShopData($pdo, $user_id, $start_date, $end_date) {
     $stmt->execute([$user_id, $start_date, $end_date]);
     $shop_data_all = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Create a map for merging
+    $shop_map = [];
+    foreach ($shop_data_all as $d) {
+        $key = $d['cat_1'] . '|' . $d['label1'];
+        $shop_map[$key] = [
+            'cat_1' => $d['cat_1'],
+            'label1' => $d['label1'],
+            'total' => (float)$d['total']
+        ];
+    }
+
+    // Get recurring expense instances and aggregate by shop
+    $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $start_date, $end_date);
+    foreach ($recurring_instances as $instance) {
+        $key = $instance['cat_1'] . '|' . $instance['shop_name'];
+        if (isset($shop_map[$key])) {
+            $shop_map[$key]['total'] += $instance['price'];
+        } else {
+            $shop_map[$key] = [
+                'cat_1' => $instance['cat_1'],
+                'label1' => $instance['shop_name'],
+                'total' => (float)$instance['price']
+            ];
+        }
+    }
+
+    // Convert map to array and sort by total descending
+    $merged_shop_data = array_values($shop_map);
+    usort($merged_shop_data, function($a, $b) {
+        return $b['total'] <=> $a['total'];
+    });
+
     $shop_data_raw = [];
     $others_shop = null;
 
-    foreach ($shop_data_all as $d) {
+    foreach ($merged_shop_data as $d) {
         if ($d['label1'] === 'その他' || $d['label1'] === 'Others') {
             $others_shop = $d;
         } else {
@@ -93,6 +167,8 @@ function getCategoryData($pdo, $user_id, $start_date, $end_date) {
     }
 
     $tables = getTableNames();
+
+    // Get actual transaction category data
     $stmt = $pdo->prepare("
         SELECT s.cat_2, c2.label as label2, SUM(s.price) as total
         FROM {$tables['source']} s
@@ -100,10 +176,44 @@ function getCategoryData($pdo, $user_id, $start_date, $end_date) {
         WHERE s.user_id = ? AND s.re_date BETWEEN ? AND ?
         GROUP BY s.cat_2, c2.label
         ORDER BY total DESC
-        LIMIT 10
     ");
     $stmt->execute([$user_id, $start_date, $end_date]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $category_data_all = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Create a map for merging
+    $category_map = [];
+    foreach ($category_data_all as $d) {
+        $key = $d['cat_2'] . '|' . $d['label2'];
+        $category_map[$key] = [
+            'cat_2' => $d['cat_2'],
+            'label2' => $d['label2'],
+            'total' => (float)$d['total']
+        ];
+    }
+
+    // Get recurring expense instances and aggregate by category
+    $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $start_date, $end_date);
+    foreach ($recurring_instances as $instance) {
+        $key = $instance['cat_2'] . '|' . $instance['category_name'];
+        if (isset($category_map[$key])) {
+            $category_map[$key]['total'] += $instance['price'];
+        } else {
+            $category_map[$key] = [
+                'cat_2' => $instance['cat_2'],
+                'label2' => $instance['category_name'],
+                'total' => (float)$instance['price']
+            ];
+        }
+    }
+
+    // Convert map to array and sort by total descending
+    $merged_category_data = array_values($category_map);
+    usort($merged_category_data, function($a, $b) {
+        return $b['total'] <=> $a['total'];
+    });
+
+    // Return top 10
+    return array_slice($merged_category_data, 0, 10);
 }
 
 // 日別推移取得
@@ -114,6 +224,8 @@ function getDailyData($pdo, $user_id, $start_date, $end_date) {
     }
 
     $tables = getTableNames();
+
+    // Get actual transaction daily data
     $stmt = $pdo->prepare("
         SELECT re_date, SUM(price) as daily_total
         FROM {$tables['source']}
@@ -122,7 +234,39 @@ function getDailyData($pdo, $user_id, $start_date, $end_date) {
         ORDER BY re_date
     ");
     $stmt->execute([$user_id, $start_date, $end_date]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $daily_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Create a map for merging
+    $daily_map = [];
+    foreach ($daily_data as $d) {
+        $daily_map[$d['re_date']] = (float)$d['daily_total'];
+    }
+
+    // Get recurring expense instances and aggregate by date
+    $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $start_date, $end_date);
+    foreach ($recurring_instances as $instance) {
+        $date = $instance['date'];
+        if (isset($daily_map[$date])) {
+            $daily_map[$date] += $instance['price'];
+        } else {
+            $daily_map[$date] = (float)$instance['price'];
+        }
+    }
+
+    // Convert map to array and sort by date
+    $result = [];
+    foreach ($daily_map as $date => $total) {
+        $result[] = [
+            're_date' => $date,
+            'daily_total' => $total
+        ];
+    }
+
+    usort($result, function($a, $b) {
+        return strcmp($a['re_date'], $b['re_date']);
+    });
+
+    return $result;
 }
 
 // 期間別推移取得
@@ -245,7 +389,9 @@ function getRecentTransactions($pdo, $user_id, $start_date, $end_date, $search_s
     }
 
     $tables = getTableNames();
-    $recent_sql = "SELECT s.id, s.re_date, c1.label as label1, c2.label as label2, s.price
+
+    // Get actual transactions
+    $recent_sql = "SELECT s.id, s.re_date, c1.label as label1, c2.label as label2, s.price, 'actual' as source
                    FROM {$tables['source']} s
                    LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id
                    LEFT JOIN {$tables['cat_2_labels']} c2 ON s.cat_2 = c2.id
@@ -262,11 +408,57 @@ function getRecentTransactions($pdo, $user_id, $start_date, $end_date, $search_s
         $recent_params[] = $search_category;
     }
 
-    $recent_sql .= " ORDER BY s.re_date DESC, s.id DESC LIMIT " . (int)$recent_limit;
+    $recent_sql .= " ORDER BY s.re_date DESC, s.id DESC";
 
     $stmt = $pdo->prepare($recent_sql);
     $stmt->execute($recent_params);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $actual_transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Get recurring expense instances
+    $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $start_date, $end_date);
+
+    // Filter recurring instances by search criteria
+    $filtered_recurring = [];
+    foreach ($recurring_instances as $instance) {
+        $include = true;
+
+        if (!empty($search_shop) && $instance['shop_name'] !== $search_shop) {
+            $include = false;
+        }
+
+        if (!empty($search_category) && $instance['category_name'] !== $search_category) {
+            $include = false;
+        }
+
+        if ($include) {
+            $filtered_recurring[] = [
+                'id' => 'recurring_' . $instance['recurring_id'] . '_' . $instance['date'],
+                're_date' => $instance['date'],
+                'label1' => $instance['shop_name'],
+                'label2' => $instance['category_name'],
+                'price' => $instance['price'],
+                'source' => 'recurring'
+            ];
+        }
+    }
+
+    // Merge and sort by date descending
+    $all_transactions = array_merge($actual_transactions, $filtered_recurring);
+
+    usort($all_transactions, function($a, $b) {
+        $date_cmp = strcmp($b['re_date'], $a['re_date']);
+        if ($date_cmp !== 0) return $date_cmp;
+
+        // For same date, sort by ID (actual transactions first, then recurring)
+        if (isset($a['source']) && isset($b['source'])) {
+            if ($a['source'] === 'actual' && $b['source'] === 'recurring') return -1;
+            if ($a['source'] === 'recurring' && $b['source'] === 'actual') return 1;
+        }
+        return 0;
+    });
+
+    // Apply limit
+    return array_slice($all_transactions, 0, (int)$recent_limit);
 }
 
 // 検索結果取得
@@ -361,10 +553,17 @@ function getBudgetProgress($pdo, $user_id, $year, $month) {
         $start_date = sprintf('%04d-%02d-01', $year, $month);
         $end_date = date('Y-m-t', strtotime($start_date));
 
+        // Get actual transaction total
         $stmt = $pdo->prepare("SELECT SUM(price) as total FROM {$tables['source']} WHERE user_id = ? AND re_date BETWEEN ? AND ?");
         $stmt->execute([$user_id, $start_date, $end_date]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $actual = $result['total'] ?? 0;
+        $actual = (float)($result['total'] ?? 0);
+
+        // Add recurring expenses to actual
+        $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $start_date, $end_date);
+        foreach ($recurring_instances as $instance) {
+            $actual += $instance['price'];
+        }
 
         $budget_amount = $budget['amount'];
         $percentage = $budget_amount > 0 ? round(($actual / $budget_amount) * 100, 1) : 0;
