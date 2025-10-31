@@ -14,6 +14,16 @@ A comprehensive personal finance tracking dashboard built with PHP, MySQL, Boots
 
 ## ✨ Features
 
+### 🔐 User Authentication & Security
+- **User Registration** - Secure account creation with email validation
+- **User Login/Logout** - Session-based authentication system
+- **User Profile Management** - Update username and password
+- **User Display in Header** - Show current logged-in user with dropdown menu
+- **CSRF Protection** - Token-based protection against cross-site request forgery
+- **Rate Limiting** - Protection against brute-force attacks
+- **Session Management** - Secure session handling with 30-minute timeout
+- **Multi-Account Support** - Each user has isolated data and transactions
+
 ### 📊 Dashboard
 - **Period Summary Statistics** - Total expenses, daily average, record count, and shop count
 - **Shop Expense Breakdown** - Interactive pie chart showing spending by shop
@@ -42,6 +52,13 @@ A comprehensive personal finance tracking dashboard built with PHP, MySQL, Boots
 - **Smart Alerts** - Warning at 80%, danger at 100% of budget
 - **Budget vs Actual** - Real-time comparison with remaining balance
 
+### 🔄 Recurring Expenses
+- **Recurring Expense Management** - Track monthly recurring costs (subscriptions, rent, utilities)
+- **Automated Calculations** - Auto-include recurring expenses in budget and dashboard
+- **Flexible Scheduling** - Set day of month, start date, and optional end date
+- **Active/Inactive Toggle** - Temporarily disable recurring expenses
+- **Edit & Delete** - Full CRUD operations for recurring expenses
+
 ### 📈 Advanced Analytics Dashboard
 - **Long-Year Data Visualization** - Comprehensive view from to present
 - **Yearly Trend Analysis** - Annual spending patterns with bar charts
@@ -61,7 +78,8 @@ A comprehensive personal finance tracking dashboard built with PHP, MySQL, Boots
 
 ### 🌐 Additional Features
 - **Multi-language Support** - Seamless Japanese/English toggle
-- **Dark Mode** - Theme switcher with automatic chart color updates
+- **Dark Mode** - Theme switcher with automatic chart color updates (also available on login screen)
+- **Unified Design** - Consistent UI between login and dashboard screens
 - **Responsive Design** - Mobile-first, works on all devices
 - **Interactive Charts** - Powered by Highcharts with animations
 - **Search & Filter** - Click any shop or category to filter transactions
@@ -239,6 +257,18 @@ RewriteRule ^(.*)$ index.php [QSA,L]
 
 > 📚 **Detailed Usage Guide**: Please refer to [USAGE.md](./docs/USAGE.md)
 
+### Getting Started
+
+1. **Create an Account**: Navigate to the registration page and create your account
+2. **Login**: Use your username/email and password to log in
+3. **Access Dashboard**: After login, you'll see your personalized dashboard
+
+### Managing Your Profile
+
+- Click your username in the top-right corner of the dashboard
+- Access options to update your username or password
+- Log out when finished
+
 ### Adding a Transaction
 1. Click the **Data Entry** tab
 2. Select the transaction date
@@ -267,6 +297,18 @@ RewriteRule ^(.*)$ index.php [QSA,L]
    - **Insights**: Weekday analysis and seasonal patterns
 3. Navigate between tabs for different visualization perspectives
 4. All charts are interactive and responsive
+
+### Managing Recurring Expenses
+1. Navigate to the **Master** tab
+2. Scroll to the **Recurring Expenses** section
+3. Click **Add Recurring Expense**
+4. Enter expense details:
+   - Name (e.g., "Netflix", "Rent", "Internet")
+   - Shop and Category
+   - Monthly amount
+   - Day of month (1-31)
+   - Start date and optional end date
+5. Recurring expenses automatically appear in budget calculations and dashboard
 
 ### Managing Master Data
 1. Navigate to the **Master** tab
@@ -335,17 +377,23 @@ INSERT INTO cat_2_labels (label) VALUES ('New Category');
 ## 🔒 Security
 
 ### Implemented Protections
-- ✅ **SQL Injection**: PDO prepared statements
-- ✅ **XSS**: `htmlspecialchars()` on all outputs
-- ✅ **Session Management**: Secure session handling
+- ✅ **User Authentication**: Session-based authentication with secure login/logout
+- ✅ **Password Security**: Bcrypt hashing for all user passwords
+- ✅ **SQL Injection**: PDO prepared statements throughout
+- ✅ **XSS**: `htmlspecialchars()` on all user-generated outputs
+- ✅ **CSRF Protection**: Token-based validation on all POST requests
+- ✅ **Rate Limiting**: Protection against brute-force attacks
+- ✅ **Session Management**: Secure session handling with 30-minute timeout
+- ✅ **Session Configuration**: HttpOnly cookies, SameSite protection, strict mode
+- ✅ **Multi-User Isolation**: User-specific data access with query-level filtering
 - ✅ **Environment Variables**: Credentials in `.env_db` (gitignored)
 
 ### Production Checklist
 - [ ] Disable error display (`display_errors = 0`)
 - [ ] Enable HTTPS
-- [ ] Implement CSRF protection
-- [ ] Add rate limiting
-- [ ] Set secure session cookies
+- [x] Implement CSRF protection
+- [x] Add rate limiting
+- [x] Set secure session cookies
 - [ ] Regular database backups
 - [ ] Update dependencies
 
@@ -491,15 +539,20 @@ Please include:
 - [x] **REST API** - Analytics API endpoints for data retrieval
 - [x] **17-Year Data Analysis** - Comprehensive historical data visualization
 - [x] **Trend & Pattern Analysis** - Moving averages, weekday, and seasonal patterns
+- [x] **User Authentication & Multi-User Support** - Secure login system with multi-account isolation
+- [x] **Recurring Expenses** - Track and manage monthly recurring costs
+- [x] **User Profile Management** - Username and password update functionality
+- [x] **Unified Design** - Consistent UI between login and dashboard
+- [x] **User Display in Header** - Current user display with dropdown menu
 
 ### Version 1.2 (Planned)
 - [ ] Transaction memo/notes field
-- [ ] Recurring transactions (auto-generated)
-- [ ] User authentication & multi-user support
 - [ ] Transaction categories hierarchy
 - [ ] Advanced filtering options
 - [ ] Email notifications for budget alerts
 - [ ] PDF/Excel report generation from analytics
+- [ ] Two-factor authentication (2FA)
+- [ ] Password reset via email
 
 ### Version 2.0 (Future)
 - [ ] Multi-currency support
