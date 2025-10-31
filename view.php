@@ -28,11 +28,31 @@
                     Personal Finance Dashboard
                 </span>
             </span>
-            <div>
+            <div class="d-flex align-items-center">
+                <?php if (isset($current_user) && $current_user): ?>
+                    <div class="dropdown me-2">
+                        <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i>
+                            <span class="d-none d-md-inline ms-1">
+                                <?= htmlspecialchars($current_user['username'] ?? $current_user['email'] ?? 'User') ?>
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuDropdown">
+                            <?php if ($current_user['full_name']): ?>
+                                <li><h6 class="dropdown-header"><i class="bi bi-person-badge"></i> <?= htmlspecialchars($current_user['full_name']) ?></h6></li>
+                                <li><hr class="dropdown-divider"></li>
+                            <?php endif; ?>
+                            <li><a class="dropdown-item" href="update-username.php"><i class="bi bi-pencil-square"></i> ユーザー名変更</a></li>
+                            <li><a class="dropdown-item" href="update-password.php"><i class="bi bi-key"></i> パスワード変更</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i> ログアウト</a></li>
+                        </ul>
+                    </div>
+                <?php endif; ?>
                 <button class="btn btn-outline-light btn-sm me-2" id="langToggle">
                     <i class="bi bi-translate"></i> <span id="langLabel">JP</span>
                 </button>
-                <button class="btn btn-outline-light" id="themeToggle">
+                <button class="btn btn-outline-light btn-sm" id="themeToggle">
                     <i class="bi bi-moon-fill" id="themeIcon"></i>
                 </button>
             </div>
