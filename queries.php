@@ -135,6 +135,17 @@ function getPeriodData($pdo, $user_id, $period_range) {
     $tables = getTableNames();
     $period_is_monthly = $period_range < 60;
 
+    // Calculate date range
+    if ($period_is_monthly) {
+        $start_date = date('Y-m-01', strtotime("-$period_range months"));
+        $end_date = date('Y-m-t'); // Last day of current month
+    } else {
+        $years_back = intval($period_range / 12);
+        $start_date = date('Y-01-01', strtotime("-$years_back years"));
+        $end_date = date('Y-12-31'); // Last day of current year
+    }
+
+    // Get actual transaction data
     if ($period_is_monthly) {
         $period_query = "
             SELECT
@@ -144,8 +155,8 @@ function getPeriodData($pdo, $user_id, $period_range) {
             FROM {$tables['source']} s
             LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id
             WHERE s.user_id = ?
-                AND s.re_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL ? MONTH), '%Y-%m-01')
-                AND s.re_date <= LAST_DAY(CURDATE())
+                AND s.re_date >= ?
+                AND s.re_date <= ?
             GROUP BY DATE_FORMAT(s.re_date, '%Y-%m'), c1.label
             ORDER BY period, shop_name
         ";
@@ -158,16 +169,72 @@ function getPeriodData($pdo, $user_id, $period_range) {
             FROM {$tables['source']} s
             LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id
             WHERE s.user_id = ?
-                AND s.re_date >= CONCAT(YEAR(DATE_SUB(CURDATE(), INTERVAL ? MONTH)), '-01-01')
-                AND s.re_date <= CONCAT(YEAR(CURDATE()), '-12-31')
+                AND s.re_date >= ?
+                AND s.re_date <= ?
             GROUP BY YEAR(s.re_date), c1.label
             ORDER BY period, shop_name
         ";
     }
 
     $stmt = $pdo->prepare($period_query);
-    $stmt->execute([$user_id, $period_range]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->execute([$user_id, $start_date, $end_date]);
+    $actual_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Get recurring expense instances for the same period
+    $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $start_date, $end_date);
+
+    // Aggregate recurring expenses by period and shop
+    $recurring_aggregated = [];
+    foreach ($recurring_instances as $instance) {
+        if ($period_is_monthly) {
+            $period = substr($instance['date'], 0, 7); // YYYY-MM
+        } else {
+            $period = substr($instance['date'], 0, 4); // YYYY
+        }
+
+        $shop = $instance['shop_name'];
+        $key = $period . '|' . $shop;
+
+        if (!isset($recurring_aggregated[$key])) {
+            $recurring_aggregated[$key] = [
+                'period' => $period,
+                'shop_name' => $shop,
+                'total' => 0
+            ];
+        }
+
+        $recurring_aggregated[$key]['total'] += $instance['price'];
+    }
+
+    // Merge actual data and recurring data
+    $merged_data = [];
+
+    // Add actual transactions
+    foreach ($actual_data as $row) {
+        $key = $row['period'] . '|' . $row['shop_name'];
+        $merged_data[$key] = $row;
+    }
+
+    // Add or merge recurring expenses
+    foreach ($recurring_aggregated as $key => $row) {
+        if (isset($merged_data[$key])) {
+            // Merge: add recurring to actual
+            $merged_data[$key]['total'] += $row['total'];
+        } else {
+            // Add new entry for recurring only
+            $merged_data[$key] = $row;
+        }
+    }
+
+    // Convert to indexed array and sort
+    $result = array_values($merged_data);
+    usort($result, function($a, $b) {
+        $period_cmp = strcmp($a['period'], $b['period']);
+        if ($period_cmp !== 0) return $period_cmp;
+        return strcmp($a['shop_name'], $b['shop_name']);
+    });
+
+    return $result;
 }
 
 // 最新取引履歴取得
@@ -314,4 +381,254 @@ function getBudgetProgress($pdo, $user_id, $year, $month) {
         error_log('Budget progress fetch error: ' . $e->getMessage());
         return null;
     }
+}
+
+// ============================================================
+// Recurring Expenses Functions
+// ============================================================
+
+// Get all recurring expenses for a user
+function getRecurringExpenses($pdo, $user_id, $include_inactive = false) {
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return [];
+    }
+
+    $tables = getTableNames();
+    $query = "
+        SELECT
+            r.id,
+            r.name,
+            r.cat_1,
+            r.cat_2,
+            c1.label as shop_name,
+            c2.label as category_name,
+            r.price,
+            r.day_of_month,
+            r.start_date,
+            r.end_date,
+            r.is_active
+        FROM recurring_expenses r
+        LEFT JOIN {$tables['cat_1_labels']} c1 ON r.cat_1 = c1.id
+        LEFT JOIN {$tables['cat_2_labels']} c2 ON r.cat_2 = c2.id
+        WHERE r.user_id = ?
+    ";
+
+    if (!$include_inactive) {
+        $query .= " AND r.is_active = 1";
+    }
+
+    $query .= " ORDER BY r.day_of_month, r.name";
+
+    try {
+        $stmt = $pdo->prepare($query);
+        $stmt->execute([$user_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log('Recurring expenses fetch error: ' . $e->getMessage());
+        return [];
+    }
+}
+
+// Add a new recurring expense
+function addRecurringExpense($pdo, $user_id, $name, $cat_1, $cat_2, $price, $day_of_month, $start_date, $end_date = null) {
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return ['success' => false, 'message' => 'Invalid user ID'];
+    }
+
+    // Validate inputs
+    if (empty($name)) {
+        return ['success' => false, 'message' => 'Name is required'];
+    }
+    if (!is_numeric($price) || (int)$price <= 0) {
+        return ['success' => false, 'message' => 'Price must be positive'];
+    }
+    if (!is_numeric($day_of_month) || (int)$day_of_month < 1 || (int)$day_of_month > 31) {
+        return ['success' => false, 'message' => 'Day of month must be between 1 and 31'];
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO recurring_expenses
+            (user_id, name, cat_1, cat_2, price, day_of_month, start_date, end_date, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+        ");
+
+        $stmt->execute([
+            $user_id,
+            trim($name),
+            (int)$cat_1,
+            (int)$cat_2,
+            (int)$price,
+            (int)$day_of_month,
+            $start_date,
+            $end_date ?: null
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Recurring expense added successfully',
+            'id' => $pdo->lastInsertId()
+        ];
+    } catch (PDOException $e) {
+        error_log('Recurring expense add error: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Failed to add recurring expense'];
+    }
+}
+
+// Update a recurring expense
+function updateRecurringExpense($pdo, $user_id, $id, $name, $cat_1, $cat_2, $price, $day_of_month, $start_date, $end_date = null, $is_active = 1) {
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return ['success' => false, 'message' => 'Invalid user ID'];
+    }
+
+    // Validate inputs
+    if (empty($name)) {
+        return ['success' => false, 'message' => 'Name is required'];
+    }
+    if (!is_numeric($price) || (int)$price <= 0) {
+        return ['success' => false, 'message' => 'Price must be positive'];
+    }
+    if (!is_numeric($day_of_month) || (int)$day_of_month < 1 || (int)$day_of_month > 31) {
+        return ['success' => false, 'message' => 'Day of month must be between 1 and 31'];
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            UPDATE recurring_expenses
+            SET name = ?, cat_1 = ?, cat_2 = ?, price = ?, day_of_month = ?,
+                start_date = ?, end_date = ?, is_active = ?
+            WHERE id = ? AND user_id = ?
+        ");
+
+        $stmt->execute([
+            trim($name),
+            (int)$cat_1,
+            (int)$cat_2,
+            (int)$price,
+            (int)$day_of_month,
+            $start_date,
+            $end_date ?: null,
+            (int)$is_active,
+            (int)$id,
+            $user_id
+        ]);
+
+        if ($stmt->rowCount() > 0) {
+            return ['success' => true, 'message' => 'Recurring expense updated successfully'];
+        } else {
+            return ['success' => false, 'message' => 'Recurring expense not found or no changes made'];
+        }
+    } catch (PDOException $e) {
+        error_log('Recurring expense update error: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Failed to update recurring expense'];
+    }
+}
+
+// Delete a recurring expense
+function deleteRecurringExpense($pdo, $user_id, $id) {
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return ['success' => false, 'message' => 'Invalid user ID'];
+    }
+
+    try {
+        $stmt = $pdo->prepare("DELETE FROM recurring_expenses WHERE id = ? AND user_id = ?");
+        $stmt->execute([(int)$id, $user_id]);
+
+        if ($stmt->rowCount() > 0) {
+            return ['success' => true, 'message' => 'Recurring expense deleted successfully'];
+        } else {
+            return ['success' => false, 'message' => 'Recurring expense not found'];
+        }
+    } catch (PDOException $e) {
+        error_log('Recurring expense delete error: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Failed to delete recurring expense'];
+    }
+}
+
+// Toggle active status of a recurring expense
+function toggleRecurringExpense($pdo, $user_id, $id) {
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return ['success' => false, 'message' => 'Invalid user ID'];
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            UPDATE recurring_expenses
+            SET is_active = NOT is_active
+            WHERE id = ? AND user_id = ?
+        ");
+        $stmt->execute([(int)$id, $user_id]);
+
+        if ($stmt->rowCount() > 0) {
+            return ['success' => true, 'message' => 'Recurring expense status updated'];
+        } else {
+            return ['success' => false, 'message' => 'Recurring expense not found'];
+        }
+    } catch (PDOException $e) {
+        error_log('Recurring expense toggle error: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Failed to toggle recurring expense'];
+    }
+}
+
+// Generate recurring expense instances for a given date range
+function generateRecurringExpenseInstances($pdo, $user_id, $start_date, $end_date) {
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return [];
+    }
+
+    $recurring_expenses = getRecurringExpenses($pdo, $user_id, false);
+    $instances = [];
+
+    foreach ($recurring_expenses as $expense) {
+        // Determine the effective start and end dates
+        $expense_start = max($expense['start_date'], $start_date);
+        $expense_end = $end_date;
+
+        if ($expense['end_date'] !== null) {
+            $expense_end = min($expense['end_date'], $end_date);
+        }
+
+        // Generate instances for each month in the range
+        $current = new DateTime($expense_start);
+        $end = new DateTime($expense_end);
+
+        // Start from the first day of the month
+        $current->modify('first day of this month');
+
+        while ($current <= $end) {
+            // Create an instance for this month
+            $year = (int)$current->format('Y');
+            $month = (int)$current->format('m');
+            $day = min((int)$expense['day_of_month'], (int)$current->format('t')); // Handle month end
+
+            $instance_date = sprintf('%04d-%02d-%02d', $year, $month, $day);
+            $instance_datetime = new DateTime($instance_date);
+
+            // Check if this instance falls within the range
+            $range_start = new DateTime($expense_start);
+            $range_end = new DateTime($expense_end);
+
+            if ($instance_datetime >= $range_start && $instance_datetime <= $range_end) {
+                // Check if this date is after the recurring expense start date
+                $recurring_start = new DateTime($expense['start_date']);
+                if ($instance_datetime >= $recurring_start) {
+                    $instances[] = [
+                        'recurring_id' => $expense['id'],
+                        'date' => $instance_date,
+                        'name' => $expense['name'],
+                        'shop_name' => $expense['shop_name'],
+                        'category_name' => $expense['category_name'],
+                        'price' => $expense['price'],
+                        'cat_1' => $expense['cat_1'],
+                        'cat_2' => $expense['cat_2']
+                    ];
+                }
+            }
+
+            // Move to next month
+            $current->modify('first day of next month');
+        }
+    }
+
+    return $instances;
 }
