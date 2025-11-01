@@ -1,66 +1,136 @@
 <?php
 /**
- * ユーザー名更新ユーティリティ
- *
- * 使用方法:
- *   php update-username.php <current_username> <new_username>
- *
- * 例:
- *   php update-username.php user1 tanaka
- *   php update-username.php hiromi hiromi_tanaka
+ * ユーザー名変更ページ
  */
 
 require_once __DIR__ . '/config.php';
 
-// コマンドライン引数をチェック
-if ($argc < 3) {
-    echo "使用方法: php update-username.php <current_username> <new_username>\n";
-    echo "例: php update-username.php user1 tanaka\n";
-    exit(1);
-}
+// 認証チェック
+requireLogin();
 
-$currentUsername = $argv[1];
-$newUsername = $argv[2];
+$errors = [];
+$successMessage = '';
+$current_user = getCurrentUser();
 
-// 新しいユーザー名の検証（3-50文字、英数字とアンダースコアのみ）
-if (!preg_match('/^[a-zA-Z0-9_]{3,50}$/', $newUsername)) {
-    echo "エラー: ユーザー名は3〜50文字の英数字とアンダースコアのみ使用できます\n";
-    exit(1);
-}
+// POSTリクエスト処理
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF トークン検証
+    if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
+        $errors[] = 'Invalid request. Please try again.';
+    } else {
+        $newUsername = trim($_POST['new_username'] ?? '');
 
-try {
-    $pdo = getDatabaseConnection();
+        // 新しいユーザー名の検証
+        if (empty($newUsername)) {
+            $errors[] = '新しいユーザー名を入力してください';
+        } elseif (!preg_match('/^[a-zA-Z0-9_]{3,50}$/', $newUsername)) {
+            $errors[] = 'ユーザー名は3〜50文字の英数字とアンダースコアのみ使用できます';
+        } else {
+            try {
+                $pdo = getDatabaseConnection();
 
-    // 現在のユーザーが存在するか確認
-    $stmt = $pdo->prepare("SELECT id, username, email FROM users WHERE username = ?");
-    $stmt->execute([$currentUsername]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                // 新しいユーザー名が既に使用されていないか確認
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
+                $stmt->execute([$newUsername, $current_user['id']]);
+                if ($stmt->fetch()) {
+                    $errors[] = "ユーザー名 '{$newUsername}' は既に使用されています";
+                } else {
+                    // ユーザー名を更新
+                    $stmt = $pdo->prepare("UPDATE users SET username = ?, updated_at = NOW() WHERE id = ?");
+                    $stmt->execute([$newUsername, $current_user['id']]);
 
-    if (!$user) {
-        echo "エラー: ユーザー '{$currentUsername}' が見つかりません\n";
-        exit(1);
+                    // セッション情報を更新
+                    $_SESSION['username'] = $newUsername;
+
+                    $successMessage = "ユーザー名を '{$newUsername}' に変更しました";
+                    $current_user['username'] = $newUsername;
+                }
+            } catch (PDOException $e) {
+                error_log("Username update error: " . $e->getMessage());
+                $errors[] = 'ユーザー名の変更に失敗しました';
+            }
+        }
     }
-
-    // 新しいユーザー名が既に使用されていないか確認
-    $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
-    $stmt->execute([$newUsername]);
-    if ($stmt->fetch()) {
-        echo "エラー: ユーザー名 '{$newUsername}' は既に使用されています\n";
-        exit(1);
-    }
-
-    // ユーザー名を更新
-    $stmt = $pdo->prepare("UPDATE users SET username = ?, updated_at = NOW() WHERE id = ?");
-    $stmt->execute([$newUsername, $user['id']]);
-
-    echo "成功: ユーザー名を '{$currentUsername}' から '{$newUsername}' に変更しました\n";
-    echo "メールアドレス: {$user['email']}\n";
-    echo "\n";
-    echo "⚠️  注意: 次回ログイン時は新しいユーザー名を使用してください\n";
-    echo "   ユーザー名: {$newUsername}\n";
-    echo "   パスワード: (変更なし)\n";
-
-} catch (PDOException $e) {
-    echo "エラー: " . $e->getMessage() . "\n";
-    exit(1);
 }
+?>
+<!DOCTYPE html>
+<html lang="ja" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ユーザー名変更 - Personal Finance Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-wallet2"></i>
+                <span onclick="window.location.href='index.php';" style="cursor: pointer;">
+                    Personal Finance Dashboard
+                </span>
+            </span>
+            <a href="index.php" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-arrow-left"></i> 戻る
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="bi bi-pencil-square"></i> ユーザー名変更</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- メッセージ表示 -->
+                        <?php if (!empty($successMessage)): ?>
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <?= htmlspecialchars($successMessage) ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        <?php endif; ?>
+                        <?php foreach ($errors as $error): ?>
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <?= htmlspecialchars($error) ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        <?php endforeach; ?>
+
+                        <form method="POST" action="update-username.php">
+                            <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+
+                            <div class="mb-3">
+                                <label for="current_username" class="form-label">現在のユーザー名</label>
+                                <input type="text" class="form-control" id="current_username" value="<?= htmlspecialchars($current_user['username']) ?>" disabled>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="new_username" class="form-label">新しいユーザー名 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="new_username" name="new_username"
+                                       pattern="[a-zA-Z0-9_]{3,50}"
+                                       title="3〜50文字の英数字とアンダースコアのみ使用できます"
+                                       required>
+                                <div class="form-text">3〜50文字の英数字とアンダースコアのみ使用できます</div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> 変更する
+                                </button>
+                                <a href="index.php" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> キャンセル
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
