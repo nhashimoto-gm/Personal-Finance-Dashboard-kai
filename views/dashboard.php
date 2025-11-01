@@ -18,19 +18,18 @@
                             value="<?= htmlspecialchars($end_date) ?>">
                     </div>
                     <div class="col-4 col-md-2">
-                        <button type="submit" class="btn btn-primary w-100" style="margin-top: 2rem;" title="Filter">
+                        <button type="submit" class="btn btn-primary w-100 filter-action-btn" title="Filter">
                             <i class="bi bi-search"></i> <span class="btn-text" data-i18n="filter">絞り込み</span>
                         </button>
                     </div>
                     <div class="col-4 col-md-2">
-                        <button type="button" class="btn btn-secondary w-100" id="resetBtn"
-                            style="margin-top: 2rem;" title="Reset">
+                        <button type="button" class="btn btn-secondary w-100 filter-action-btn" id="resetBtn" title="Reset">
                             <i class="bi bi-arrow-clockwise"></i> <span class="btn-text" data-i18n="reset">リセット</span>
                         </button>
                     </div>
                     <div class="col-4 col-md-2">
                         <a href="export.php?type=summary&start_date=<?= $start_date ?>&end_date=<?= $end_date ?>"
-                           class="btn btn-success w-100" style="margin-top: 2rem;" title="Export">
+                           class="btn btn-success w-100 filter-action-btn" title="Export">
                             <i class="bi bi-download"></i> <span class="btn-text" data-i18n="export">Export</span>
                         </a>
                     </div>
