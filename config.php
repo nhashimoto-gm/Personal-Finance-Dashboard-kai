@@ -457,7 +457,7 @@ function updateUserProfile($pdo, $userId, $data) {
  */
 function changePassword($pdo, $userId, $currentPassword, $newPassword) {
     if (strlen($newPassword) < 8) {
-        return ['success' => false, 'message' => 'New password must be at least 8 characters'];
+        return ['success' => false, 'message' => '新しいパスワードは8文字以上である必要があります'];
     }
 
     try {
@@ -467,7 +467,7 @@ function changePassword($pdo, $userId, $currentPassword, $newPassword) {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user || !password_verify($currentPassword, $user['password_hash'])) {
-            return ['success' => false, 'message' => 'Current password is incorrect'];
+            return ['success' => false, 'message' => '現在のパスワードが正しくありません'];
         }
 
         // 新しいパスワードをハッシュ化
@@ -477,11 +477,11 @@ function changePassword($pdo, $userId, $currentPassword, $newPassword) {
         $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
         $stmt->execute([$newPasswordHash, $userId]);
 
-        return ['success' => true, 'message' => 'Password changed successfully'];
+        return ['success' => true, 'message' => 'パスワードを変更しました'];
 
     } catch (PDOException $e) {
         error_log("Password change error: " . $e->getMessage());
-        return ['success' => false, 'message' => 'Password change failed'];
+        return ['success' => false, 'message' => 'パスワードの変更に失敗しました'];
     }
 }
 
