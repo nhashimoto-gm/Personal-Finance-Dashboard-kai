@@ -193,6 +193,11 @@ body {
     display: block !important;
 }
 
+/* Filter action buttons - default desktop margin */
+.filter-action-btn {
+    margin-top: 2rem;
+}
+
 #periodTrendSection {
     scroll-margin-top: 50px;
 }
@@ -307,21 +312,71 @@ body {
         width: 29%;
     }
 
-    /* Dashboard filter buttons - hide text on mobile */
+    /* Dashboard filter form - reduce vertical spacing */
+    .card-body form.row {
+        row-gap: 0.5rem !important;
+    }
+
+    /* Dashboard filter input fields - reduce height */
+    .card-body form .form-control {
+        min-height: 36px;
+        height: 36px;
+        padding: 0.375rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .card-body form .form-label {
+        margin-bottom: 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    /* Dashboard filter buttons - hide text on mobile and reduce height */
     .card-body form .btn .btn-text {
         display: none;
     }
 
     .card-body form .btn {
-        padding: 0.5rem;
+        padding: 0.375rem 0.5rem;
         display: flex;
         align-items: center;
         justify-content: center;
+        min-height: 36px;
+        height: 36px;
     }
 
     .card-body form .btn i {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         margin: 0;
+        line-height: 1;
+    }
+
+    /* Quick filter buttons - reduce height to match font/icon size */
+    .card-body .btn-sm.btn-outline-primary,
+    .card-body .btn-sm.btn-outline-secondary {
+        padding: 0.25rem 0.5rem;
+        min-height: 32px;
+        height: 32px;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .card-body .btn-sm i {
+        font-size: 0.875rem;
+        line-height: 1;
+    }
+
+    /* Reduce margin between quick filter buttons and main form */
+    .card-body .row.g-2 {
+        margin-top: 0.5rem !important;
+        row-gap: 0.5rem !important;
+    }
+
+    /* Filter action buttons - reduced margin for mobile */
+    .filter-action-btn {
+        margin-top: 0.5rem;
     }
 
     .table .clickable {
@@ -447,6 +502,57 @@ body {
         max-width: calc(100vw - 20px);
     }
 
+    /* Dashboard filter input fields - further reduce height */
+    .card-body form .form-control {
+        min-height: 32px;
+        height: 32px;
+        padding: 0.25rem 0.4rem;
+        font-size: 0.8rem;
+    }
+
+    .card-body form .form-label {
+        margin-bottom: 0.2rem;
+        font-size: 0.8rem;
+    }
+
+    /* Dashboard filter buttons - further reduce height */
+    .card-body form .btn {
+        padding: 0.3rem 0.4rem;
+        min-height: 32px;
+        height: 32px;
+    }
+
+    .card-body form .btn i {
+        font-size: 1rem;
+    }
+
+    /* Quick filter buttons - further reduce height */
+    .card-body .btn-sm.btn-outline-primary,
+    .card-body .btn-sm.btn-outline-secondary {
+        padding: 0.2rem 0.4rem;
+        min-height: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+    }
+
+    .card-body .btn-sm i {
+        font-size: 0.8rem;
+    }
+
+    /* Reduce vertical spacing further */
+    .card-body form.row {
+        row-gap: 0.4rem !important;
+    }
+
+    .card-body .row.g-2 {
+        margin-top: 0.4rem !important;
+        row-gap: 0.4rem !important;
+    }
+
+    .filter-action-btn {
+        margin-top: 0.4rem;
+    }
+
     .btn-group .btn,
     .btn-group .btn-sm {
         font-size: 0.7rem;
@@ -501,6 +607,57 @@ body {
         transform: translate3d(0, 0, 0) !important;
         min-width: 180px;
         max-width: calc(100vw - 15px);
+    }
+
+    /* Dashboard filter input fields - ultra-compact */
+    .card-body form .form-control {
+        min-height: 30px;
+        height: 30px;
+        padding: 0.2rem 0.35rem;
+        font-size: 0.75rem;
+    }
+
+    .card-body form .form-label {
+        margin-bottom: 0.15rem;
+        font-size: 0.75rem;
+    }
+
+    /* Dashboard filter buttons - ultra-compact */
+    .card-body form .btn {
+        padding: 0.25rem 0.35rem;
+        min-height: 30px;
+        height: 30px;
+    }
+
+    .card-body form .btn i {
+        font-size: 0.95rem;
+    }
+
+    /* Quick filter buttons - ultra-compact */
+    .card-body .btn-sm.btn-outline-primary,
+    .card-body .btn-sm.btn-outline-secondary {
+        padding: 0.15rem 0.35rem;
+        min-height: 26px;
+        height: 26px;
+        font-size: 0.75rem;
+    }
+
+    .card-body .btn-sm i {
+        font-size: 0.75rem;
+    }
+
+    /* Reduce vertical spacing to minimum */
+    .card-body form.row {
+        row-gap: 0.3rem !important;
+    }
+
+    .card-body .row.g-2 {
+        margin-top: 0.3rem !important;
+        row-gap: 0.3rem !important;
+    }
+
+    .filter-action-btn {
+        margin-top: 0.3rem;
     }
 
     .btn-group .btn,
