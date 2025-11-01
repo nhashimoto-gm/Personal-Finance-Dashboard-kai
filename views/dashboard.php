@@ -35,6 +35,21 @@
                         </a>
                     </div>
                 </form>
+                <!-- Quick Filter Buttons -->
+                <div class="row g-2 mt-2">
+                    <div class="col-auto">
+                        <a href="?start_date=<?= date('Y-m-01') ?>&end_date=<?= date('Y-m-t') ?>"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-calendar-month"></i> <span data-i18n="currentMonth">当月</span>
+                        </a>
+                    </div>
+                    <div class="col-auto">
+                        <a href="?start_date=<?= date('Y-m-01', strtotime('first day of last month')) ?>&end_date=<?= date('Y-m-t', strtotime('last day of last month')) ?>"
+                           class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-calendar-minus"></i> <span data-i18n="lastMonth">前月</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -107,15 +122,14 @@
 
 <!-- 予算進捗 -->
 <?php if ($budget_progress): ?>
-<?php
-$month_names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-$budget_period_en = $month_names[$current_month - 1] . ' ' . $current_year;
-?>
 <div class="row mb-4">
     <div class="col-12">
         <div class="card border-<?= $budget_progress['alert_level'] ?>">
             <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-piggy-bank"></i> <span data-i18n="budgetProgress">予算進捗</span> (<span id="budgetPeriod" data-year="<?= $current_year ?>" data-month="<?= $current_month ?>"><?= $budget_period_en ?></span>)</h5>
+                <h5 class="mb-0">
+                    <i class="bi bi-piggy-bank"></i> <span data-i18n="budgetProgress">予算進捗</span>
+                    <small class="text-muted ms-2">(<?= $start_date ?> ～ <?= $end_date ?>)</small>
+                </h5>
                 <?php if ($budget_progress['alert_level'] === 'danger'): ?>
                     <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> <span data-i18n="budgetOver">予算超過！</span></span>
                 <?php elseif ($budget_progress['alert_level'] === 'warning'): ?>
@@ -126,22 +140,48 @@ $budget_period_en = $month_names[$current_month - 1] . ' ' . $current_year;
             </div>
             <div class="card-body">
                 <div class="row mb-3">
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-6 mb-3">
                         <div class="text-muted small" data-i18n="budgetAmount">予算額</div>
                         <div class="h4">¥<?= number_format($budget_progress['budget_amount']) ?></div>
+                        <small class="text-muted" data-i18n="proratedBudget">日割按分済</small>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-6 mb-3">
                         <div class="text-muted small" data-i18n="actualAmount">実績額</div>
                         <div class="h4 text-<?= $budget_progress['alert_level'] ?>">¥<?= number_format($budget_progress['actual_amount']) ?></div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-6 mb-3">
                         <div class="text-muted small" data-i18n="remaining">残高</div>
                         <div class="h4 text-<?= $budget_progress['alert_level'] ?>">¥<?= number_format($budget_progress['remaining']) ?></div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3 col-6 mb-3">
                         <div class="text-muted small" data-i18n="percentage">達成率</div>
                         <div class="h4 text-<?= $budget_progress['alert_level'] ?>"><?= $budget_progress['percentage'] ?>%</div>
                     </div>
+                    <?php if ($predicted_expense): ?>
+                    <div class="col-md-12">
+                        <hr class="my-2">
+                        <div class="row">
+                            <div class="col-md-4 col-6">
+                                <div class="text-muted small" data-i18n="predictedExpense">予測消費額（当月）</div>
+                                <div class="h5 text-info">¥<?= number_format($predicted_expense['predicted_amount']) ?></div>
+                                <small class="text-muted">
+                                    <span data-i18n="basedOnLastYear">前年実績より算出</span>
+                                </small>
+                            </div>
+                            <div class="col-md-4 col-6">
+                                <div class="text-muted small" data-i18n="lastYearActual">前年同月実績</div>
+                                <div class="h6">¥<?= number_format($predicted_expense['last_year_actual']) ?></div>
+                            </div>
+                            <div class="col-md-4 col-12">
+                                <div class="text-muted small" data-i18n="progressInfo">進捗情報</div>
+                                <div class="small">
+                                    <span data-i18n="currentDay">現在</span>: <?= $predicted_expense['current_day'] ?><span data-i18n="dayUnit">日</span> / <?= $predicted_expense['days_in_month'] ?><span data-i18n="dayUnit">日</span>
+                                    (¥<?= number_format($predicted_expense['current_actual']) ?>)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
                 <div class="progress" style="height: 30px;">
                     <div class="progress-bar bg-<?= $budget_progress['alert_level'] ?>" role="progressbar"

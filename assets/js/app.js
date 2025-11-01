@@ -349,9 +349,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
+        // Get last day of current month
+        const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
         document.getElementById('startDate').value = year + '-' + month + '-01';
-        document.getElementById('endDate').value = year + '-' + month + '-' + day;
+        document.getElementById('endDate').value = year + '-' + month + '-' + String(lastDay).padStart(2, '0');
     });
 });
 
