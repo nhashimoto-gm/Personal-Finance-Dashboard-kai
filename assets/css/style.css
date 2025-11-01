@@ -254,6 +254,17 @@ body {
         --chart-height: 300px;
     }
 
+    /* ヘッダの2段組レイアウト */
+    .navbar .container-fluid {
+        flex-wrap: wrap;
+    }
+
+    .navbar .d-flex.align-items-center {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 0.5rem;
+    }
+
     /* ユーザー情報ドロップダウンメニューのモバイル対応 */
     .navbar .dropdown-menu {
         position: absolute !important;
