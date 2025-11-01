@@ -99,7 +99,22 @@ function getTranslations() {
             'confirmDeleteRecurring' => '本当にこの定期支出を削除しますか？この操作は元に戻せません。',
             'leaveEmptyOngoing' => '継続中の場合は空欄のまま',
             'startDateLabel' => '開始日',
-            'endDateLabel' => '終了日（任意）'
+            'endDateLabel' => '終了日（任意）',
+            // ユーザー名変更
+            'changeUsername' => 'ユーザー名変更',
+            'currentUsername' => '現在のユーザー名',
+            'newUsername' => '新しいユーザー名',
+            'usernameRules' => '3〜50文字の英数字とアンダースコアのみ使用できます',
+            'changeButton' => '変更する',
+            'backButton' => '戻る',
+            // パスワード変更
+            'changePassword' => 'パスワード変更',
+            'username' => 'ユーザー名',
+            'currentPassword' => '現在のパスワード',
+            'newPassword' => '新しいパスワード',
+            'confirmPassword' => '新しいパスワード（確認）',
+            'passwordRules' => 'パスワードは8文字以上である必要があります',
+            'required' => '必須項目です'
         ],
         'en' => [
             'title' => 'Personal Finance Dashboard',
@@ -197,7 +212,22 @@ function getTranslations() {
             'confirmDeleteRecurring' => 'Are you sure you want to delete this recurring expense? This action cannot be undone.',
             'leaveEmptyOngoing' => 'Leave empty for ongoing expenses',
             'startDateLabel' => 'Start Date',
-            'endDateLabel' => 'End Date (Optional)'
+            'endDateLabel' => 'End Date (Optional)',
+            // Username change
+            'changeUsername' => 'Change Username',
+            'currentUsername' => 'Current Username',
+            'newUsername' => 'New Username',
+            'usernameRules' => '3-50 characters (alphanumeric and underscore only)',
+            'changeButton' => 'Change',
+            'backButton' => 'Back',
+            // Password change
+            'changePassword' => 'Change Password',
+            'username' => 'Username',
+            'currentPassword' => 'Current Password',
+            'newPassword' => 'New Password',
+            'confirmPassword' => 'Confirm New Password',
+            'passwordRules' => 'Password must be at least 8 characters',
+            'required' => 'Required'
         ]
     ];
 }
