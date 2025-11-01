@@ -228,8 +228,9 @@ if (isset($_SESSION['successMessage'])) {
 }
 
 // パラメータ取得
+// デフォルトは当月初日から当月最終日
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
-$end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
+$end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t');
 $period_range = isset($_GET['period_range']) ? $_GET['period_range'] : '12';
 $search_shop = isset($_GET['search_shop']) ? $_GET['search_shop'] : '';
 $search_category = isset($_GET['search_category']) ? $_GET['search_category'] : '';
@@ -259,11 +260,23 @@ $shops = getShops($pdo, $user_id);
 $categories = getCategories($pdo, $user_id);
 $recurring_expenses = getRecurringExpenses($pdo, $user_id, true);
 
-// 予算データ取得（当月・ユーザー固有）
+// 予算データ取得（フィルター範囲・ユーザー固有）
 $current_year = (int)date('Y');
 $current_month = (int)date('m');
-$budget_progress = getBudgetProgress($pdo, $user_id, $current_year, $current_month);
+$budget_progress = getBudgetProgressForRange($pdo, $user_id, $start_date, $end_date);
 $all_budgets = getBudgets($pdo, $user_id);
+
+// 予測消費額を取得（当月のみ）
+$predicted_expense = null;
+$filter_start = new DateTime($start_date);
+$filter_end = new DateTime($end_date);
+$current_month_start = new DateTime(date('Y-m-01'));
+$current_month_end = new DateTime(date('Y-m-t'));
+
+// フィルター範囲が当月を含む場合のみ予測を表示
+if ($filter_start <= $current_month_end && $filter_end >= $current_month_start) {
+    $predicted_expense = getPredictedExpense($pdo, $user_id, $current_year, $current_month);
+}
 
 // ビュー読み込み
 require_once __DIR__ . '/view.php';

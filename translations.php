@@ -118,7 +118,17 @@ function getTranslations() {
             // ユーザーメニュー
             'menuChangeUsername' => 'ユーザー名変更',
             'menuChangePassword' => 'パスワード変更',
-            'menuLogout' => 'ログアウト'
+            'menuLogout' => 'ログアウト',
+            // 予算関連の追加
+            'currentMonth' => '当月',
+            'lastMonth' => '前月',
+            'proratedBudget' => '日割按分済',
+            'predictedExpense' => '予測消費額（当月）',
+            'basedOnLastYear' => '前年実績より算出',
+            'lastYearActual' => '前年同月実績',
+            'progressInfo' => '進捗情報',
+            'currentDay' => '現在',
+            'dayUnit' => '日'
         ],
         'en' => [
             'title' => 'Personal Finance Dashboard',
@@ -235,7 +245,17 @@ function getTranslations() {
             // User menu
             'menuChangeUsername' => 'Change Username',
             'menuChangePassword' => 'Change Password',
-            'menuLogout' => 'Logout'
+            'menuLogout' => 'Logout',
+            // Budget related additions
+            'currentMonth' => 'Current Month',
+            'lastMonth' => 'Last Month',
+            'proratedBudget' => 'Prorated',
+            'predictedExpense' => 'Predicted Expense (Current Month)',
+            'basedOnLastYear' => 'Based on last year',
+            'lastYearActual' => 'Last Year Same Month',
+            'progressInfo' => 'Progress Info',
+            'currentDay' => 'Current',
+            'dayUnit' => 'day(s)'
         ]
     ];
 }

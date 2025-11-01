@@ -582,6 +582,171 @@ function getBudgetProgress($pdo, $user_id, $year, $month) {
     }
 }
 
+// Get budget progress for a date range with prorated budget calculation
+function getBudgetProgressForRange($pdo, $user_id, $start_date, $end_date) {
+    // ユーザーID検証
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return null;
+    }
+
+    try {
+        $tables = getTableNames();
+
+        // Parse dates
+        $start = new DateTime($start_date);
+        $end = new DateTime($end_date);
+
+        // Calculate total budget for the range by aggregating monthly budgets
+        $total_budget = 0;
+        $current = clone $start;
+        $current->modify('first day of this month');
+
+        while ($current <= $end) {
+            $year = (int)$current->format('Y');
+            $month = (int)$current->format('m');
+
+            // Get monthly budget
+            $stmt = $pdo->prepare("SELECT amount FROM {$tables['budgets']} WHERE user_id = ? AND budget_type = 'monthly' AND target_id IS NULL AND target_year = ? AND target_month = ?");
+            $stmt->execute([$user_id, $year, $month]);
+            $budget = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($budget) {
+                $monthly_budget = (float)$budget['amount'];
+
+                // Calculate days in this month that overlap with the filter range
+                $month_start = new DateTime($year . '-' . str_pad($month, 2, '0', STR_PAD_LEFT) . '-01');
+                $month_end = new DateTime($month_start->format('Y-m-t'));
+
+                $overlap_start = max($start, $month_start);
+                $overlap_end = min($end, $month_end);
+
+                if ($overlap_start <= $overlap_end) {
+                    // Calculate prorate
+                    $days_in_month = (int)$month_end->format('d');
+                    $overlap_days = $overlap_start->diff($overlap_end)->days + 1;
+                    $prorated_budget = ($monthly_budget / $days_in_month) * $overlap_days;
+                    $total_budget += $prorated_budget;
+                }
+            }
+
+            $current->modify('first day of next month');
+        }
+
+        // If no budget found for any month in range, return null
+        if ($total_budget == 0) {
+            return null;
+        }
+
+        // Get actual transaction total for the range
+        $stmt = $pdo->prepare("SELECT SUM(price) as total FROM {$tables['source']} WHERE user_id = ? AND re_date BETWEEN ? AND ?");
+        $stmt->execute([$user_id, $start_date, $end_date]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $actual = (float)($result['total'] ?? 0);
+
+        // Add recurring expenses to actual
+        $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $start_date, $end_date);
+        foreach ($recurring_instances as $instance) {
+            $actual += $instance['price'];
+        }
+
+        $percentage = $total_budget > 0 ? round(($actual / $total_budget) * 100, 1) : 0;
+
+        return [
+            'budget_amount' => round($total_budget, 0),
+            'actual_amount' => $actual,
+            'remaining' => round($total_budget - $actual, 0),
+            'percentage' => $percentage,
+            'alert_level' => $percentage >= 100 ? 'danger' : ($percentage >= 80 ? 'warning' : 'success')
+        ];
+    } catch (Exception $e) {
+        error_log('Budget progress for range fetch error: ' . $e->getMessage());
+        return null;
+    }
+}
+
+// Get predicted expense for current month based on last year's data
+function getPredictedExpense($pdo, $user_id, $year, $month) {
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return null;
+    }
+
+    try {
+        $tables = getTableNames();
+
+        // Get last year's same month data
+        $last_year = $year - 1;
+        $last_year_start = sprintf('%04d-%02d-01', $last_year, $month);
+        $last_year_end = date('Y-m-t', strtotime($last_year_start));
+
+        // Get last year's actual for this month
+        $stmt = $pdo->prepare("SELECT SUM(price) as total FROM {$tables['source']} WHERE user_id = ? AND re_date BETWEEN ? AND ?");
+        $stmt->execute([$user_id, $last_year_start, $last_year_end]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $last_year_actual = (float)($result['total'] ?? 0);
+
+        // Add recurring expenses from last year
+        $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $last_year_start, $last_year_end);
+        foreach ($recurring_instances as $instance) {
+            $last_year_actual += $instance['price'];
+        }
+
+        // Get current month data up to today
+        $current_month_start = sprintf('%04d-%02d-01', $year, $month);
+        $today = date('Y-m-d');
+        $current_month_end = min($today, date('Y-m-t', strtotime($current_month_start)));
+
+        // Get current month's actual so far
+        $stmt = $pdo->prepare("SELECT SUM(price) as total FROM {$tables['source']} WHERE user_id = ? AND re_date BETWEEN ? AND ?");
+        $stmt->execute([$user_id, $current_month_start, $current_month_end]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $current_actual = (float)($result['total'] ?? 0);
+
+        // Add recurring expenses from current month
+        $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $current_month_start, $current_month_end);
+        foreach ($recurring_instances as $instance) {
+            $current_actual += $instance['price'];
+        }
+
+        // Calculate prediction based on proportional calculation
+        $current_day = (int)date('d');
+        $days_in_month = (int)date('t', strtotime($current_month_start));
+
+        // If we have last year data, use it for prediction
+        if ($last_year_actual > 0 && $current_day < $days_in_month) {
+            // Proportion: (current_actual / current_day) compared to (last_year_actual / days_in_last_year_month)
+            $days_in_last_year_month = (int)date('t', strtotime($last_year_start));
+            $last_year_daily_avg = $last_year_actual / $days_in_last_year_month;
+
+            // Predicted: current spending pace applied to remaining days + last year's pace
+            if ($current_day > 0) {
+                $current_daily_avg = $current_actual / $current_day;
+                $predicted = $current_actual + ($current_daily_avg * ($days_in_month - $current_day));
+            } else {
+                $predicted = $last_year_actual;
+            }
+        } else {
+            // If no last year data, just project current pace
+            if ($current_day > 0 && $current_day < $days_in_month) {
+                $current_daily_avg = $current_actual / $current_day;
+                $predicted = $current_actual + ($current_daily_avg * ($days_in_month - $current_day));
+            } else {
+                $predicted = $current_actual;
+            }
+        }
+
+        return [
+            'predicted_amount' => round($predicted, 0),
+            'last_year_actual' => round($last_year_actual, 0),
+            'current_actual' => round($current_actual, 0),
+            'current_day' => $current_day,
+            'days_in_month' => $days_in_month
+        ];
+    } catch (Exception $e) {
+        error_log('Predicted expense fetch error: ' . $e->getMessage());
+        return null;
+    }
+}
+
 // ============================================================
 // Recurring Expenses Functions
 // ============================================================
