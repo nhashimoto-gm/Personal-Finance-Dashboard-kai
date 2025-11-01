@@ -114,7 +114,11 @@ function getTranslations() {
             'newPassword' => '新しいパスワード',
             'confirmPassword' => '新しいパスワード（確認）',
             'passwordRules' => 'パスワードは8文字以上である必要があります',
-            'required' => '必須項目です'
+            'required' => '必須項目です',
+            // ユーザーメニュー
+            'menuChangeUsername' => 'ユーザー名変更',
+            'menuChangePassword' => 'パスワード変更',
+            'menuLogout' => 'ログアウト'
         ],
         'en' => [
             'title' => 'Personal Finance Dashboard',
@@ -227,7 +231,11 @@ function getTranslations() {
             'newPassword' => 'New Password',
             'confirmPassword' => 'Confirm New Password',
             'passwordRules' => 'Password must be at least 8 characters',
-            'required' => 'Required'
+            'required' => 'Required',
+            // User menu
+            'menuChangeUsername' => 'Change Username',
+            'menuChangePassword' => 'Change Password',
+            'menuLogout' => 'Logout'
         ]
     ];
 }

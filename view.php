@@ -42,10 +42,10 @@
                                 <li><h6 class="dropdown-header"><i class="bi bi-person-badge"></i> <?= htmlspecialchars($current_user['full_name']) ?></h6></li>
                                 <li><hr class="dropdown-divider"></li>
                             <?php endif; ?>
-                            <li><a class="dropdown-item" href="update-username.php"><i class="bi bi-pencil-square"></i> ユーザー名変更</a></li>
-                            <li><a class="dropdown-item" href="update-password.php"><i class="bi bi-key"></i> パスワード変更</a></li>
+                            <li><a class="dropdown-item" href="update-username.php"><i class="bi bi-pencil-square"></i> <span data-i18n="menuChangeUsername">ユーザー名変更</span></a></li>
+                            <li><a class="dropdown-item" href="update-password.php"><i class="bi bi-key"></i> <span data-i18n="menuChangePassword">パスワード変更</span></a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i> ログアウト</a></li>
+                            <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i> <span data-i18n="menuLogout">ログアウト</span></a></li>
                         </ul>
                     </div>
                 <?php endif; ?>
