@@ -104,6 +104,23 @@ body {
     position: relative;
 }
 
+/* ヘッダのボタンを内容に合わせて低く */
+.navbar .btn-outline-light.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    height: auto;
+    min-height: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.navbar .btn-outline-light.btn-sm i {
+    font-size: 1rem;
+    line-height: 1;
+}
+
 [data-bs-theme="light"] .stat-card:hover {
     box-shadow: var(--elevation-3);
 }
@@ -259,6 +276,23 @@ body {
         --chart-height: 300px;
     }
 
+    /* タブのテキストを非表示にしてアイコンのみ表示 */
+    .nav-tab-text {
+        display: none;
+    }
+
+    /* タブのアイコンを中央に配置 */
+    .nav-tabs .nav-link {
+        padding: 0.5rem 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-tabs .nav-link i {
+        margin: 0;
+    }
+
     /* ヘッダの2段組レイアウト */
     .navbar .container-fluid {
         flex-wrap: wrap;
@@ -268,6 +302,17 @@ body {
         width: 100%;
         justify-content: flex-end;
         margin-top: 0.5rem;
+    }
+
+    /* モバイル用ヘッダボタンサイズ調整 */
+    .navbar .btn-outline-light.btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.8rem;
+        gap: 0.2rem;
+    }
+
+    .navbar .btn-outline-light.btn-sm i {
+        font-size: 0.9rem;
     }
 
     /* ユーザー情報ドロップダウンメニューのモバイル対応 */
