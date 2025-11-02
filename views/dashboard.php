@@ -184,11 +184,11 @@
                                     <?php
                                     $trend = $predicted_expense['trend_coefficient'];
                                     if ($trend > 1.05): ?>
-                                        <span class="text-danger">↗ 増加傾向 (<?= round(($trend - 1) * 100, 1) ?>%)</span>
+                                        <span class="text-danger">↗ <span data-i18n="trendIncreasing">増加傾向</span> (<?= round(($trend - 1) * 100, 1) ?>%)</span>
                                     <?php elseif ($trend < 0.95): ?>
-                                        <span class="text-success">↘ 減少傾向 (<?= round((1 - $trend) * 100, 1) ?>%)</span>
+                                        <span class="text-success">↘ <span data-i18n="trendDecreasing">減少傾向</span> (<?= round((1 - $trend) * 100, 1) ?>%)</span>
                                     <?php else: ?>
-                                        <span class="text-secondary">→ 横ばい</span>
+                                        <span class="text-secondary">→ <span data-i18n="trendStable">横ばい</span></span>
                                     <?php endif; ?>
                                 </small>
                                 <?php endif; ?>
