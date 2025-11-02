@@ -210,63 +210,6 @@ function getRateLimitInfo($action = 'default') {
 // ============================================================
 
 /**
- * ユーザー登録
- * @param PDO $pdo データベース接続
- * @param string $username ユーザー名
- * @param string $email メールアドレス
- * @param string $password パスワード
- * @param string|null $fullName フルネーム（任意）
- * @return array ['success' => bool, 'message' => string, 'user_id' => int|null]
- */
-function registerUser($pdo, $username, $email, $password, $fullName = null) {
-    // 入力検証
-    if (empty($username) || empty($email) || empty($password)) {
-        return ['success' => false, 'message' => 'All required fields must be filled', 'user_id' => null];
-    }
-
-    // ユーザー名の検証（3-50文字、英数字とアンダースコアのみ）
-    if (!preg_match('/^[a-zA-Z0-9_]{3,50}$/', $username)) {
-        return ['success' => false, 'message' => 'Username must be 3-50 characters (alphanumeric and underscore only)', 'user_id' => null];
-    }
-
-    // メールアドレスの検証
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        return ['success' => false, 'message' => 'Invalid email address', 'user_id' => null];
-    }
-
-    // パスワードの強度チェック（最低8文字）
-    if (strlen($password) < 8) {
-        return ['success' => false, 'message' => 'Password must be at least 8 characters', 'user_id' => null];
-    }
-
-    try {
-        // ユーザー名とメールアドレスの重複チェック
-        $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
-        $stmt->execute([$username, $email]);
-        if ($stmt->fetch()) {
-            return ['success' => false, 'message' => 'Username or email already exists', 'user_id' => null];
-        }
-
-        // パスワードをハッシュ化
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-
-        // ユーザーを挿入
-        $stmt = $pdo->prepare(
-            "INSERT INTO users (username, email, password_hash, full_name, is_active) VALUES (?, ?, ?, ?, 1)"
-        );
-        $stmt->execute([$username, $email, $passwordHash, $fullName]);
-
-        $userId = $pdo->lastInsertId();
-
-        return ['success' => true, 'message' => 'User registered successfully', 'user_id' => $userId];
-
-    } catch (PDOException $e) {
-        error_log("User registration error: " . $e->getMessage());
-        return ['success' => false, 'message' => 'Registration failed: ' . $e->getMessage(), 'user_id' => null];
-    }
-}
-
-/**
  * ユーザーログイン
  * @param PDO $pdo データベース接続
  * @param string $username ユーザー名またはメールアドレス
