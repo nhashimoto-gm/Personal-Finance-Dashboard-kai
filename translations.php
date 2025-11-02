@@ -137,7 +137,19 @@ function getTranslations() {
             'trendStable' => '横ばい',
             'predictionDetails' => '予測詳細情報',
             'methodsUsed' => '使用した予測手法',
-            'ensembleNote' => '※ 複数手法のアンサンブル予測を採用'
+            'ensembleNote' => '※ 複数手法のアンサンブル予測を採用',
+            // Login screen
+            'loginTitle' => 'Personal Finance Dashboard',
+            'loginSubtitle' => 'ログインしてあなたの財務データにアクセス',
+            'loginUsername' => 'ユーザー名またはメールアドレス',
+            'loginPassword' => 'パスワード',
+            'loginRememberMe' => 'ログイン状態を保持',
+            'loginButton' => 'ログイン',
+            'loginOr' => 'または',
+            'loginNoAccount' => 'アカウントをお持ちでないですか?',
+            'loginSignUp' => '新規登録',
+            'loginUsernamePlaceholder' => 'username or email@example.com',
+            'loginPasswordPlaceholder' => 'パスワードを入力してください'
         ],
         'en' => [
             'title' => 'Personal Finance Dashboard',
@@ -273,7 +285,19 @@ function getTranslations() {
             'trendStable' => 'Stable',
             'predictionDetails' => 'Prediction Details',
             'methodsUsed' => 'Methods Used',
-            'ensembleNote' => '※ Ensemble prediction using multiple methods'
+            'ensembleNote' => '※ Ensemble prediction using multiple methods',
+            // Login screen
+            'loginTitle' => 'Personal Finance Dashboard',
+            'loginSubtitle' => 'Login to access your financial data',
+            'loginUsername' => 'Username or Email',
+            'loginPassword' => 'Password',
+            'loginRememberMe' => 'Remember me',
+            'loginButton' => 'Login',
+            'loginOr' => 'or',
+            'loginNoAccount' => 'Don\'t have an account?',
+            'loginSignUp' => 'Sign Up',
+            'loginUsernamePlaceholder' => 'username or email@example.com',
+            'loginPasswordPlaceholder' => 'Enter your password'
         ]
     ];
 }
