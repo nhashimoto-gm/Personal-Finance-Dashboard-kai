@@ -78,30 +78,30 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard-pane"
                     type="button" role="tab" aria-controls="dashboard-pane" aria-selected="true">
-                    <i class="bi bi-graph-up"></i> <span data-i18n="tabDashboard">ダッシュボード</span>
+                    <i class="bi bi-graph-up"></i> <span class="nav-tab-text" data-i18n="tabDashboard">ダッシュボード</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="entry-tab" data-bs-toggle="tab" data-bs-target="#entry-pane" type="button"
                     role="tab" aria-controls="entry-pane" aria-selected="false">
-                    <i class="bi bi-plus-circle"></i> <span data-i18n="tabDataEntry">入力</span>
+                    <i class="bi bi-plus-circle"></i> <span class="nav-tab-text" data-i18n="tabDataEntry">入力</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="budget-tab" data-bs-toggle="tab" data-bs-target="#budget-pane"
                     type="button" role="tab" aria-controls="budget-pane" aria-selected="false">
-                    <i class="bi bi-piggy-bank"></i> <span data-i18n="budget">予算</span>
+                    <i class="bi bi-piggy-bank"></i> <span class="nav-tab-text" data-i18n="budget">予算</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="management-tab" data-bs-toggle="tab" data-bs-target="#management-pane"
                     type="button" role="tab" aria-controls="management-pane" aria-selected="false">
-                    <i class="bi bi-gear"></i> <span data-i18n="tabManagement">マスター</span>
+                    <i class="bi bi-gear"></i> <span class="nav-tab-text" data-i18n="tabManagement">マスター</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <a class="nav-link" href="analytics/index.html" target="_blank">
-                    <i class="bi bi-graph-up-arrow"></i> <span data-i18n="tabAnalytics">高度な分析</span> <i class="bi bi-box-arrow-up-right ms-1" style="font-size: 0.8em;"></i>
+                    <i class="bi bi-graph-up-arrow"></i> <span class="nav-tab-text" data-i18n="tabAnalytics">高度な分析</span> <i class="bi bi-box-arrow-up-right ms-1" style="font-size: 0.8em;"></i>
                 </a>
             </li>
         </ul>

@@ -259,6 +259,23 @@ body {
         --chart-height: 300px;
     }
 
+    /* タブのテキストを非表示にしてアイコンのみ表示 */
+    .nav-tab-text {
+        display: none;
+    }
+
+    /* タブのアイコンを中央に配置 */
+    .nav-tabs .nav-link {
+        padding: 0.5rem 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-tabs .nav-link i {
+        margin: 0;
+    }
+
     /* ヘッダの2段組レイアウト */
     .navbar .container-fluid {
         flex-wrap: wrap;
