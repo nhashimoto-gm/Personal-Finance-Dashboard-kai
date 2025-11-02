@@ -207,7 +207,7 @@
                                 <details class="small">
                                     <summary class="text-muted" style="cursor: pointer;">
                                         <span data-i18n="predictionDetails">予測詳細情報</span>
-                                        <span class="badge badge-secondary"><?= count($predicted_expense['methods_used']) ?> 手法</span>
+                                        <span class="badge badge-secondary"><?= count($predicted_expense['methods_used']) ?> <span data-i18n="methods">手法</span></span>
                                     </summary>
                                     <div class="mt-2 p-2 bg-body-tertiary rounded">
                                         <div class="text-muted mb-1" data-i18n="methodsUsed">使用した予測手法:</div>
