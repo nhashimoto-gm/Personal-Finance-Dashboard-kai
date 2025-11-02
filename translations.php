@@ -128,7 +128,16 @@ function getTranslations() {
             'lastYearActual' => '前年同月実績',
             'progressInfo' => '進捗情報',
             'currentDay' => '現在',
-            'dayUnit' => '日'
+            'dayUnit' => '日',
+            // 予測機能関連
+            'confidenceInterval' => '信頼区間',
+            'trend' => 'トレンド',
+            'trendIncreasing' => '増加傾向',
+            'trendDecreasing' => '減少傾向',
+            'trendStable' => '横ばい',
+            'predictionDetails' => '予測詳細情報',
+            'methodsUsed' => '使用した予測手法',
+            'ensembleNote' => '※ 複数手法のアンサンブル予測を採用'
         ],
         'en' => [
             'title' => 'Personal Finance Dashboard',
@@ -255,7 +264,16 @@ function getTranslations() {
             'lastYearActual' => 'Last Year Same Month',
             'progressInfo' => 'Progress Info',
             'currentDay' => 'Current',
-            'dayUnit' => 'day(s)'
+            'dayUnit' => 'day(s)',
+            // Prediction features
+            'confidenceInterval' => 'Confidence Interval',
+            'trend' => 'Trend',
+            'trendIncreasing' => 'Increasing',
+            'trendDecreasing' => 'Decreasing',
+            'trendStable' => 'Stable',
+            'predictionDetails' => 'Prediction Details',
+            'methodsUsed' => 'Methods Used',
+            'ensembleNote' => '※ Ensemble prediction using multiple methods'
         ]
     ];
 }

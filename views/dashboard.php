@@ -163,13 +163,35 @@
                             <div class="col-md-4 col-6">
                                 <div class="text-muted small" data-i18n="predictedExpense">予測消費額（当月）</div>
                                 <div class="h5 text-info">¥<?= number_format($predicted_expense['predicted_amount']) ?></div>
+                                <?php if (isset($predicted_expense['confidence_lower']) && isset($predicted_expense['confidence_upper'])): ?>
+                                <small class="text-muted">
+                                    <span data-i18n="confidenceInterval">信頼区間</span>:
+                                    ¥<?= number_format($predicted_expense['confidence_lower']) ?>
+                                    ~ ¥<?= number_format($predicted_expense['confidence_upper']) ?>
+                                </small>
+                                <?php else: ?>
                                 <small class="text-muted">
                                     <span data-i18n="basedOnLastYear">前年実績より算出</span>
                                 </small>
+                                <?php endif; ?>
                             </div>
                             <div class="col-md-4 col-6">
                                 <div class="text-muted small" data-i18n="lastYearActual">前年同月実績</div>
                                 <div class="h6">¥<?= number_format($predicted_expense['last_year_actual']) ?></div>
+                                <?php if (isset($predicted_expense['trend_coefficient'])): ?>
+                                <small class="text-muted">
+                                    <span data-i18n="trend">トレンド</span>:
+                                    <?php
+                                    $trend = $predicted_expense['trend_coefficient'];
+                                    if ($trend > 1.05): ?>
+                                        <span class="text-danger">↗ <span data-i18n="trendIncreasing">増加傾向</span> (<?= round(($trend - 1) * 100, 1) ?>%)</span>
+                                    <?php elseif ($trend < 0.95): ?>
+                                        <span class="text-success">↘ <span data-i18n="trendDecreasing">減少傾向</span> (<?= round((1 - $trend) * 100, 1) ?>%)</span>
+                                    <?php else: ?>
+                                        <span class="text-secondary">→ <span data-i18n="trendStable">横ばい</span></span>
+                                    <?php endif; ?>
+                                </small>
+                                <?php endif; ?>
                             </div>
                             <div class="col-md-4 col-12">
                                 <div class="text-muted small" data-i18n="progressInfo">進捗情報</div>
@@ -179,6 +201,34 @@
                                 </div>
                             </div>
                         </div>
+                        <?php if (isset($predicted_expense['methods_used']) && !empty($predicted_expense['methods_used'])): ?>
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <details class="small">
+                                    <summary class="text-muted" style="cursor: pointer;">
+                                        <span data-i18n="predictionDetails">予測詳細情報</span>
+                                        <span class="badge badge-secondary"><?= count($predicted_expense['methods_used']) ?> 手法</span>
+                                    </summary>
+                                    <div class="mt-2 p-2 bg-light rounded">
+                                        <div class="text-muted mb-1" data-i18n="methodsUsed">使用した予測手法:</div>
+                                        <ul class="mb-0 small">
+                                            <?php foreach ($predicted_expense['methods_used'] as $method): ?>
+                                            <li>
+                                                <strong><?= ucwords(str_replace('_', ' ', $method)) ?></strong>
+                                                <?php if (isset($predicted_expense['method_predictions'][$method])): ?>
+                                                    : ¥<?= number_format($predicted_expense['method_predictions'][$method]) ?>
+                                                <?php endif; ?>
+                                            </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                        <div class="text-muted mt-2 small">
+                                            <span data-i18n="ensembleNote">※ 複数手法のアンサンブル予測を採用</span>
+                                        </div>
+                                    </div>
+                                </details>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
                 </div>
