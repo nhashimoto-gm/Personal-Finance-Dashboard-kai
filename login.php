@@ -206,13 +206,6 @@ $csrf_token = generateCsrfToken();
                 </button>
             </form>
 
-            <div class="divider">
-                <span data-i18n="loginOr">または</span>
-            </div>
-
-            <div class="register-link">
-                <p><span data-i18n="loginNoAccount">アカウントをお持ちでないですか?</span> <a href="register.php" data-i18n="loginSignUp">新規登録</a></p>
-            </div>
         </div>
 
         <div class="text-center mt-3">
