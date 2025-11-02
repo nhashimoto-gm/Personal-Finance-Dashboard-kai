@@ -664,7 +664,276 @@ function getBudgetProgressForRange($pdo, $user_id, $start_date, $end_date) {
     }
 }
 
-// Get predicted expense for current month based on last year's data
+// ============================================================
+// Advanced Prediction Engine - Machine Learning-like Statistical Methods
+// ============================================================
+
+// Helper: Get historical monthly data for the same month across multiple years
+function getHistoricalMonthlyData($pdo, $user_id, $target_month, $years_back = 3) {
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return [];
+    }
+
+    $tables = getTableNames();
+    $historical_data = [];
+    $current_year = (int)date('Y');
+
+    for ($i = 1; $i <= $years_back; $i++) {
+        $year = $current_year - $i;
+        $month_start = sprintf('%04d-%02d-01', $year, $target_month);
+        $month_end = date('Y-m-t', strtotime($month_start));
+
+        try {
+            $stmt = $pdo->prepare("SELECT SUM(price) as total FROM {$tables['source']} WHERE user_id = ? AND re_date BETWEEN ? AND ?");
+            $stmt->execute([$user_id, $month_start, $month_end]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            $total = (float)($result['total'] ?? 0);
+
+            // Add recurring expenses
+            $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $month_start, $month_end);
+            foreach ($recurring_instances as $instance) {
+                $total += $instance['price'];
+            }
+
+            if ($total > 0) {
+                $historical_data[] = [
+                    'year' => $year,
+                    'month' => $target_month,
+                    'total' => $total,
+                    'days' => (int)date('t', strtotime($month_start))
+                ];
+            }
+        } catch (Exception $e) {
+            error_log("Historical data fetch error for {$year}-{$target_month}: " . $e->getMessage());
+        }
+    }
+
+    return $historical_data;
+}
+
+// Helper: Detect and remove outliers using IQR method
+function detectOutliers($data_array) {
+    if (count($data_array) < 4) {
+        return $data_array; // Not enough data for outlier detection
+    }
+
+    $values = array_column($data_array, 'total');
+    sort($values);
+
+    $count = count($values);
+    $q1_index = floor($count * 0.25);
+    $q3_index = floor($count * 0.75);
+
+    $q1 = $values[$q1_index];
+    $q3 = $values[$q3_index];
+    $iqr = $q3 - $q1;
+
+    $lower_bound = $q1 - (1.5 * $iqr);
+    $upper_bound = $q3 + (1.5 * $iqr);
+
+    // Filter out outliers
+    return array_filter($data_array, function($item) use ($lower_bound, $upper_bound) {
+        return $item['total'] >= $lower_bound && $item['total'] <= $upper_bound;
+    });
+}
+
+// Helper: Calculate trend coefficient from recent months
+function calculateTrendCoefficient($pdo, $user_id, $months_back = 12) {
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return 1.0; // Neutral trend
+    }
+
+    $tables = getTableNames();
+    $monthly_totals = [];
+
+    $current_date = new DateTime();
+    for ($i = 1; $i <= $months_back; $i++) {
+        $date = clone $current_date;
+        $date->modify("-{$i} months");
+        $year = (int)$date->format('Y');
+        $month = (int)$date->format('m');
+
+        $month_start = sprintf('%04d-%02d-01', $year, $month);
+        $month_end = date('Y-m-t', strtotime($month_start));
+
+        try {
+            $stmt = $pdo->prepare("SELECT SUM(price) as total FROM {$tables['source']} WHERE user_id = ? AND re_date BETWEEN ? AND ?");
+            $stmt->execute([$user_id, $month_start, $month_end]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            $total = (float)($result['total'] ?? 0);
+
+            // Add recurring expenses
+            $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $month_start, $month_end);
+            foreach ($recurring_instances as $instance) {
+                $total += $instance['price'];
+            }
+
+            if ($total > 0) {
+                $monthly_totals[] = $total;
+            }
+        } catch (Exception $e) {
+            continue;
+        }
+    }
+
+    if (count($monthly_totals) < 3) {
+        return 1.0; // Not enough data
+    }
+
+    // Simple linear regression to detect trend
+    $n = count($monthly_totals);
+    $x = range(1, $n);
+    $y = array_reverse($monthly_totals); // Reverse to chronological order
+
+    $sum_x = array_sum($x);
+    $sum_y = array_sum($y);
+    $sum_xy = 0;
+    $sum_xx = 0;
+
+    for ($i = 0; $i < $n; $i++) {
+        $sum_xy += $x[$i] * $y[$i];
+        $sum_xx += $x[$i] * $x[$i];
+    }
+
+    $slope = ($n * $sum_xy - $sum_x * $sum_y) / ($n * $sum_xx - $sum_x * $sum_x);
+    $avg_y = $sum_y / $n;
+
+    // Calculate trend coefficient (1.0 = no trend, >1.0 = increasing, <1.0 = decreasing)
+    if ($avg_y > 0) {
+        $trend_coefficient = 1.0 + ($slope / $avg_y);
+        // Limit to reasonable range
+        return max(0.8, min(1.2, $trend_coefficient));
+    }
+
+    return 1.0;
+}
+
+// Helper: Analyze weekday vs weekend spending patterns
+function analyzeWeekdayPattern($pdo, $user_id, $months_back = 6) {
+    if (!is_numeric($user_id) || (int)$user_id <= 0) {
+        return ['weekday_avg' => 0, 'weekend_avg' => 0, 'has_pattern' => false];
+    }
+
+    $tables = getTableNames();
+    $weekday_totals = [];
+    $weekend_totals = [];
+
+    $start_date = date('Y-m-d', strtotime("-{$months_back} months"));
+    $end_date = date('Y-m-d');
+
+    try {
+        $stmt = $pdo->prepare("SELECT re_date, SUM(price) as daily_total FROM {$tables['source']} WHERE user_id = ? AND re_date BETWEEN ? AND ? GROUP BY re_date");
+        $stmt->execute([$user_id, $start_date, $end_date]);
+        $daily_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($daily_data as $day) {
+            $day_of_week = date('N', strtotime($day['re_date'])); // 1=Monday, 7=Sunday
+            $total = (float)$day['daily_total'];
+
+            if ($day_of_week >= 6) { // Saturday or Sunday
+                $weekend_totals[] = $total;
+            } else {
+                $weekday_totals[] = $total;
+            }
+        }
+
+        $weekday_avg = count($weekday_totals) > 0 ? array_sum($weekday_totals) / count($weekday_totals) : 0;
+        $weekend_avg = count($weekend_totals) > 0 ? array_sum($weekend_totals) / count($weekend_totals) : 0;
+
+        // Check if there's a significant pattern (more than 20% difference)
+        $has_pattern = false;
+        if ($weekday_avg > 0 && $weekend_avg > 0) {
+            $diff_ratio = abs($weekend_avg - $weekday_avg) / max($weekday_avg, $weekend_avg);
+            $has_pattern = $diff_ratio > 0.2;
+        }
+
+        return [
+            'weekday_avg' => $weekday_avg,
+            'weekend_avg' => $weekend_avg,
+            'has_pattern' => $has_pattern
+        ];
+    } catch (Exception $e) {
+        error_log('Weekday pattern analysis error: ' . $e->getMessage());
+        return ['weekday_avg' => 0, 'weekend_avg' => 0, 'has_pattern' => false];
+    }
+}
+
+// Helper: Exponential Smoothing (ETS method)
+function exponentialSmoothing($data_points, $alpha = 0.3) {
+    if (empty($data_points)) {
+        return 0;
+    }
+
+    $smoothed = $data_points[0];
+    foreach ($data_points as $point) {
+        $smoothed = $alpha * $point + (1 - $alpha) * $smoothed;
+    }
+
+    return $smoothed;
+}
+
+// Helper: Simple ARIMA-like prediction (Auto-Regressive component)
+function simpleARIMA($data_points, $order = 2) {
+    $n = count($data_points);
+    if ($n < $order + 1) {
+        return end($data_points);
+    }
+
+    // Use last 'order' points for auto-regression
+    $recent = array_slice($data_points, -$order);
+
+    // Simple weighted average with more weight on recent data
+    $weights = [];
+    $weight_sum = 0;
+    for ($i = 0; $i < $order; $i++) {
+        $weight = $i + 1; // More recent = higher weight
+        $weights[] = $weight;
+        $weight_sum += $weight;
+    }
+
+    $prediction = 0;
+    for ($i = 0; $i < $order; $i++) {
+        $prediction += $recent[$i] * $weights[$i] / $weight_sum;
+    }
+
+    return $prediction;
+}
+
+// Helper: Calculate confidence interval based on historical variance
+function calculateConfidenceInterval($historical_data, $predicted_value, $confidence_level = 0.95) {
+    if (count($historical_data) < 2) {
+        // Default to ±10% if not enough data
+        $margin = $predicted_value * 0.1;
+        return [
+            'lower' => max(0, $predicted_value - $margin),
+            'upper' => $predicted_value + $margin,
+            'margin' => $margin
+        ];
+    }
+
+    $values = array_column($historical_data, 'total');
+    $mean = array_sum($values) / count($values);
+
+    // Calculate standard deviation
+    $variance = 0;
+    foreach ($values as $value) {
+        $variance += pow($value - $mean, 2);
+    }
+    $std_dev = sqrt($variance / count($values));
+
+    // Z-score for 95% confidence ≈ 1.96
+    $z_score = 1.96;
+    $margin = $z_score * $std_dev;
+
+    return [
+        'lower' => max(0, $predicted_value - $margin),
+        'upper' => $predicted_value + $margin,
+        'margin' => $margin,
+        'std_dev' => $std_dev
+    ];
+}
+
+// Main: Advanced prediction function with all methods combined
 function getPredictedExpense($pdo, $user_id, $year, $month) {
     if (!is_numeric($user_id) || (int)$user_id <= 0) {
         return null;
@@ -672,30 +941,14 @@ function getPredictedExpense($pdo, $user_id, $year, $month) {
 
     try {
         $tables = getTableNames();
-
-        // Get last year's same month data
-        $last_year = $year - 1;
-        $last_year_start = sprintf('%04d-%02d-01', $last_year, $month);
-        $last_year_end = date('Y-m-t', strtotime($last_year_start));
-
-        // Get last year's actual for this month
-        $stmt = $pdo->prepare("SELECT SUM(price) as total FROM {$tables['source']} WHERE user_id = ? AND re_date BETWEEN ? AND ?");
-        $stmt->execute([$user_id, $last_year_start, $last_year_end]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $last_year_actual = (float)($result['total'] ?? 0);
-
-        // Add recurring expenses from last year
-        $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $last_year_start, $last_year_end);
-        foreach ($recurring_instances as $instance) {
-            $last_year_actual += $instance['price'];
-        }
-
-        // Get current month data up to today
         $current_month_start = sprintf('%04d-%02d-01', $year, $month);
         $today = date('Y-m-d');
         $current_month_end = min($today, date('Y-m-t', strtotime($current_month_start)));
 
-        // Get current month's actual so far
+        $current_day = (int)date('d');
+        $days_in_month = (int)date('t', strtotime($current_month_start));
+
+        // Get current month's actual spending so far
         $stmt = $pdo->prepare("SELECT SUM(price) as total FROM {$tables['source']} WHERE user_id = ? AND re_date BETWEEN ? AND ?");
         $stmt->execute([$user_id, $current_month_start, $current_month_end]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -707,42 +960,144 @@ function getPredictedExpense($pdo, $user_id, $year, $month) {
             $current_actual += $instance['price'];
         }
 
-        // Calculate prediction based on proportional calculation
-        $current_day = (int)date('d');
-        $days_in_month = (int)date('t', strtotime($current_month_start));
+        // PHASE 1: Historical data with outlier removal
+        $historical_data = getHistoricalMonthlyData($pdo, $user_id, $month, 3);
+        $filtered_data = detectOutliers($historical_data);
 
-        // If we have last year data, use it for prediction
-        if ($last_year_actual > 0 && $current_day < $days_in_month) {
-            // Proportion: (current_actual / current_day) compared to (last_year_actual / days_in_last_year_month)
-            $days_in_last_year_month = (int)date('t', strtotime($last_year_start));
-            $last_year_daily_avg = $last_year_actual / $days_in_last_year_month;
+        // Calculate weighted average of historical data (more recent = higher weight)
+        $weighted_sum = 0;
+        $weight_total = 0;
+        $historical_values = [];
+        foreach ($filtered_data as $index => $data) {
+            $weight = count($filtered_data) - $index; // More recent = higher weight
+            $weighted_sum += $data['total'] * $weight;
+            $weight_total += $weight;
+            $historical_values[] = $data['total'];
+        }
+        $historical_avg = $weight_total > 0 ? $weighted_sum / $weight_total : 0;
 
-            // Predicted: current spending pace applied to remaining days + last year's pace
-            if ($current_day > 0) {
-                $current_daily_avg = $current_actual / $current_day;
-                $predicted = $current_actual + ($current_daily_avg * ($days_in_month - $current_day));
+        // Get trend coefficient
+        $trend_coefficient = calculateTrendCoefficient($pdo, $user_id, 12);
+
+        // PHASE 2: Weekday pattern analysis
+        $weekday_pattern = analyzeWeekdayPattern($pdo, $user_id, 6);
+
+        // Calculate remaining weekdays and weekend days
+        $remaining_weekdays = 0;
+        $remaining_weekend_days = 0;
+        for ($day = $current_day + 1; $day <= $days_in_month; $day++) {
+            $date = sprintf('%04d-%02d-%02d', $year, $month, $day);
+            $day_of_week = date('N', strtotime($date));
+            if ($day_of_week >= 6) {
+                $remaining_weekend_days++;
             } else {
-                $predicted = $last_year_actual;
-            }
-        } else {
-            // If no last year data, just project current pace
-            if ($current_day > 0 && $current_day < $days_in_month) {
-                $current_daily_avg = $current_actual / $current_day;
-                $predicted = $current_actual + ($current_daily_avg * ($days_in_month - $current_day));
-            } else {
-                $predicted = $current_actual;
+                $remaining_weekdays++;
             }
         }
 
+        // PHASE 3: Multiple prediction methods
+        $predictions = [];
+
+        // Method 1: Simple pace-based prediction
+        if ($current_day > 0) {
+            $daily_avg = $current_actual / $current_day;
+            $predictions['simple_pace'] = $current_actual + ($daily_avg * ($days_in_month - $current_day));
+        }
+
+        // Method 2: Historical average with trend
+        if ($historical_avg > 0) {
+            $predictions['historical_trend'] = $historical_avg * $trend_coefficient;
+        }
+
+        // Method 3: Weekday-aware prediction
+        if ($weekday_pattern['has_pattern'] && $current_day > 0) {
+            $current_daily_avg = $current_actual / $current_day;
+            $remaining_expense = ($remaining_weekdays * $weekday_pattern['weekday_avg']) +
+                                ($remaining_weekend_days * $weekday_pattern['weekend_avg']);
+
+            // Blend current pace with weekday pattern
+            $predictions['weekday_aware'] = $current_actual + ($remaining_expense * 0.7 + $current_daily_avg * ($days_in_month - $current_day) * 0.3);
+        }
+
+        // Method 4: Exponential Smoothing
+        if (!empty($historical_values)) {
+            $ets_prediction = exponentialSmoothing($historical_values, 0.3);
+            if ($current_day > 0 && $current_day < $days_in_month) {
+                // Blend with current pace
+                $current_projection = $current_actual * ($days_in_month / $current_day);
+                $predictions['exponential_smoothing'] = $ets_prediction * 0.4 + $current_projection * 0.6;
+            } else {
+                $predictions['exponential_smoothing'] = $ets_prediction;
+            }
+        }
+
+        // Method 5: ARIMA-like prediction
+        if (!empty($historical_values)) {
+            $arima_prediction = simpleARIMA($historical_values, 2);
+            if ($current_day > 0 && $current_day < $days_in_month) {
+                $current_projection = $current_actual * ($days_in_month / $current_day);
+                $predictions['arima'] = $arima_prediction * 0.3 + $current_projection * 0.7;
+            } else {
+                $predictions['arima'] = $arima_prediction;
+            }
+        }
+
+        // Ensemble: Combine all predictions with weights
+        if (empty($predictions)) {
+            // Fallback: just use current pace
+            $final_prediction = $current_day > 0 ? $current_actual * ($days_in_month / $current_day) : $current_actual;
+        } else {
+            // Weighted ensemble
+            $weights = [
+                'simple_pace' => 0.15,
+                'historical_trend' => 0.25,
+                'weekday_aware' => 0.25,
+                'exponential_smoothing' => 0.20,
+                'arima' => 0.15
+            ];
+
+            $weighted_prediction = 0;
+            $total_weight = 0;
+            foreach ($predictions as $method => $value) {
+                $weight = $weights[$method] ?? 0.2;
+                $weighted_prediction += $value * $weight;
+                $total_weight += $weight;
+            }
+            $final_prediction = $total_weight > 0 ? $weighted_prediction / $total_weight : $current_actual;
+        }
+
+        // Calculate confidence interval
+        $confidence = calculateConfidenceInterval($filtered_data, $final_prediction);
+
+        // Get last year's actual for comparison
+        $last_year = $year - 1;
+        $last_year_start = sprintf('%04d-%02d-01', $last_year, $month);
+        $last_year_end = date('Y-m-t', strtotime($last_year_start));
+        $stmt = $pdo->prepare("SELECT SUM(price) as total FROM {$tables['source']} WHERE user_id = ? AND re_date BETWEEN ? AND ?");
+        $stmt->execute([$user_id, $last_year_start, $last_year_end]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $last_year_actual = (float)($result['total'] ?? 0);
+
+        $recurring_instances = generateRecurringExpenseInstances($pdo, $user_id, $last_year_start, $last_year_end);
+        foreach ($recurring_instances as $instance) {
+            $last_year_actual += $instance['price'];
+        }
+
         return [
-            'predicted_amount' => round($predicted, 0),
+            'predicted_amount' => round($final_prediction, 0),
+            'confidence_lower' => round($confidence['lower'], 0),
+            'confidence_upper' => round($confidence['upper'], 0),
+            'confidence_margin' => round($confidence['margin'], 0),
             'last_year_actual' => round($last_year_actual, 0),
             'current_actual' => round($current_actual, 0),
             'current_day' => $current_day,
-            'days_in_month' => $days_in_month
+            'days_in_month' => $days_in_month,
+            'trend_coefficient' => round($trend_coefficient, 3),
+            'methods_used' => array_keys($predictions),
+            'method_predictions' => array_map(function($v) { return round($v, 0); }, $predictions)
         ];
     } catch (Exception $e) {
-        error_log('Predicted expense fetch error: ' . $e->getMessage());
+        error_log('Advanced predicted expense fetch error: ' . $e->getMessage());
         return null;
     }
 }

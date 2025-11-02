@@ -46,11 +46,20 @@ A comprehensive personal finance tracking dashboard built with PHP, MySQL, Boots
 - Category list management (add/view)
 - Easy master data maintenance
 
-### 💰 Budget Management
+### 💰 Budget Management & Forecasting
 - **Monthly Budget Planning** - Set and track monthly spending limits
 - **Visual Progress Tracking** - Color-coded progress bars and alerts
 - **Smart Alerts** - Warning at 80%, danger at 100% of budget
 - **Budget vs Actual** - Real-time comparison with remaining balance
+- **Advanced Expense Forecasting** - AI-powered statistical prediction using multiple methods:
+  - **Historical Analysis** - 3-year weighted average with outlier detection
+  - **Trend Detection** - 12-month linear regression for spending trends
+  - **Weekday Patterns** - Weekday vs. weekend spending analysis
+  - **Exponential Smoothing (ETS)** - Time series smoothing for stable predictions
+  - **ARIMA Model** - Auto-regressive integrated moving average
+  - **Ensemble Prediction** - Weighted combination of 5 prediction methods
+  - **Confidence Intervals** - Statistical range (95% confidence level)
+  - **Prediction Details** - Expandable view showing all prediction methods and values
 
 ### 🔄 Recurring Expenses
 - **Recurring Expense Management** - Track monthly recurring costs (subscriptions, rent, utilities)
@@ -544,6 +553,7 @@ Please include:
 - [x] **User Profile Management** - Username and password update functionality
 - [x] **Unified Design** - Consistent UI between login and dashboard
 - [x] **User Display in Header** - Current user display with dropdown menu
+- [x] **AI-Powered Expense Forecasting** - Statistical ML-like prediction engine with ensemble methods
 
 ### Version 1.2 (Planned)
 - [ ] Transaction memo/notes field
@@ -559,8 +569,8 @@ Please include:
 - [ ] Bank account integration
 - [ ] Receipt photo upload
 - [ ] Mobile app (PWA)
-- [ ] AI-powered insights
-- [ ] Predictive analytics
+- [ ] AI-powered insights and anomaly detection
+- [ ] Advanced predictive analytics with external data integration
 
 ---
 
