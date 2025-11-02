@@ -137,7 +137,14 @@ function getTranslations() {
             'trendStable' => '横ばい',
             'predictionDetails' => '予測詳細情報',
             'methodsUsed' => '使用した予測手法',
+            'methods' => '手法',
             'ensembleNote' => '※ 複数手法のアンサンブル予測を採用',
+            // Prediction methods
+            'methodSimplePace' => '単純ペース予測',
+            'methodHistoricalTrend' => '過去トレンド',
+            'methodWeekdayAware' => '曜日考慮予測',
+            'methodExponentialSmoothing' => '指数平滑法',
+            'methodArima' => '自己回帰予測',
             // Login screen
             'loginTitle' => 'Personal Finance Dashboard',
             'loginSubtitle' => 'ログインしてあなたの財務データにアクセス',
@@ -285,7 +292,14 @@ function getTranslations() {
             'trendStable' => 'Stable',
             'predictionDetails' => 'Prediction Details',
             'methodsUsed' => 'Methods Used',
+            'methods' => 'methods',
             'ensembleNote' => '※ Ensemble prediction using multiple methods',
+            // Prediction methods
+            'methodSimplePace' => 'Simple Pace',
+            'methodHistoricalTrend' => 'Historical Trend',
+            'methodWeekdayAware' => 'Weekday Pattern',
+            'methodExponentialSmoothing' => 'Exponential Smoothing',
+            'methodArima' => 'ARIMA-like',
             // Login screen
             'loginTitle' => 'Personal Finance Dashboard',
             'loginSubtitle' => 'Login to access your financial data',

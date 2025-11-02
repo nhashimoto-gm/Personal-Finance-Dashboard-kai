@@ -207,14 +207,32 @@
                                 <details class="small">
                                     <summary class="text-muted" style="cursor: pointer;">
                                         <span data-i18n="predictionDetails">予測詳細情報</span>
-                                        <span class="badge badge-secondary"><?= count($predicted_expense['methods_used']) ?> 手法</span>
+                                        <span class="badge badge-secondary"><?= count($predicted_expense['methods_used']) ?> <span data-i18n="methods">手法</span></span>
                                     </summary>
                                     <div class="mt-2 p-2 bg-body-tertiary rounded">
                                         <div class="text-muted mb-1" data-i18n="methodsUsed">使用した予測手法:</div>
                                         <ul class="mb-0 small">
-                                            <?php foreach ($predicted_expense['methods_used'] as $method): ?>
+                                            <?php
+                                            // Method name translation mapping
+                                            $method_translation_map = [
+                                                'simple_pace' => 'methodSimplePace',
+                                                'historical_trend' => 'methodHistoricalTrend',
+                                                'weekday_aware' => 'methodWeekdayAware',
+                                                'exponential_smoothing' => 'methodExponentialSmoothing',
+                                                'arima' => 'methodArima'
+                                            ];
+
+                                            foreach ($predicted_expense['methods_used'] as $method):
+                                                $translation_key = $method_translation_map[$method] ?? '';
+                                            ?>
                                             <li>
-                                                <strong><?= ucwords(str_replace('_', ' ', $method)) ?></strong>
+                                                <strong>
+                                                    <?php if ($translation_key): ?>
+                                                        <span data-i18n="<?= $translation_key ?>"><?= ucwords(str_replace('_', ' ', $method)) ?></span>
+                                                    <?php else: ?>
+                                                        <?= ucwords(str_replace('_', ' ', $method)) ?>
+                                                    <?php endif; ?>
+                                                </strong>
                                                 <?php if (isset($predicted_expense['method_predictions'][$method])): ?>
                                                     : ¥<?= number_format($predicted_expense['method_predictions'][$method]) ?>
                                                 <?php endif; ?>
