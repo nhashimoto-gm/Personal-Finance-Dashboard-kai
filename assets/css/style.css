@@ -357,6 +357,11 @@ body {
         width: 28%;
     }
 
+    /* Date column font size for mobile */
+    #recentTransactionsSection .table .transaction-date {
+        font-size: 0.8rem;
+    }
+
     /* Dashboard filter form - reduce vertical spacing */
     .card-body form.row {
         row-gap: 0.5rem !important;

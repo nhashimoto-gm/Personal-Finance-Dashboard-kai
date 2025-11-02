@@ -5,6 +5,31 @@ const translations = window.translationsData || {};
 
 let currentLang = 'en';
 
+// 日付フォーマット変換
+function formatTransactionDates() {
+    const isMobile = window.innerWidth <= 768;
+    const dateCells = document.querySelectorAll('.transaction-date');
+
+    dateCells.forEach(cell => {
+        const fullDate = cell.getAttribute('data-date');
+        if (!fullDate) return;
+
+        if (isMobile) {
+            // モバイル: YY-MM-DD形式
+            const dateParts = fullDate.split('-');
+            if (dateParts.length === 3) {
+                const year = dateParts[0].slice(-2); // 下2桁
+                const month = dateParts[1];
+                const day = dateParts[2];
+                cell.textContent = `${year}-${month}-${day}`;
+            }
+        } else {
+            // デスクトップ: YYYY-MM-DD形式
+            cell.textContent = fullDate;
+        }
+    });
+}
+
 // 言語切り替え
 function switchLanguage(lang) {
     currentLang = lang;
@@ -34,6 +59,16 @@ function switchLanguage(lang) {
 // ページ読み込み時
 window.addEventListener('load', () => {
     switchLanguage('en');
+    formatTransactionDates();
+});
+
+// ウィンドウリサイズ時に日付フォーマットを更新
+let resizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        formatTransactionDates();
+    }, 250);
 });
 
 // 言語切り替えボタン
