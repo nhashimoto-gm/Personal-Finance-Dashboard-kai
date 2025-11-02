@@ -60,7 +60,7 @@
                     <tbody>
                         <?php foreach ($recent_transactions as $t): ?>
                             <tr>
-                                <td><?= htmlspecialchars($t['re_date']) ?></td>
+                                <td class="transaction-date" data-date="<?= htmlspecialchars($t['re_date']) ?>"><?= htmlspecialchars($t['re_date']) ?></td>
                                 <td>
                                     <span class="badge bg-primary clickable"
                                         onclick="searchByShop('<?= htmlspecialchars($t['label1'], ENT_QUOTES) ?>')">
