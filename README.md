@@ -539,7 +539,7 @@ Please include:
 
 ## 🗺️ Roadmap
 
-### Version 1.1 (✅ Completed)
+### Version 2.1 (✅ Completed)
 - [x] **Transaction Edit & Delete** - Modify or remove transactions with inline controls
 - [x] **Export to CSV/Excel** - Export transactions and summaries with UTF-8 BOM support
 - [x] **Budget Planning & Alerts** - Set monthly budgets with visual progress tracking
@@ -555,7 +555,7 @@ Please include:
 - [x] **User Display in Header** - Current user display with dropdown menu
 - [x] **AI-Powered Expense Forecasting** - Statistical ML-like prediction engine with ensemble methods
 
-### Version 1.2 (Planned)
+### Version 3.0 (Planned)
 - [ ] Transaction memo/notes field
 - [ ] Transaction categories hierarchy
 - [ ] Advanced filtering options
@@ -564,7 +564,7 @@ Please include:
 - [ ] Two-factor authentication (2FA)
 - [ ] Password reset via email
 
-### Version 2.0 (Future)
+### Version 4.0 (Future)
 - [ ] Multi-currency support
 - [ ] Bank account integration
 - [ ] Receipt photo upload
