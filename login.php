@@ -1,6 +1,7 @@
 <?php
 // login.php - ログインページ
 require_once 'config.php';
+require_once 'translations.php';
 
 // セッション開始
 if (session_status() === PHP_SESSION_NONE) {
@@ -142,23 +143,23 @@ $csrf_token = generateCsrfToken();
         .register-link a:hover {
             text-decoration: underline;
         }
-        .theme-toggle-login {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-        }
     </style>
 </head>
 <body>
-    <button class="btn btn-outline-light theme-toggle-login" id="themeToggle">
-        <i class="bi bi-moon-fill" id="themeIcon"></i>
-    </button>
+    <div class="d-flex gap-2" style="position: absolute; top: 20px; right: 20px;">
+        <button class="btn btn-outline-light" id="langToggle">
+            <i class="bi bi-translate"></i> <span id="langLabel">JP</span>
+        </button>
+        <button class="btn btn-outline-light" id="themeToggle">
+            <i class="bi bi-moon-fill" id="themeIcon"></i>
+        </button>
+    </div>
     <div class="login-container">
         <div class="login-card card">
             <div class="login-header">
                 <i class="bi bi-wallet2"></i>
-                <h1>Personal Finance Dashboard</h1>
-                <p>ログインしてあなたの財務データにアクセス</p>
+                <h1 data-i18n="loginTitle">Personal Finance Dashboard</h1>
+                <p data-i18n="loginSubtitle">ログインしてあなたの財務データにアクセス</p>
             </div>
 
             <?php if ($error): ?>
@@ -182,35 +183,35 @@ $csrf_token = generateCsrfToken();
                 <input type="hidden" name="action" value="login">
 
                 <div class="mb-3">
-                    <label for="username" class="form-label">ユーザー名またはメールアドレス</label>
+                    <label for="username" class="form-label" data-i18n="loginUsername">ユーザー名またはメールアドレス</label>
                     <input type="text" class="form-control" id="username" name="username"
-                           placeholder="username or email@example.com" required autofocus>
+                           data-i18n-placeholder="loginUsernamePlaceholder" placeholder="username or email@example.com" required autofocus>
                 </div>
 
                 <div class="mb-3">
-                    <label for="password" class="form-label">パスワード</label>
+                    <label for="password" class="form-label" data-i18n="loginPassword">パスワード</label>
                     <input type="password" class="form-control" id="password" name="password"
-                           placeholder="Enter your password" required>
+                           data-i18n-placeholder="loginPasswordPlaceholder" placeholder="Enter your password" required>
                 </div>
 
                 <div class="mb-3 form-check">
                     <input type="checkbox" class="form-check-input" id="remember">
-                    <label class="form-check-label" for="remember">
+                    <label class="form-check-label" for="remember" data-i18n="loginRememberMe">
                         ログイン状態を保持
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-login">
+                <button type="submit" class="btn btn-login" data-i18n="loginButton">
                     ログイン
                 </button>
             </form>
 
             <div class="divider">
-                <span>または</span>
+                <span data-i18n="loginOr">または</span>
             </div>
 
             <div class="register-link">
-                <p>アカウントをお持ちでないですか? <a href="register.php">新規登録</a></p>
+                <p><span data-i18n="loginNoAccount">アカウントをお持ちでないですか?</span> <a href="register.php" data-i18n="loginSignUp">新規登録</a></p>
             </div>
         </div>
 
@@ -223,6 +224,35 @@ $csrf_token = generateCsrfToken();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Translation data
+        const translations = <?= json_encode(getTranslations()) ?>;
+        let currentLang = localStorage.getItem('language') || 'en';
+
+        // Language switching functionality
+        function switchLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('language', lang);
+
+            // Update text content
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+
+            // Update placeholders
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (translations[lang] && translations[lang][key]) {
+                    el.placeholder = translations[lang][key];
+                }
+            });
+
+            // Update language button label
+            document.getElementById('langLabel').textContent = lang === 'en' ? 'JP' : 'EN';
+        }
+
         // Theme toggle functionality
         const themeToggle = document.getElementById('themeToggle');
         const themeIcon = document.getElementById('themeIcon');
@@ -250,6 +280,16 @@ $csrf_token = generateCsrfToken();
                 themeIcon.classList.add('bi-sun-fill');
             }
         }
+
+        // Language toggle event listener
+        document.getElementById('langToggle').addEventListener('click', () => {
+            switchLanguage(currentLang === 'en' ? 'ja' : 'en');
+        });
+
+        // Initialize language on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            switchLanguage(currentLang);
+        });
     </script>
 </body>
 </html>
