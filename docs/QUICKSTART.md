@@ -1,128 +1,282 @@
-# 🚀 クイックスタートガイド
+# 🚀 Quick Start Guide
 
-## 3ステップで始める
+Get your Personal Finance Dashboard up and running in 3 simple steps!
 
-### ステップ1: ファイルをコピー（1分）
+## Prerequisites
+
+Before you begin, ensure you have:
+- PHP 7.4+ installed
+- MySQL 5.7+ or MariaDB 10.2+
+- A web server (Apache/Nginx)
+- Git (for cloning the repository)
+
+## 3 Steps to Get Started
+
+### Step 1: Install the Application (5 minutes)
 
 ```bash
-# 既存プロジェクトに移動
-cd /path/to/personal-finance-dashboard-public
+# Clone the repository
+git clone https://github.com/nhashimoto-gm/Personal-Finance-Dashboard.git
+cd Personal-Finance-Dashboard
 
-# 新しいディレクトリ作成
-mkdir -p analytics api
-
-# ファイルをコピー
-cp /path/to/dashboard.html analytics/index.html
-cp /path/to/analytics-api.php api/
+# Create the database
+mysql -u root -p
 ```
 
-### ステップ2: 設定を確認（1分）
-
-`.env_db`ファイルが既にあるので、何も変更不要！
-
-### ステップ3: デモモードで動作確認（1分）
-
-1. `analytics/index.html`をブラウザで開く
-2. デモデータで動作を確認
-3. 問題なければ本番モードに切り替え：
-
-```javascript
-// analytics/index.html の24行目付近
-const USE_DEMO_DATA = false;  // true → false に変更
+```sql
+CREATE DATABASE finance_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE finance_db;
+SOURCE database.sql;
+EXIT;
 ```
 
-## ✅ チェックリスト
+### Step 2: Configure Environment (2 minutes)
 
-- [ ] `analytics/index.html` を配置
-- [ ] `api/analytics-api.php` を配置
-- [ ] `.env_db` の接続情報が正しい
-- [ ] ブラウザでアクセスして動作確認
-- [ ] デモモードから本番モードに切り替え
+```bash
+# Copy the example environment file
+cp .env_db.example .env_db
 
-## 📂 最終的なファイル構造
+# Edit with your credentials
+nano .env_db  # or use your preferred editor
+```
+
+Edit `.env_db` with your database credentials:
+
+```ini
+DB_HOST=localhost
+DB_USERNAME=your_database_username
+DB_PASSWORD=your_database_password
+DB_DATABASE=finance_db
+```
+
+```bash
+# Set proper permissions
+chmod 600 .env_db
+```
+
+### Step 3: Access the Application (1 minute)
+
+1. **Start your web server** or use PHP's built-in server:
+   ```bash
+   php -S localhost:8000
+   ```
+
+2. **Open your browser** and navigate to:
+   ```
+   http://localhost:8000
+   ```
+
+3. **Create your account**:
+   - Click "Register" to create a new account
+   - Log in with your credentials
+   - Start tracking your finances!
+
+## ✅ Verification Checklist
+
+After installation, verify:
+
+- [ ] Database tables created successfully
+- [ ] `.env_db` file configured with correct credentials
+- [ ] Application loads without errors
+- [ ] Can register a new user account
+- [ ] Can log in successfully
+- [ ] Dashboard displays correctly
+- [ ] Can add a transaction
+- [ ] Charts render properly
+
+## 📂 Final Directory Structure
 
 ```
-personal-finance-dashboard-public/
-├── .env_db                    ✅ 既存（そのまま）
-├── database.sql               ✅ 既存
-├── queries.php                ✅ 既存
-├── index.php                  ✅ 既存
+Personal-Finance-Dashboard/
+├── .env_db                         # Database configuration (configured ✅)
+├── .env_db.example                 # Example configuration
+├── database.sql                    # Database schema
+├── index.php                       # Main entry point
+├── config.php                      # Application configuration
+├── functions.php                   # Business logic
+├── queries.php                     # Database queries
+├── translations.php                # Multi-language support
+├── view.php                        # Main view template
 ├── api/
-│   └── analytics-api.php     🆕 追加
-└── analytics/
-    └── index.html            🆕 追加
+│   └── analytics-api.php          # Analytics API
+├── analytics/
+│   └── index.html                 # Advanced analytics dashboard
+├── assets/
+│   ├── css/
+│   │   └── style.css              # Stylesheets
+│   └── js/
+│       └── app.js                 # JavaScript functionality
+├── docs/                           # Documentation
+└── views/                          # View templates
 ```
 
-## 🌐 アクセスURL
+## 🌐 Accessing Your Dashboard
 
-**ローカル開発:**
+### Local Development
 ```
-http://localhost/finance/analytics/
-```
-
-**Lolipopサーバー:**
-```
-https://your-domain.com/finance/analytics/
+http://localhost:8000/
 ```
 
-## 🎯 次にやること
+### Production Server
+```
+https://your-domain.com/Personal-Finance-Dashboard/
+```
 
-1. **セキュリティ設定**
-   - Basic認証を追加
-   - IPアドレス制限
+### Advanced Analytics
+```
+https://your-domain.com/Personal-Finance-Dashboard/analytics/
+```
 
-2. **カスタマイズ**
-   - 色を好みに変更
-   - 表示する統計を調整
+## 🎯 Next Steps
 
-3. **既存システムと連携**
-   - メニューにリンク追加
-   - データを共有
+### 1. Security Configuration (Recommended)
+- **Change default admin password** (if migrated from single-user)
+- **Enable HTTPS** in production
+- **Configure rate limiting** (see [RATE_LIMITING.md](./RATE_LIMITING.md))
+- **Set up regular backups**
 
-## 💬 よくある質問
+### 2. Customization
+- **Theme**: Switch between light and dark mode
+- **Language**: Toggle between English and Japanese
+- **Budget**: Set monthly budgets for expense tracking
+- **Categories**: Add custom shops and categories
 
-**Q: 既存のダッシュボードに影響はありますか？**
-A: ありません。完全に独立して動作します。
+### 3. Integration
+- **CSV Import**: Bulk import historical transactions
+- **Recurring Expenses**: Set up monthly recurring costs
+- **Analytics**: Explore the advanced analytics dashboard
+- **Reports**: Export data to CSV for external analysis
 
-**Q: データベースを変更する必要はありますか？**
-A: いいえ。既存のテーブルをそのまま使用します。
+## 💬 Frequently Asked Questions
 
-**Q: デモデータはどこから来ていますか？**
-A: `dashboard.html`内のJavaScriptで自動生成されています。
+### Q: Will this affect my existing data?
+**A:** No. This is a fresh installation. If you're migrating data, see [MULTI_ACCOUNT_MIGRATION.md](../MULTI_ACCOUNT_MIGRATION.md).
 
-**Q: 本番モードに切り替えるとエラーが出ます**
-A: APIのパスを確認してください。`API_BASE_URL`が正しいか確認。
+### Q: Do I need to modify the database?
+**A:** No. The `database.sql` script creates all necessary tables and structures automatically.
 
-## 🔍 トラブルシューティング
+### Q: Can multiple users use the same installation?
+**A:** Yes! The application supports multiple users with isolated data. Each user has their own transactions, budgets, and settings.
 
-### データが表示されない
+### Q: How do I reset my password?
+**A:** Currently, password reset must be done via database. Contact your administrator or see the user management documentation.
+
+### Q: The analytics dashboard shows no data
+**A:** Analytics require at least some transaction data. Add a few transactions first, then check the analytics page.
+
+## 🔍 Troubleshooting
+
+### Database Connection Error
+
+**Problem**: Can't connect to database
+
+**Solutions**:
+1. Verify `.env_db` credentials are correct
+2. Ensure MySQL server is running:
+   ```bash
+   sudo systemctl status mysql
+   ```
+3. Check database user has proper permissions:
+   ```sql
+   GRANT ALL PRIVILEGES ON finance_db.* TO 'your_username'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
+
+### White Screen / No Output
+
+**Problem**: Application shows blank page
+
+**Solutions**:
+1. Check PHP error log:
+   ```bash
+   tail -f /var/log/php_errors.log
+   ```
+2. Enable error display (development only):
+   ```php
+   // Add to index.php temporarily
+   ini_set('display_errors', 1);
+   error_reporting(E_ALL);
+   ```
+3. Verify all required PHP extensions are installed:
+   ```bash
+   php -m | grep -E 'pdo|mysql|mbstring'
+   ```
+
+### Permission Denied Errors
+
+**Problem**: Can't write to files or directories
+
+**Solutions**:
 ```bash
-# APIが動作しているか確認
-curl https://your-domain.com/api/analytics-api.php?action=summary
+# Set proper ownership (adjust user/group as needed)
+sudo chown -R www-data:www-data /path/to/Personal-Finance-Dashboard
+
+# Set proper permissions
+chmod 755 /path/to/Personal-Finance-Dashboard
+chmod 600 .env_db
 ```
 
-### 白い画面が表示される
-```
-F12 → Console でエラーを確認
+### Charts Not Rendering
+
+**Problem**: Dashboard loads but charts don't appear
+
+**Solutions**:
+1. Check browser console for JavaScript errors (F12)
+2. Verify Highcharts CDN is accessible
+3. Clear browser cache
+4. Try a different browser
+
+### API Errors
+
+**Problem**: Analytics API returns errors
+
+**Solutions**:
+```bash
+# Test API directly
+curl http://localhost:8000/api/analytics-api.php?action=summary
+
+# Check API file permissions
+chmod 644 api/analytics-api.php
+
+# Verify .env_db path in analytics-api.php
 ```
 
-### MySQLエラーが出る
-```php
-// .env_db の設定を確認
-DB_HOST=mysql000.lolipop.jp
-DB_USERNAME=LAA0000000
-DB_PASSWORD=your_password
-DB_DATABASE=LAA0000000-xxxxxx
-```
+## 📱 Mobile Access
 
-## 📱 スマホでアクセス
+The dashboard is fully responsive and works great on mobile devices!
 
-QRコードを生成してスマホからアクセス：
-```
-https://www.qr-code-generator.com/
-→ URLを入力してQRコード生成
-```
+To easily access from your phone:
+1. Deploy to a web server with HTTPS
+2. Add to your phone's home screen for app-like experience (PWA support coming soon)
 
-## 🎉 完了！
+## 🎉 You're All Set!
 
-これで17年分のデータを美しく可視化できます！
+You can now:
+- ✅ Track daily expenses
+- ✅ View spending trends
+- ✅ Manage budgets
+- ✅ Analyze financial patterns
+- ✅ Export reports
+
+For detailed usage instructions, see [USAGE.md](./USAGE.md).
+
+For advanced analytics features, see [ANALYTICS.md](./ANALYTICS.md).
+
+## 📚 Additional Resources
+
+- **[USAGE.md](./USAGE.md)** - Detailed usage guide
+- **[ANALYTICS.md](./ANALYTICS.md)** - Advanced analytics documentation
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contributing guidelines
+- **[Main README](../README.md)** - Complete project documentation
+
+## 🆘 Need Help?
+
+- **GitHub Issues**: https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/issues
+- **Discussions**: https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/discussions
+- **Email**: 94941257+nhashimoto-gm@users.noreply.github.com
+
+---
+
+**Last Updated**: 2025-11-03
+**Version**: 2.1
+**Estimated Setup Time**: 10 minutes
