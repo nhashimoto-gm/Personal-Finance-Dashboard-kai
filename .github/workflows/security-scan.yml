@@ -1,0 +1,86 @@
+name: Security Scan
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+  schedule:
+    # Run weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+
+jobs:
+  security-checker:
+    name: PHP Security Checker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: pdo, pdo_mysql
+          coverage: none
+
+      - name: Install Local PHP Security Checker
+        run: |
+          curl -L https://github.com/fabpot/local-php-security-checker/releases/download/v2.1.3/local-php-security-checker_2.1.3_linux_amd64 -o local-php-security-checker
+          chmod +x local-php-security-checker
+          sudo mv local-php-security-checker /usr/local/bin/
+
+      - name: Run Security Checker
+        run: |
+          # Create a composer.lock if it doesn't exist (for scanning purposes)
+          if [ ! -f composer.lock ]; then
+            echo "No composer.lock found. Creating minimal one for security scanning..."
+            echo '{"packages": [], "packages-dev": []}' > composer.lock
+          fi
+
+          local-php-security-checker --format=json || true
+
+  sensitive-data-scan:
+    name: Scan for Sensitive Data
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog OSS
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          extra_args: --debug --only-verified
+
+
+  sql-injection-check:
+    name: SQL Injection Pattern Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for potential SQL injection vulnerabilities
+        run: |
+          echo "Scanning for potential SQL injection patterns..."
+
+          # Check for direct variable concatenation in SQL queries
+          echo "Checking for direct SQL concatenation..."
+          grep -r -n '\$sql.*\.\s*\$' --include="*.php" . || echo "No direct concatenation found"
+
+          # Check for execute() without prepare()
+          echo "Checking for queries without prepared statements..."
+          grep -r -n 'mysql_query\|mysqli_query' --include="*.php" . && echo "⚠️  Found deprecated mysql functions!" || echo "✅ No deprecated mysql functions"
+
+          # Look for PDO without prepare
+          echo "Checking PDO usage..."
+          grep -r -n 'query(' --include="*.php" . | grep -v prepare && echo "⚠️  Found direct PDO query() calls" || echo "✅ Using prepared statements"
+

@@ -1,0 +1,45 @@
+name: PHP Syntax Check
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  syntax-check:
+    name: Check PHP Syntax
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+
+      - name: Check PHP syntax for all files
+        run: |
+          echo "Checking PHP syntax..."
+          HAS_ERRORS=0
+
+          # Find all PHP files and check syntax
+          while IFS= read -r -d '' file; do
+            echo "Checking: $file"
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "❌ Syntax error in: $file"
+              php -l "$file"
+              HAS_ERRORS=1
+            fi
+          done < <(find . -name "*.php" -not -path "./vendor/*" -print0)
+
+          if [ $HAS_ERRORS -eq 1 ]; then
+            echo "❌ PHP syntax errors found!"
+            exit 1
+          else
+            echo "✅ All PHP files have valid syntax!"
+          fi
+

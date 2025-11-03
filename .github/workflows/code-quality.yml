@@ -1,0 +1,143 @@
+name: Code Quality Check
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  phpstan:
+    name: PHPStan Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: pdo, pdo_mysql
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install PHPStan
+        run: |
+          composer require --dev phpstan/phpstan --no-interaction --no-progress || echo "Continuing without composer.json"
+          # If no composer.json exists, install globally
+          if [ ! -f composer.json ]; then
+            composer global require phpstan/phpstan
+            echo "$(composer global config bin-dir --absolute)" >> $GITHUB_PATH
+          fi
+
+      - name: Create PHPStan configuration
+        run: |
+          cat > phpstan.neon << 'EOF'
+          parameters:
+              level: 5
+              paths:
+                  - .
+              excludePaths:
+                  - vendor
+                  - assets
+                  - .git
+              ignoreErrors:
+                  - '#Undefined variable: \$#'
+                  - '#Variable \$.* might not be defined#'
+          EOF
+
+      - name: Run PHPStan
+        run: |
+          if [ -f vendor/bin/phpstan ]; then
+            vendor/bin/phpstan analyse --memory-limit=1G || true
+          else
+            phpstan analyse --memory-limit=1G || true
+          fi
+
+  phpcs:
+    name: PHP CodeSniffer
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          tools: cs2pr
+          coverage: none
+
+      - name: Install PHP_CodeSniffer
+        run: |
+          composer require --dev squizlabs/php_codesniffer --no-interaction --no-progress || echo "Continuing without composer.json"
+          if [ ! -f composer.json ]; then
+            composer global require squizlabs/php_codesniffer
+            echo "$(composer global config bin-dir --absolute)" >> $GITHUB_PATH
+          fi
+
+      - name: Create PHPCS configuration
+        run: |
+          cat > phpcs.xml << 'EOF'
+          <?xml version="1.0"?>
+          <ruleset name="PFD Coding Standards">
+              <description>Coding standards for PFD project</description>
+
+              <file>.</file>
+
+              <exclude-pattern>*/vendor/*</exclude-pattern>
+              <exclude-pattern>*/assets/*</exclude-pattern>
+              <exclude-pattern>*/.git/*</exclude-pattern>
+
+              <arg name="extensions" value="php"/>
+              <arg name="colors"/>
+              <arg value="p"/>
+
+              <rule ref="PSR12">
+                  <!-- Relax some rules for legacy code -->
+                  <exclude name="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
+                  <exclude name="PSR12.Files.FileHeader.SpacingAfterBlock"/>
+              </rule>
+          </ruleset>
+          EOF
+
+      - name: Run PHPCS
+        run: |
+          if [ -f vendor/bin/phpcs ]; then
+            vendor/bin/phpcs --standard=phpcs.xml --report=checkstyle | cs2pr || true
+          else
+            phpcs --standard=phpcs.xml --report=checkstyle | cs2pr || true
+          fi
+
+  phpcbf:
+    name: PHP Code Beautifier
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+
+      - name: Install PHP_CodeSniffer
+        run: |
+          composer global require squizlabs/php_codesniffer
+          echo "$(composer global config bin-dir --absolute)" >> $GITHUB_PATH
+
+      - name: Run PHPCBF (dry-run)
+        run: |
+          phpcbf --standard=PSR12 --dry-run . || true
