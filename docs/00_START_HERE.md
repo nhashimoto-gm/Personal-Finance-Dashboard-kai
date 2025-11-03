@@ -1,256 +1,127 @@
-# 家計簿分析ダッシュボード - 完全パッケージ
+# Personal Finance Dashboard - Documentation Overview
 
-## 📦 パッケージ内容
+## 📦 Welcome
 
-このパッケージには、既存の`personal-finance-dashboard-public`システムに統合できる、
-React + Chart.js による高度な分析ダッシュボードが含まれています。
+Welcome to the Personal Finance Dashboard documentation! This comprehensive guide will help you get started and make the most of your financial tracking system.
 
-## 🗂️ ファイル構成
+## 📚 Documentation Structure
 
-### 📄 メインダッシュボード
-```
-dashboard.html                    ★推奨★ 最新版・フル機能
-├─ 17年間のデータ可視化
-├─ 4つのタブ（概要/トレンド/内訳/分析）
-├─ 移動平均トレンド分析
-├─ 曜日別・季節性パターン分析
-└─ デモモード/本番モード切替可能
-```
+### Getting Started (Essential Reading)
+- **[QUICKSTART.md](./QUICKSTART.md)** - Get up and running in 3 steps (⏱️ 3 minutes)
+- **[USAGE.md](./USAGE.md)** - Detailed usage guide for all features
+- **[README.md](../README.md)** - Main project README with overview and installation
 
-### 🎨 その他のダッシュボード
-```
-finance-dashboard.html           基本版（シンプル）
-advanced-dashboard.html          高度分析版（予測機能付き）
-```
+### Advanced Features
+- **[ANALYTICS.md](./ANALYTICS.md)** - Advanced analytics dashboard documentation
+- **[README_ANALYTICS.md](./README_ANALYTICS.md)** - Analytics integration guide
+- **[RATE_LIMITING.md](./RATE_LIMITING.md)** - Rate limiting and security features
 
-### 🔌 API（バックエンド）
-```
-api/
-├── analytics-api.php            ★メインAPI★ 新規実装
-│   ├─ 8つのエンドポイント
-│   ├─ .env_db 完全対応
-│   └─ 既存DB構造対応
-│
-├── analytics-integration.php    既存queries.php統合版
-│   ├─ 既存関数を活用
-│   └─ 拡張分析機能
-│
-└── finance-data.php             汎用API（参考）
-```
+### Migration & Deployment
+- **[MIGRATION_GUIDE.md](../MIGRATION_GUIDE.md)** - Repository migration guide
+- **[MULTI_ACCOUNT_MIGRATION.md](../MULTI_ACCOUNT_MIGRATION.md)** - Multi-user migration guide
 
-### 📚 ドキュメント
-```
-README_ANALYTICS.md              ★詳細ガイド★ 必読
-├─ セットアップ手順
-├─ 既存システムとの統合方法
-├─ カスタマイズガイド
-└─ トラブルシューティング
+### Development
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** - Contribution guidelines for developers
+- **[APP_DIAGRAM.md](./APP_DIAGRAM.md)** - Application architecture diagrams
 
-QUICKSTART.md                    3ステップで開始
-├─ 1分でセットアップ
-└─ チェックリスト付き
+## 🎯 Quick Navigation by Role
 
-README.md                        基本説明
-```
+### 👤 For End Users
+Start here to learn how to use the application:
+1. [QUICKSTART.md](./QUICKSTART.md) - Quick setup
+2. [USAGE.md](./USAGE.md) - How to use all features
+3. [ANALYTICS.md](./ANALYTICS.md) - Advanced analytics
 
-### 🗄️ データベース
-```
-database-schema.sql              サンプルスキーマ（参考）
-optimization.sql                 ★パフォーマンス最適化★
-├─ インデックス追加
-├─ 便利なビュー定義
-├─ キャッシュテーブル
-└─ 高速化クエリ集
-```
+### 🚀 For Administrators
+Deploying or migrating the application:
+1. [Main README](../README.md) - Installation guide
+2. [MIGRATION_GUIDE.md](../MIGRATION_GUIDE.md) - Repository migration
+3. [MULTI_ACCOUNT_MIGRATION.md](../MULTI_ACCOUNT_MIGRATION.md) - Multi-user setup
+4. [RATE_LIMITING.md](./RATE_LIMITING.md) - Security configuration
 
-## 🚀 今すぐ始める（3ステップ）
+### 👩‍💻 For Developers
+Contributing to the project:
+1. [CONTRIBUTING.md](./CONTRIBUTING.md) - How to contribute
+2. [APP_DIAGRAM.md](./APP_DIAGRAM.md) - Architecture overview
+3. [Main README](../README.md) - Technical stack
 
-### ステップ1: ファイルを配置
+## ✨ Key Features Overview
+
+### 🔐 Security & Authentication
+- User registration and login
+- Multi-account support with data isolation
+- CSRF protection and rate limiting
+- Session management with timeout
+
+### 📊 Dashboard & Analytics
+- Real-time expense tracking
+- Interactive charts (Highcharts & Chart.js)
+- Period-based filtering and analysis
+- Budget vs actual comparison
+
+### 💰 Financial Management
+- Transaction management (CRUD operations)
+- Budget planning with visual progress tracking
+- Recurring expense tracking
+- CSV import/export
+
+### 📈 Advanced Analytics
+- 17-year historical data visualization
+- Trend analysis with moving averages
+- Weekday and seasonal pattern detection
+- Shop and category breakdown analysis
+
+### 🌐 User Experience
+- Multi-language support (English/Japanese)
+- Dark mode with automatic chart theming
+- Responsive design (mobile, tablet, desktop)
+- Real-time input validation
+
+## 🚀 Quick Start Guide
+
+### For New Users
 ```bash
-# 既存プロジェクトに移動
-cd /path/to/personal-finance-dashboard-public
+# 1. Install the application (see main README.md)
+git clone https://github.com/nhashimoto-gm/Personal-Finance-Dashboard.git
+cd Personal-Finance-Dashboard
 
-# ファイルをコピー
-cp dashboard.html analytics/index.html
-cp api/analytics-api.php api/
+# 2. Set up database
+mysql -u root -p < database.sql
+
+# 3. Configure environment
+cp .env_db.example .env_db
+# Edit .env_db with your credentials
+
+# 4. Access the application
+http://localhost/Personal-Finance-Dashboard/
 ```
 
-### ステップ2: 動作確認（デモモード）
-```
-ブラウザで analytics/index.html を開く
-→ サンプルデータで動作確認
-```
+### For Existing Users
+See [USAGE.md](./USAGE.md) for detailed instructions on:
+- Adding transactions
+- Managing budgets
+- Using analytics
+- Exporting data
 
-### ステップ3: 本番モードに切替
-```javascript
-// analytics/index.html の24行目
-const USE_DEMO_DATA = false;  // true → false
-```
+## 🔗 External Resources
 
-## 📊 主な機能
+- **GitHub Repository**: https://github.com/nhashimoto-gm/Personal-Finance-Dashboard
+- **Issues**: https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/issues
+- **Discussions**: https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/discussions
 
-### 基本機能
-✅ 17年間（2008-2025）のデータ可視化
-✅ 月次・年次の収支トレンド
-✅ ショップ別・カテゴリ別分析
-✅ 期間フィルター（全期間/直近12ヶ月/年別）
-✅ レスポンシブデザイン（スマホ対応）
+## 📞 Support
 
-### 高度な分析
-✅ 6ヶ月移動平均トレンド
-✅ 曜日別平均支出分析
-✅ 月別季節性パターン検出
-✅ 自動インサイト生成
-✅ トップショップ・カテゴリランキング
+If you encounter any issues:
+1. Check the relevant documentation section above
+2. Search existing [GitHub Issues](https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/issues)
+3. Create a new issue with detailed information
 
-### パフォーマンス
-✅ データベースインデックス最適化
-✅ ビューによる高速クエリ
-✅ キャッシュテーブル対応
-✅ 非同期データ読み込み
+## 📄 License
 
-## 🎯 統合オプション
-
-### オプションA: 別ページとして運用（推奨）
-```
-既存: https://your-domain.com/finance/
-新規: https://your-domain.com/finance/analytics/
-```
-**メリット**: 既存システムに影響なし、安全
-
-### オプションB: メニューに統合
-```html
-<!-- 既存index.phpに追加 -->
-<nav>
-    <a href="/">入力</a>
-    <a href="/analytics/">📊 分析</a>
-</nav>
-```
-
-### オプションC: タブとして統合
-```javascript
-// iframeで埋め込み
-<iframe src="/analytics/" width="100%" height="800px"></iframe>
-```
-
-## 🔧 カスタマイズ例
-
-### 色テーマ変更
-```css
-.stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    /* お好みのカラーに変更 */
-}
-```
-
-### 統計カード追加
-```javascript
-<div className="stat-card">
-    <div className="stat-label">新しい指標</div>
-    <div className="stat-value">¥XXX</div>
-</div>
-```
-
-### 新しいグラフ追加
-```javascript
-const MyChart = ({ data }) => {
-    // Chart.jsコンポーネント
-};
-```
-
-## 📈 APIエンドポイント一覧
-
-| エンドポイント | 説明 |
-|---|---|
-| `?action=summary` | 全期間統計 |
-| `?action=monthly` | 月次データ |
-| `?action=yearly` | 年次データ |
-| `?action=shop` | ショップ別 |
-| `?action=category` | カテゴリ別 |
-| `?action=daily` | 日別データ |
-| `?action=trends` | トレンド分析 |
-| `?action=stats` | 統計分析 |
-
-## 🔒 セキュリティ
-
-### Basic認証（推奨）
-```apache
-# .htaccess
-AuthType Basic
-AuthName "Analytics"
-AuthUserFile /path/.htpasswd
-Require valid-user
-```
-
-### IPアドレス制限
-```php
-$allowed_ips = ['your-ip'];
-if (!in_array($_SERVER['REMOTE_ADDR'], $allowed_ips)) {
-    die('Access denied');
-}
-```
-
-## 🐛 よくある問題
-
-### データが表示されない
-→ `USE_DEMO_DATA = true` でデモモード確認
-→ APIのURL確認: `API_BASE_URL`
-→ ブラウザコンソール（F12）でエラー確認
-
-### 白い画面
-→ JavaScriptエラーを確認（F12 → Console）
-→ Chart.js CDNが読み込めているか確認
-
-### 遅い
-→ `optimization.sql` でインデックス追加
-→ 期間を限定してデータ取得
-→ キャッシュテーブル使用
-
-## 📱 動作環境
-
-- **ブラウザ**: Chrome, Firefox, Safari, Edge（最新版）
-- **サーバー**: PHP 7.4+, MySQL 5.7+
-- **ホスティング**: Lolipop ハイスピードプラン対応
-- **デバイス**: PC, タブレット, スマートフォン
-
-## 📚 推奨読む順序
-
-1. **QUICKSTART.md** - まず3分で開始
-2. **README_ANALYTICS.md** - 詳細を理解
-3. **optimization.sql** - パフォーマンス向上
-4. **dashboard.html** - コードをカスタマイズ
-
-## 🎨 デモサイト
-
-デモモード（`USE_DEMO_DATA = true`）で、
-実際のデータなしで動作を確認できます。
-
-## 💡 次のステップ
-
-1. ✅ デモモードで動作確認
-2. ✅ 本番データベースに接続
-3. ✅ カラーテーマをカスタマイズ
-4. ✅ Basic認証を設定
-5. ✅ 既存システムにリンク追加
-
-## 🆘 サポート
-
-問題が発生した場合：
-1. QUICKSTART.md のトラブルシューティング確認
-2. README_ANALYTICS.md の詳細ガイド参照
-3. ブラウザのコンソールでエラー確認
-
-## 📄 ライセンス
-
-MIT License - 自由にカスタマイズ・商用利用可能
-
-## 🎉 完成！
-
-このパッケージで17年分のデータを美しく可視化できます。
-まずはQUICKSTART.mdから始めてください！
+This project is licensed under the MIT License - see [LICENSE](../LICENSE) file for details.
 
 ---
 
-作成日: 2025-10-27
-バージョン: 1.0
-互換性: personal-finance-dashboard-public
+**Last Updated**: 2025-11-03
+**Version**: 2.1
+**Compatibility**: PHP 7.4+, MySQL 5.7+

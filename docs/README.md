@@ -1,238 +1,314 @@
-# 家計簿分析ダッシュボード - セットアップガイド
+# Analytics Dashboard - Setup Guide
 
-## 📋 概要
-2008年からの17年間の家計簿データをReact + Chart.jsで可視化する分析ダッシュボードです。
+## 📋 Overview
 
-## 🎯 主な機能
+The Analytics Dashboard provides advanced data visualization for your financial data using React and Chart.js, supporting historical data analysis spanning multiple years.
 
-### 基本分析
-- ✅ 月次・年次の収支トレンドグラフ
-- ✅ カテゴリ別支出の円グラフ
-- ✅ 17年間の長期トレンド比較
-- ✅ 期間フィルター（全期間/直近12ヶ月/年別）
-- ✅ 貯蓄率の自動計算
+## 🎯 Key Features
 
-### 高度な機能（追加可能）
-- 🔄 季節性パターン分析
-- 📊 予算vs実績比較
-- 🎯 目標設定と進捗管理
-- 📈 支出予測（機械学習）
-- 📤 データエクスポート（CSV/PDF）
+### Basic Analysis
+- ✅ Monthly and yearly trend charts
+- ✅ Category breakdown pie charts
+- ✅ Long-term trend comparison
+- ✅ Period filters (all-time/last 12 months/by year)
+- ✅ Automatic savings rate calculation
 
-## 🚀 クイックスタート
+### Advanced Features
+- 🔄 Seasonal pattern analysis
+- 📊 Budget vs actual comparison
+- 🎯 Goal setting and progress tracking
+- 📈 Expense prediction (statistical methods)
+- 📤 Data export (CSV/Excel)
 
-### 1. デモ版を確認
-`finance-dashboard.html` をブラウザで開くだけで動作します。
-サンプルデータで動作を確認できます。
+## 🚀 Quick Start
 
-### 2. 実際のデータベースに接続
+### 1. Prerequisites
 
-#### Lolipopでの設定手順
+Ensure you have the following installed:
+- PHP 7.4 or higher
+- MySQL 5.7+ / MariaDB 10.2+
+- Web server (Apache/Nginx)
+- Modern web browser with JavaScript enabled
 
-**A. データベース情報を確認**
-1. Lolipopユーザー専用ページにログイン
-2. サーバーの管理・設定 → データベース
-3. 接続情報をメモ：
-   - ホスト名: `mysql000.lolipop.jp`
-   - データベース名: `LAA0000000-xxxxxx`
-   - ユーザー名: `LAA0000000`
-   - パスワード: `********`
+### 2. Database Configuration
 
-**B. APIファイルの設定**
-`api/finance-data.php` を編集：
+#### A. Configure Environment Variables
 
-```php
-$db_host = 'mysql000.lolipop.jp'; // 実際のホスト名
-$db_name = 'LAA0000000-xxxxxx';    // データベース名
-$db_user = 'LAA0000000';            // ユーザー名
-$db_pass = 'your_password';         // パスワード
+Edit your `.env_db` file with your database credentials:
+
+```ini
+DB_HOST=localhost
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+DB_DATABASE=finance_db
 ```
 
-**C. テーブル構造の確認と調整**
+#### B. Verify Table Structure
 
-あなたの既存のテーブル構造に合わせてSQLクエリを修正してください。
+The analytics system expects the following table structure:
 
-想定しているテーブル構造例：
 ```sql
-CREATE TABLE transactions (
+-- Main transactions table
+CREATE TABLE source (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    date DATE NOT NULL,
-    category VARCHAR(50),
-    amount DECIMAL(10, 2),
-    type ENUM('income', 'expense'),
-    description TEXT,
+    re_date DATE NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    cat_1 VARCHAR(255),  -- Shop
+    cat_2 VARCHAR(255),  -- Category
+    user_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Shop labels
+CREATE TABLE cat_1_labels (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    label VARCHAR(255) NOT NULL,
+    user_id INT
+);
+
+-- Category labels
+CREATE TABLE cat_2_labels (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    label VARCHAR(255) NOT NULL,
+    user_id INT
 );
 ```
 
-既存のテーブル構造が異なる場合、`finance-data.php` のSQL文を修正してください。
+### 3. File Structure
 
-### 3. ファイルのアップロード
-
-Lolipopサーバーに以下の構造でアップロード：
+Deploy the analytics dashboard with the following structure:
 
 ```
-public_html/
-├── finance/
-│   ├── index.html (finance-dashboard.html をリネーム)
-│   └── api/
-│       └── finance-data.php
+Personal-Finance-Dashboard/
+├── analytics/
+│   └── index.html          # Analytics dashboard
+├── api/
+│   └── analytics-api.php   # Backend API
+├── .env_db                 # Database configuration
+└── database.sql            # Database schema
 ```
 
-FTPソフト（FileZilla等）またはLolipopのファイルマネージャーを使用。
+### 4. API Configuration
 
-### 4. HTMLファイルの修正
+The analytics API (`api/analytics-api.php`) automatically reads configuration from `.env_db`. Ensure the file path is correct:
 
-`finance-dashboard.html` の以下の部分を有効化：
+```php
+// The API will look for .env_db in the parent directory
+// Adjust the path if your structure is different
+```
 
-**現在（デモ用）：**
+### 5. Enable Production Mode
+
+By default, the analytics dashboard runs in demo mode. To connect to your actual database:
+
+Edit `analytics/index.html` and change:
+
 ```javascript
-useEffect(() => {
-    const sampleData = generateSampleData();
-    setData(sampleData);
-}, []);
+// Line ~24
+const USE_DEMO_DATA = false;  // Change from true to false
 ```
 
-**本番用に変更：**
+## 📊 Integration Options
+
+### Option 1: Standalone Dashboard (Recommended)
+- Run analytics as a separate page
+- Main app: `https://your-domain.com/`
+- Analytics: `https://your-domain.com/analytics/`
+- **Benefit**: No impact on existing system
+
+### Option 2: Menu Integration
+Add a link in your main navigation:
+
+```html
+<!-- In index.php -->
+<nav>
+    <a href="/">Dashboard</a>
+    <a href="/analytics/">📊 Analytics</a>
+</nav>
+```
+
+### Option 3: Tab Integration
+Embed as an iframe in your existing dashboard:
+
 ```javascript
-useEffect(() => {
-    // 月次データ取得
-    fetch('/api/finance-data.php?action=monthly')
-        .then(res => res.json())
-        .then(result => {
-            if (result.success) {
-                setMonthlyData(result.data);
-            }
-        });
-    
-    // カテゴリデータ取得
-    fetch('/api/finance-data.php?action=categories')
-        .then(res => res.json())
-        .then(result => {
-            if (result.success) {
-                setCategoryData(result.data);
-            }
-        });
-}, []);
+<iframe src="/analytics/" width="100%" height="800px"></iframe>
 ```
 
-## 📊 既存システムとの統合
+## 🛠️ Customization
 
-### GitHub リポジトリとの連携
-現在運用中の `personal-finance-dashboard-public` との統合方法：
+### Color Theme
 
-**オプション1: 別システムとして運用**
-- 分析専用ダッシュボードとして独立運用
-- 既存の入力システムはそのまま使用
-- データベースを共有
+Customize the gradient colors in `analytics/index.html`:
 
-**オプション2: 統合する**
-- 既存システムに分析機能を追加
-- React コンポーネントとして組み込み
-
-## 🛠️ カスタマイズ
-
-### カテゴリの変更
-`generateSampleData()` 関数内の配列を編集：
-```javascript
-const categories = ['食費', '住居費', '光熱費', ...];
+```css
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Change to your preferred colors */
+}
 ```
 
-### 色のカスタマイズ
+### Chart Colors
+
+Modify chart colors in the JavaScript section:
+
 ```javascript
 backgroundColor: [
-    '#FF6384', // 色コードを変更
+    '#FF6384',  // Change these hex color codes
     '#36A2EB',
+    '#FFCE56',
     // ...
 ]
 ```
 
-### 追加機能の実装
+### Adding Custom Features
 
-**1. 予算管理機能**
+#### 1. Budget Management
 ```javascript
 const budgets = {
-    '食費': 50000,
-    '住居費': 100000,
-    // ...
+    'Groceries': 50000,
+    'Rent': 100000,
+    // Add your budget categories
 };
 ```
 
-**2. CSVエクスポート**
+#### 2. CSV Export
 ```javascript
 const exportToCSV = () => {
-    const csv = filteredData.map(row => 
-        `${row.date},${row.income},${row.expense}`
+    const csv = filteredData.map(row =>
+        `${row.date},${row.amount},${row.category}`
     ).join('\n');
-    
+
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'finance-data.csv';
+    a.download = 'financial-data.csv';
     a.click();
 };
 ```
 
-## 🔒 セキュリティ
+## 🔒 Security
 
-### 推奨設定
-1. **Basic認証の設定**
-   - Lolipopの管理画面で .htaccess を設定
-   - パスワード保護
+### Recommended Security Measures
 
-2. **APIのセキュリティ**
+1. **Basic Authentication**
+   Create `.htaccess` in the `analytics/` directory:
+   ```apache
+   AuthType Basic
+   AuthName "Analytics Dashboard"
+   AuthUserFile /path/to/.htpasswd
+   Require valid-user
+   ```
+
+2. **IP Address Restriction**
+   Add to `api/analytics-api.php`:
    ```php
-   // IPアドレス制限
-   $allowed_ips = ['あなたのIP'];
+   $allowed_ips = ['your.ip.address'];
    if (!in_array($_SERVER['REMOTE_ADDR'], $allowed_ips)) {
+       http_response_code(403);
        die('Access denied');
    }
    ```
 
-3. **SQLインジェクション対策**
-   - プリペアドステートメントを使用（実装済み）
+3. **SQL Injection Prevention**
+   - Use prepared statements (already implemented)
+   - Validate all user inputs
+   - Sanitize outputs with `htmlspecialchars()`
 
-## 📱 レスポンシブ対応
-Tailwind CSSでモバイル対応済み：
-- スマートフォン
-- タブレット
-- デスクトップ
+## 📱 Responsive Design
 
-## 🐛 トラブルシューティング
+The analytics dashboard is fully responsive and works on:
+- 📱 Smartphones (320px+)
+- 💻 Tablets (768px+)
+- 🖥️ Desktops (1024px+)
 
-### データが表示されない
-1. ブラウザの開発者ツール（F12）でエラー確認
-2. `api/finance-data.php` に直接アクセスしてJSON確認
-3. データベース接続情報を再確認
+## 🐛 Troubleshooting
 
-### チャートが表示されない
-1. Chart.js のCDNが読み込めているか確認
-2. コンソールエラーを確認
+### Data Not Displaying
 
-### Lolipopでの動作が遅い
-1. データを集約（月次サマリーテーブル作成）
-2. インデックスを追加
-3. キャッシュを実装
+1. **Check API Response**
+   ```bash
+   curl https://your-domain.com/api/analytics-api.php?action=summary
+   ```
 
-## 📚 技術スタック
-- **フロントエンド**: React 18, Chart.js 4, Tailwind CSS
-- **バックエンド**: PHP 7.4+, MySQL 5.7+
-- **ホスティング**: Lolipop ハイスピードプラン
+2. **Verify Database Connection**
+   - Check `.env_db` credentials
+   - Ensure database server is running
+   - Verify user permissions
 
-## 🎨 今後の拡張案
-- [ ] PDF/Excelレポート生成
-- [ ] メール通知機能
-- [ ] 予算アラート
-- [ ] 複数アカウント対応
-- [ ] AI による支出予測
-- [ ] スマホアプリ版
+3. **Check Browser Console**
+   - Press F12 to open Developer Tools
+   - Look for errors in the Console tab
+   - Check Network tab for failed API requests
 
-## 💡 質問・サポート
-何か問題があれば、以下を確認してください：
-1. データベーステーブル構造
-2. エラーログ
-3. ブラウザコンソール
+### Charts Not Rendering
 
-## 📄 ライセンス
-MIT License - ご自由にカスタマイズしてください！
+1. **Verify CDN Access**
+   - Check if Chart.js CDN is accessible
+   - Check if React CDN is accessible
+   - Look for CORS errors
+
+2. **JavaScript Errors**
+   - Open browser console (F12)
+   - Check for syntax errors
+   - Verify all dependencies loaded
+
+### Performance Issues
+
+1. **Add Database Indexes**
+   ```sql
+   CREATE INDEX idx_date ON source(re_date);
+   CREATE INDEX idx_user_date ON source(user_id, re_date);
+   CREATE INDEX idx_shop ON source(cat_1);
+   CREATE INDEX idx_category ON source(cat_2);
+   ```
+
+2. **Limit Date Range**
+   ```javascript
+   // Fetch only recent data
+   fetch('/api/analytics-api.php?action=monthly&start_date=2024-01-01')
+   ```
+
+3. **Implement Caching**
+   ```php
+   // Cache API responses
+   $cache_file = "cache/summary_" . date('Y-m-d') . ".json";
+   if (file_exists($cache_file) && (time() - filemtime($cache_file) < 3600)) {
+       echo file_get_contents($cache_file);
+       exit;
+   }
+   ```
+
+## 📚 Technology Stack
+
+- **Frontend**: React 18, Chart.js 4, Bootstrap 5
+- **Backend**: PHP 7.4+, PDO
+- **Database**: MySQL 5.7+ / MariaDB 10.2+
+- **Architecture**: RESTful API with JSON responses
+
+## 🎨 Future Enhancements
+
+- [ ] PDF/Excel report generation
+- [ ] Email notifications
+- [ ] Budget alerts
+- [ ] Multi-account support
+- [ ] AI-powered expense prediction
+- [ ] Mobile app (PWA)
+
+## 💡 Support
+
+If you encounter issues:
+1. Check database table structure matches expected schema
+2. Review error logs (PHP error log and browser console)
+3. Verify API endpoint responses
+4. Check [GitHub Issues](https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/issues)
+
+## 📄 License
+
+MIT License - Feel free to customize and use commercially!
+
+---
+
+**Last Updated**: 2025-11-03
+**Version**: 2.1
+**For more information**: See [ANALYTICS.md](./ANALYTICS.md) for detailed analytics documentation

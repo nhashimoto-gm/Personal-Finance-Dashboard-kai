@@ -336,8 +336,8 @@ A: 現在のバージョンは単一ユーザー向けです。ユーザー認�
 
 問題が解決しない場合は、以下をご利用ください：
 
-- [GitHubイシュー](https://github.com/YOUR_USERNAME/Personal-Finance-Dashboard/issues)
-- [GitHubディスカッション](https://github.com/YOUR_USERNAME/Personal-Finance-Dashboard/discussions)
+- [GitHubイシュー](https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/issues)
+- [GitHubディスカッション](https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/discussions)
 
 ---
 

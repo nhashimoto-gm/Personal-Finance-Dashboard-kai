@@ -25,7 +25,7 @@ This project follows a Code of Conduct. By participating, you are expected to up
 ### Reporting Bugs
 
 Before creating a bug report:
-- Check the [existing issues](https://github.com/YOUR_USERNAME/Personal-Finance-Dashboard/issues)
+- Check the [existing issues](https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/issues)
 - Use the latest version
 - Check if it's already fixed in `main` branch
 
@@ -78,7 +78,7 @@ We love code contributions! Here are types of contributions we welcome:
 
 2. **Clone your fork**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/Personal-Finance-Dashboard.git
+   git clone https://github.com/your-username/Personal-Finance-Dashboard.git
    cd Personal-Finance-Dashboard
    ```
 
@@ -345,9 +345,9 @@ Contributors will be:
 
 ## ❓ Questions?
 
-- Create an [issue](https://github.com/YOUR_USERNAME/Personal-Finance-Dashboard/issues)
-- Start a [discussion](https://github.com/YOUR_USERNAME/Personal-Finance-Dashboard/discussions)
-- Email: your.email@example.com
+- Create an [issue](https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/issues)
+- Start a [discussion](https://github.com/nhashimoto-gm/Personal-Finance-Dashboard/discussions)
+- Email: 94941257+nhashimoto-gm@users.noreply.github.com
 
 ## 📚 Resources
 
