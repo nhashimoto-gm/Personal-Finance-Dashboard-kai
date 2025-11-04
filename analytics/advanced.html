@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Analytics - Predictions & Statistical Analysis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        body {
+            background-color: #0f1419;
+            color: #e1e8ed;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        [data-bs-theme="light"] body {
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+
+        .advanced-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 24px 24px;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .stat-card.info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-label {
+            font-size: 0.95rem;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        .stat-sublabel {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 0.25rem;
+        }
+
+        .chart-container {
+            background: #1a1f2e;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .chart-container:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            transform: translateY(-2px);
+        }
+
+        [data-bs-theme="light"] .chart-container {
+            background: white;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+
+        [data-bs-theme="light"] .chart-header {
+            border-bottom-color: rgba(0,0,0,0.1);
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title i {
+            color: #667eea;
+        }
+
+        .section-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .anomaly-item {
+            background: rgba(245, 87, 108, 0.1);
+            border-left: 4px solid #f5576c;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .anomaly-item:hover {
+            background: rgba(245, 87, 108, 0.15);
+            transform: translateX(4px);
+        }
+
+        .anomaly-item.critical {
+            border-left-color: #dc3545;
+            background: rgba(220, 53, 69, 0.15);
+        }
+
+        .correlation-item {
+            background: rgba(79, 172, 254, 0.1);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 8px;
+            border-left: 4px solid #4facfe;
+        }
+
+        .correlation-item.strong {
+            border-left-color: #56ab2f;
+            background: rgba(86, 171, 47, 0.1);
+        }
+
+        .correlation-item.negative {
+            border-left-color: #f093fb;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stats-item {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .stats-item-label {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 0.25rem;
+        }
+
+        .stats-item-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        [data-bs-theme="light"] .stats-item-value {
+            color: #764ba2;
+        }
+
+        .prediction-item {
+            background: rgba(79, 172, 254, 0.08);
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 3px solid #4facfe;
+        }
+
+        .confidence-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .confidence-high {
+            background: rgba(86, 171, 47, 0.2);
+            color: #a8e063;
+        }
+
+        .confidence-medium {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .confidence-low {
+            background: rgba(245, 87, 108, 0.2);
+            color: #f5576c;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+        }
+
+        .heatmap-cell {
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .nav-pills .nav-link {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .trend-icon {
+            display: inline-block;
+            margin-left: 0.5rem;
+        }
+
+        .trend-up {
+            color: #dc3545;
+        }
+
+        .trend-down {
+            color: #28a745;
+        }
+
+        .trend-stable {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="advanced-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-1"><i class="bi bi-graph-up-arrow"></i> <span data-i18n="title">Advanced Analytics</span></h1>
+                    <p class="mb-0 opacity-75"><span data-i18n="subtitle">Predictions, Statistical Analysis & Pattern Detection</span></p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light" id="themeToggle">
+                        <i class="bi bi-moon-fill"></i>
+                    </button>
+                    <button class="btn btn-light" id="langToggle">
+                        <span id="langText">日本語</span>
+                    </button>
+                    <a href="index.html" class="btn btn-outline-light">
+                        <i class="bi bi-arrow-left"></i> <span data-i18n="backToBasic">Basic Analytics</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Forecast Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card info">
+                    <div class="stat-label" data-i18n="nextMonthForecast">Next Month Forecast</div>
+                    <div class="stat-value" id="nextMonthPrediction">-</div>
+                    <div class="stat-sublabel"><span id="nextMonthConfidence">-</span> <span data-i18n="confidence">confidence</span></div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" id="trendCard">
+                    <div class="stat-label" data-i18n="spendingTrend">Spending Trend</div>
+                    <div class="stat-value" id="trendDirection">-</div>
+                    <div class="stat-sublabel" id="trendRate">-</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card warning">
+                    <div class="stat-label" data-i18n="anomaliesDetected">Anomalies (90 days)</div>
+                    <div class="stat-value" id="anomalyCount">-</div>
+                    <div class="stat-sublabel" id="anomalyRate">-</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card success">
+                    <div class="stat-label" data-i18n="dataQuality">Data Quality</div>
+                    <div class="stat-value" id="dataQuality">-</div>
+                    <div class="stat-sublabel" data-i18n="monthsOfData">months of data</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-pills mb-4" id="analyticsTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="forecast-tab" data-bs-toggle="pill" data-bs-target="#forecast" type="button">
+                    <i class="bi bi-graph-up"></i> <span data-i18n="tabForecast">Forecast & Predictions</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="anomalies-tab" data-bs-toggle="pill" data-bs-target="#anomalies" type="button">
+                    <i class="bi bi-exclamation-triangle"></i> <span data-i18n="tabAnomalies">Anomaly Detection</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="statistics-tab" data-bs-toggle="pill" data-bs-target="#statistics" type="button">
+                    <i class="bi bi-calculator"></i> <span data-i18n="tabStatistics">Statistical Analysis</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="correlation-tab" data-bs-toggle="pill" data-bs-target="#correlation" type="button">
+                    <i class="bi bi-diagram-3"></i> <span data-i18n="tabCorrelation">Correlation</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="heatmap-tab" data-bs-toggle="pill" data-bs-target="#heatmap" type="button">
+                    <i class="bi bi-grid-3x3"></i> <span data-i18n="tabHeatmap">Heatmap</span>
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="analyticsTabContent">
+            <!-- Forecast Tab -->
+            <div class="tab-pane fade show active" id="forecast" role="tabpanel">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">
+                            <i class="bi bi-activity"></i>
+                            <span data-i18n="forecastTitle">Expense Forecast (Next 6 Months)</span>
+                        </h3>
+                        <span class="section-badge" data-i18n="forecastBadge">AI Prediction</span>
+                    </div>
+                    <canvas id="forecastChart" height="80"></canvas>
+                    <div class="mt-4">
+                        <h5 data-i18n="modelInfo">Model Information</h5>
+                        <div class="stats-grid">
+                            <div class="stats-item">
+                                <div class="stats-item-label" data-i18n="modelType">Model Type</div>
+                                <div class="stats-item-value" style="font-size: 0.9rem;" id="modelType">-</div>
+                            </div>
+                            <div class="stats-item">
+                                <div class="stats-item-label" data-i18n="trendSlope">Trend Slope</div>
+                                <div class="stats-item-value" id="modelSlope">-</div>
+                            </div>
+                            <div class="stats-item">
+                                <div class="stats-item-label" data-i18n="movingAverage">Moving Average</div>
+                                <div class="stats-item-value" id="modelMA">-</div>
+                            </div>
+                            <div class="stats-item">
+                                <div class="stats-item-label" data-i18n="dataPoints">Data Points</div>
+                                <div class="stats-item-value" id="modelDataPoints">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h4 class="mb-3"><i class="bi bi-list-ol"></i> <span data-i18n="monthlyPredictions">Monthly Predictions</span></h4>
+                    <div id="predictionsList"></div>
+                </div>
+            </div>
+
+            <!-- Anomalies Tab -->
+            <div class="tab-pane fade" id="anomalies" role="tabpanel">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">
+                            <i class="bi bi-graph-down-arrow"></i>
+                            <span data-i18n="anomalyChart">Anomaly Detection Chart</span>
+                        </h3>
+                        <span class="section-badge" data-i18n="anomalyBadge">Outlier Analysis</span>
+                    </div>
+                    <canvas id="anomalyChart" height="80"></canvas>
+                    <div class="mt-4">
+                        <div class="stats-grid">
+                            <div class="stats-item">
+                                <div class="stats-item-label" data-i18n="meanExpense">Mean Daily Expense</div>
+                                <div class="stats-item-value" id="anomalyMean">-</div>
+                            </div>
+                            <div class="stats-item">
+                                <div class="stats-item-label" data-i18n="stdDev">Standard Deviation</div>
+                                <div class="stats-item-value" id="anomalyStdDev">-</div>
+                            </div>
+                            <div class="stats-item">
+                                <div class="stats-item-label" data-i18n="upperThreshold">Upper Threshold</div>
+                                <div class="stats-item-value" id="anomalyUpper">-</div>
+                            </div>
+                            <div class="stats-item">
+                                <div class="stats-item-label" data-i18n="anomalyRate">Anomaly Rate</div>
+                                <div class="stats-item-value" id="anomalyRateValue">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h4 class="mb-3"><i class="bi bi-exclamation-circle"></i> <span data-i18n="detectedAnomalies">Detected Anomalies</span></h4>
+                    <div id="anomaliesList"></div>
+                </div>
+            </div>
+
+            <!-- Statistics Tab -->
+            <div class="tab-pane fade" id="statistics" role="tabpanel">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">
+                            <i class="bi bi-bar-chart"></i>
+                            <span data-i18n="distributionChart">Expense Distribution</span>
+                        </h3>
+                        <span class="section-badge" data-i18n="statsBadge">Statistical Analysis</span>
+                    </div>
+                    <canvas id="distributionChart" height="80"></canvas>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3"><i class="bi bi-table"></i> <span data-i18n="descriptiveStats">Descriptive Statistics</span></h4>
+                            <div class="stats-grid">
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="mean">Mean</div>
+                                    <div class="stats-item-value" id="statMean">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="median">Median</div>
+                                    <div class="stats-item-value" id="statMedian">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="variance">Variance</div>
+                                    <div class="stats-item-value" id="statVariance">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="stdDeviation">Std Deviation</div>
+                                    <div class="stats-item-value" id="statStdDev">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="cv">Coefficient of Variation</div>
+                                    <div class="stats-item-value" id="statCV">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="range">Range</div>
+                                    <div class="stats-item-value" id="statRange">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3"><i class="bi bi-box"></i> <span data-i18n="quartiles">Quartiles & Distribution</span></h4>
+                            <div class="stats-grid">
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="q1">Q1 (25th percentile)</div>
+                                    <div class="stats-item-value" id="statQ1">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="q2">Q2 (50th percentile)</div>
+                                    <div class="stats-item-value" id="statQ2">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="q3">Q3 (75th percentile)</div>
+                                    <div class="stats-item-value" id="statQ3">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="iqr">IQR</div>
+                                    <div class="stats-item-value" id="statIQR">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="skewness">Skewness</div>
+                                    <div class="stats-item-value" id="statSkewness">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="distribution">Distribution</div>
+                                    <div class="stats-item-value" style="font-size: 1rem;" id="statDistribution">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-container mt-3">
+                            <h4 class="mb-3"><i class="bi bi-percent"></i> <span data-i18n="confidenceInterval">95% Confidence Interval</span></h4>
+                            <div class="stats-grid">
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="lowerBound">Lower Bound</div>
+                                    <div class="stats-item-value" id="ciLower">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="upperBound">Upper Bound</div>
+                                    <div class="stats-item-value" id="ciUpper">-</div>
+                                </div>
+                                <div class="stats-item">
+                                    <div class="stats-item-label" data-i18n="marginOfError">Margin of Error</div>
+                                    <div class="stats-item-value" id="ciMargin">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Correlation Tab -->
+            <div class="tab-pane fade" id="correlation" role="tabpanel">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">
+                            <i class="bi bi-bezier2"></i>
+                            <span data-i18n="correlationTitle">Category Correlation Analysis</span>
+                        </h3>
+                        <span class="section-badge" data-i18n="correlationBadge">Pearson Correlation</span>
+                    </div>
+                    <p class="mb-4 opacity-75" data-i18n="correlationDescription">
+                        Analyzing spending patterns between different categories. Positive correlation means categories tend to increase together.
+                    </p>
+                    <div id="correlationList"></div>
+                </div>
+            </div>
+
+            <!-- Heatmap Tab -->
+            <div class="tab-pane fade" id="heatmap" role="tabpanel">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3 class="chart-title">
+                            <i class="bi bi-calendar-heat"></i>
+                            <span data-i18n="heatmapTitle">Spending Pattern Heatmap</span>
+                        </h3>
+                        <span class="section-badge" data-i18n="heatmapBadge">Temporal Analysis</span>
+                    </div>
+                    <p class="mb-4 opacity-75" data-i18n="heatmapDescription">
+                        Average spending by day of week and month. Darker colors indicate higher spending.
+                    </p>
+                    <canvas id="heatmapChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-5 mb-5">
+        <footer class="text-center opacity-50">
+            <small>Advanced Analytics Dashboard v1.0 | Powered by Statistical Analysis & Machine Learning</small>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // API Configuration
+        const API_BASE_URL = '../api/analytics-api.php';
+
+        // i18n translations
+        const translations = {
+            en: {
+                title: 'Advanced Analytics',
+                subtitle: 'Predictions, Statistical Analysis & Pattern Detection',
+                backToBasic: 'Basic Analytics',
+                nextMonthForecast: 'Next Month Forecast',
+                confidence: 'confidence',
+                spendingTrend: 'Spending Trend',
+                anomaliesDetected: 'Anomalies (90 days)',
+                dataQuality: 'Data Quality',
+                monthsOfData: 'months of data',
+                tabForecast: 'Forecast & Predictions',
+                tabAnomalies: 'Anomaly Detection',
+                tabStatistics: 'Statistical Analysis',
+                tabCorrelation: 'Correlation',
+                tabHeatmap: 'Heatmap',
+                forecastTitle: 'Expense Forecast (Next 6 Months)',
+                forecastBadge: 'AI Prediction',
+                modelInfo: 'Model Information',
+                modelType: 'Model Type',
+                trendSlope: 'Trend Slope',
+                movingAverage: 'Moving Average',
+                dataPoints: 'Data Points',
+                monthlyPredictions: 'Monthly Predictions',
+                anomalyChart: 'Anomaly Detection Chart',
+                anomalyBadge: 'Outlier Analysis',
+                meanExpense: 'Mean Daily Expense',
+                stdDev: 'Standard Deviation',
+                upperThreshold: 'Upper Threshold',
+                anomalyRate: 'Anomaly Rate',
+                detectedAnomalies: 'Detected Anomalies',
+                distributionChart: 'Expense Distribution',
+                statsBadge: 'Statistical Analysis',
+                descriptiveStats: 'Descriptive Statistics',
+                mean: 'Mean',
+                median: 'Median',
+                variance: 'Variance',
+                stdDeviation: 'Std Deviation',
+                cv: 'Coefficient of Variation',
+                range: 'Range',
+                quartiles: 'Quartiles & Distribution',
+                q1: 'Q1 (25th percentile)',
+                q2: 'Q2 (50th percentile)',
+                q3: 'Q3 (75th percentile)',
+                iqr: 'IQR',
+                skewness: 'Skewness',
+                distribution: 'Distribution',
+                confidenceInterval: '95% Confidence Interval',
+                lowerBound: 'Lower Bound',
+                upperBound: 'Upper Bound',
+                marginOfError: 'Margin of Error',
+                correlationTitle: 'Category Correlation Analysis',
+                correlationBadge: 'Pearson Correlation',
+                correlationDescription: 'Analyzing spending patterns between different categories. Positive correlation means categories tend to increase together.',
+                heatmapTitle: 'Spending Pattern Heatmap',
+                heatmapBadge: 'Temporal Analysis',
+                heatmapDescription: 'Average spending by day of week and month. Darker colors indicate higher spending.',
+                increasing: 'Increasing',
+                decreasing: 'Decreasing',
+                stable: 'Stable',
+                perMonth: '/ month',
+                high: 'High',
+                moderate: 'Moderate',
+                critical: 'Critical',
+                strong: 'Strong',
+                weak: 'Weak',
+                positive: 'Positive',
+                negative: 'Negative',
+                symmetric: 'Symmetric',
+                rightSkewed: 'Right Skewed',
+                leftSkewed: 'Left Skewed'
+            },
+            ja: {
+                title: '高度な分析',
+                subtitle: '予測、統計分析、パターン検出',
+                backToBasic: '基本分析',
+                nextMonthForecast: '来月予測',
+                confidence: '信頼度',
+                spendingTrend: '支出トレンド',
+                anomaliesDetected: '異常値（90日間）',
+                dataQuality: 'データ品質',
+                monthsOfData: 'ヶ月のデータ',
+                tabForecast: '予測',
+                tabAnomalies: '異常検知',
+                tabStatistics: '統計分析',
+                tabCorrelation: '相関分析',
+                tabHeatmap: 'ヒートマップ',
+                forecastTitle: '支出予測（今後6ヶ月）',
+                forecastBadge: 'AI予測',
+                modelInfo: 'モデル情報',
+                modelType: 'モデルタイプ',
+                trendSlope: 'トレンド傾き',
+                movingAverage: '移動平均',
+                dataPoints: 'データポイント',
+                monthlyPredictions: '月別予測',
+                anomalyChart: '異常検知チャート',
+                anomalyBadge: '外れ値分析',
+                meanExpense: '平均日次支出',
+                stdDev: '標準偏差',
+                upperThreshold: '上限閾値',
+                anomalyRate: '異常率',
+                detectedAnomalies: '検出された異常値',
+                distributionChart: '支出分布',
+                statsBadge: '統計分析',
+                descriptiveStats: '記述統計',
+                mean: '平均',
+                median: '中央値',
+                variance: '分散',
+                stdDeviation: '標準偏差',
+                cv: '変動係数',
+                range: '範囲',
+                quartiles: '四分位数と分布',
+                q1: 'Q1（25パーセンタイル）',
+                q2: 'Q2（50パーセンタイル）',
+                q3: 'Q3（75パーセンタイル）',
+                iqr: '四分位範囲',
+                skewness: '歪度',
+                distribution: '分布',
+                confidenceInterval: '95%信頼区間',
+                lowerBound: '下限',
+                upperBound: '上限',
+                marginOfError: '誤差範囲',
+                correlationTitle: 'カテゴリ相関分析',
+                correlationBadge: 'ピアソン相関',
+                correlationDescription: '異なるカテゴリ間の支出パターンを分析。正の相関はカテゴリが一緒に増加する傾向を示します。',
+                heatmapTitle: '支出パターンヒートマップ',
+                heatmapBadge: '時系列分析',
+                heatmapDescription: '曜日と月ごとの平均支出。濃い色ほど支出が多いことを示します。',
+                increasing: '増加傾向',
+                decreasing: '減少傾向',
+                stable: '安定',
+                perMonth: '/ 月',
+                high: '高',
+                moderate: '中',
+                critical: '重大',
+                strong: '強い',
+                weak: '弱い',
+                positive: '正',
+                negative: '負',
+                symmetric: '対称',
+                rightSkewed: '右偏',
+                leftSkewed: '左偏'
+            }
+        };
+
+        let currentLang = localStorage.getItem('analytics_lang') || 'en';
+        let charts = {};
+
+        // Utility Functions
+        function formatCurrency(amount) {
+            return '¥' + Math.round(amount).toLocaleString();
+        }
+
+        function translate(key) {
+            return translations[currentLang][key] || key;
+        }
+
+        function updateTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = translate(key);
+            });
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'ja' : 'en';
+            localStorage.setItem('analytics_lang', currentLang);
+            document.getElementById('langText').textContent = currentLang === 'en' ? '日本語' : 'English';
+            updateTranslations();
+            loadAllData(); // Reload to update chart labels
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('analytics_theme', newTheme);
+
+            const icon = document.querySelector('#themeToggle i');
+            icon.className = newTheme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+
+            // Reload charts with new theme
+            loadAllData();
+        }
+
+        async function fetchData(action, params = {}) {
+            const url = new URL(API_BASE_URL, window.location.origin);
+            url.searchParams.append('action', action);
+            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (!data.success) {
+                console.error(`API Error (${action}):`, data.error);
+                throw new Error(data.error);
+            }
+
+            return data.data;
+        }
+
+        // Chart Configuration
+        function getChartColors() {
+            const theme = document.documentElement.getAttribute('data-bs-theme');
+            return {
+                primary: theme === 'dark' ? '#667eea' : '#764ba2',
+                secondary: theme === 'dark' ? '#4facfe' : '#00f2fe',
+                success: theme === 'dark' ? '#a8e063' : '#56ab2f',
+                danger: theme === 'dark' ? '#f5576c' : '#f093fb',
+                warning: '#ffc107',
+                text: theme === 'dark' ? '#e1e8ed' : '#212529',
+                grid: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+            };
+        }
+
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+        // Load Forecast Data
+        async function loadForecast() {
+            try {
+                const data = await fetchData('forecast', { months: 6 });
+                const colors = getChartColors();
+
+                // Update summary cards
+                if (data.predictions && data.predictions.length > 0) {
+                    const nextMonth = data.predictions[0];
+                    document.getElementById('nextMonthPrediction').textContent = formatCurrency(nextMonth.predicted_expense);
+                    document.getElementById('nextMonthConfidence').textContent = `${Math.round(nextMonth.confidence * 100)}%`;
+                }
+
+                // Update trend card
+                const trendCard = document.getElementById('trendCard');
+                const trendText = translate(data.model.trend);
+                const trendIcon = data.model.trend === 'increasing' ? '↗' : (data.model.trend === 'decreasing' ? '↘' : '→');
+                const trendClass = data.model.trend === 'increasing' ? 'trend-up' : (data.model.trend === 'decreasing' ? 'trend-down' : 'trend-stable');
+
+                document.getElementById('trendDirection').innerHTML = `${trendText} <span class="${trendClass}">${trendIcon}</span>`;
+                document.getElementById('trendRate').textContent = `${data.model.trend_rate}% ${translate('perMonth')}`;
+
+                if (data.model.trend === 'increasing') {
+                    trendCard.classList.add('warning');
+                } else if (data.model.trend === 'decreasing') {
+                    trendCard.classList.add('success');
+                }
+
+                // Update data quality
+                document.getElementById('dataQuality').textContent = data.model.data_points;
+
+                // Update model info
+                document.getElementById('modelType').textContent = data.model.type;
+                document.getElementById('modelSlope').textContent = data.model.slope;
+                document.getElementById('modelMA').textContent = formatCurrency(data.model.moving_average);
+                document.getElementById('modelDataPoints').textContent = data.model.data_points;
+
+                // Create forecast chart
+                const historicalLabels = data.historical.map(d => d.month);
+                const historicalData = data.historical.map(d => parseInt(d.expense));
+                const predictionLabels = data.predictions.map(d => d.month);
+                const predictionData = data.predictions.map(d => d.predicted_expense);
+
+                const ctx = document.getElementById('forecastChart');
+                if (charts.forecast) charts.forecast.destroy();
+
+                charts.forecast = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [...historicalLabels, ...predictionLabels],
+                        datasets: [
+                            {
+                                label: currentLang === 'en' ? 'Historical' : '実績',
+                                data: [...historicalData, ...Array(predictionData.length).fill(null)],
+                                borderColor: colors.primary,
+                                backgroundColor: colors.primary + '20',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: currentLang === 'en' ? 'Forecast' : '予測',
+                                data: [...Array(historicalData.length).fill(null), ...predictionData],
+                                borderColor: colors.danger,
+                                backgroundColor: colors.danger + '20',
+                                borderWidth: 3,
+                                borderDash: [10, 5],
+                                fill: true,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: { color: colors.text, font: { size: 14, weight: '600' } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
+                                    }
+                                }
+                            },
+                            datalabels: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    color: colors.text,
+                                    callback: function(value) { return formatCurrency(value); }
+                                },
+                                grid: { color: colors.grid }
+                            },
+                            x: {
+                                ticks: { color: colors.text },
+                                grid: { color: colors.grid }
+                            }
+                        }
+                    }
+                });
+
+                // Create predictions list
+                const predictionsList = document.getElementById('predictionsList');
+                predictionsList.innerHTML = data.predictions.map(pred => {
+                    const confPercent = Math.round(pred.confidence * 100);
+                    const confClass = confPercent >= 80 ? 'confidence-high' : (confPercent >= 60 ? 'confidence-medium' : 'confidence-low');
+                    const confText = confPercent >= 80 ? translate('high') : (confPercent >= 60 ? translate('moderate') : translate('low'));
+
+                    return `
+                        <div class="prediction-item">
+                            <div>
+                                <strong>${pred.month}</strong>
+                                <span class="ms-3">${formatCurrency(pred.predicted_expense)}</span>
+                                <small class="ms-2 opacity-75">(季節調整: ${pred.seasonal_factor})</small>
+                            </div>
+                            <span class="confidence-badge ${confClass}">${confText} ${confPercent}%</span>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Forecast loading error:', error);
+            }
+        }
+
+        // Load Anomalies Data
+        async function loadAnomalies() {
+            try {
+                const data = await fetchData('anomalies', { sensitivity: 2.0, days: 90 });
+                const colors = getChartColors();
+
+                // Update summary card
+                document.getElementById('anomalyCount').textContent = data.statistics.anomaly_count;
+                document.getElementById('anomalyRate').textContent = `${data.statistics.anomaly_rate}% ${currentLang === 'en' ? 'of days' : '日数'}`;
+
+                // Create anomaly chart
+                const allDays = [];
+                const normalExpenses = [];
+                const anomalousExpenses = [];
+                const upperThreshold = [];
+                const lowerThreshold = [];
+
+                // Create a map of anomalies for quick lookup
+                const anomalyMap = new Map(data.anomalies.map(a => [a.date, a]));
+
+                // We need to get the daily data to plot
+                const dailyData = await fetchData('daily', {
+                    start_date: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    end_date: new Date().toISOString().split('T')[0]
+                });
+
+                dailyData.data.forEach(day => {
+                    allDays.push(day.re_date);
+                    upperThreshold.push(data.statistics.threshold_upper);
+                    lowerThreshold.push(data.statistics.threshold_lower);
+
+                    if (anomalyMap.has(day.re_date)) {
+                        anomalousExpenses.push(parseInt(day.daily_total));
+                        normalExpenses.push(null);
+                    } else {
+                        normalExpenses.push(parseInt(day.daily_total));
+                        anomalousExpenses.push(null);
+                    }
+                });
+
+                const ctx = document.getElementById('anomalyChart');
+                if (charts.anomaly) charts.anomaly.destroy();
+
+                charts.anomaly = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: allDays,
+                        datasets: [
+                            {
+                                label: currentLang === 'en' ? 'Normal Spending' : '通常支出',
+                                data: normalExpenses,
+                                borderColor: colors.success,
+                                backgroundColor: colors.success + '40',
+                                borderWidth: 2,
+                                pointRadius: 3,
+                                tension: 0.1
+                            },
+                            {
+                                label: currentLang === 'en' ? 'Anomalies' : '異常値',
+                                data: anomalousExpenses,
+                                borderColor: colors.danger,
+                                backgroundColor: colors.danger,
+                                borderWidth: 2,
+                                pointRadius: 6,
+                                pointStyle: 'triangle',
+                                tension: 0.1
+                            },
+                            {
+                                label: currentLang === 'en' ? 'Upper Threshold' : '上限閾値',
+                                data: upperThreshold,
+                                borderColor: colors.warning + '80',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                labels: { color: colors.text, font: { size: 14, weight: '600' } }
+                            },
+                            datalabels: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: colors.text,
+                                    callback: function(value) { return formatCurrency(value); }
+                                },
+                                grid: { color: colors.grid }
+                            },
+                            x: {
+                                ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
+                                grid: { color: colors.grid }
+                            }
+                        }
+                    }
+                });
+
+                // Update statistics
+                document.getElementById('anomalyMean').textContent = formatCurrency(data.statistics.mean);
+                document.getElementById('anomalyStdDev').textContent = formatCurrency(data.statistics.std_dev);
+                document.getElementById('anomalyUpper').textContent = formatCurrency(data.statistics.threshold_upper);
+                document.getElementById('anomalyRateValue').textContent = data.statistics.anomaly_rate + '%';
+
+                // Create anomalies list
+                const anomaliesList = document.getElementById('anomaliesList');
+                if (data.anomalies.length === 0) {
+                    anomaliesList.innerHTML = '<p class="text-center opacity-50">' +
+                        (currentLang === 'en' ? 'No anomalies detected' : '異常値は検出されませんでした') + '</p>';
+                } else {
+                    anomaliesList.innerHTML = data.anomalies.map(anomaly => {
+                        const severityText = translate(anomaly.severity);
+                        return `
+                            <div class="anomaly-item ${anomaly.severity}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${anomaly.date}</strong>
+                                        <span class="badge bg-${anomaly.severity === 'critical' ? 'danger' : 'warning'} ms-2">${severityText}</span>
+                                    </div>
+                                    <div class="text-end">
+                                        <div><strong>${formatCurrency(anomaly.amount)}</strong></div>
+                                        <small class="opacity-75">Z-score: ${anomaly.z_score} | ${anomaly.transaction_count} ${currentLang === 'en' ? 'transactions' : '件'}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+            } catch (error) {
+                console.error('Anomalies loading error:', error);
+            }
+        }
+
+        // Load Statistics Data
+        async function loadStatistics() {
+            try {
+                const data = await fetchData('advanced_stats', { period: 'monthly' });
+                const colors = getChartColors();
+
+                // Update descriptive statistics
+                document.getElementById('statMean').textContent = formatCurrency(data.descriptive.mean);
+                document.getElementById('statMedian').textContent = formatCurrency(data.descriptive.median);
+                document.getElementById('statVariance').textContent = formatCurrency(data.dispersion.variance);
+                document.getElementById('statStdDev').textContent = formatCurrency(data.dispersion.std_deviation);
+                document.getElementById('statCV').textContent = data.dispersion.coefficient_of_variation + '%';
+                document.getElementById('statRange').textContent = formatCurrency(data.descriptive.range);
+
+                // Update quartiles
+                document.getElementById('statQ1').textContent = formatCurrency(data.quartiles.q1);
+                document.getElementById('statQ2').textContent = formatCurrency(data.quartiles.q2);
+                document.getElementById('statQ3').textContent = formatCurrency(data.quartiles.q3);
+                document.getElementById('statIQR').textContent = formatCurrency(data.dispersion.iqr);
+                document.getElementById('statSkewness').textContent = data.distribution.skewness;
+                document.getElementById('statDistribution').textContent = translate(data.distribution.interpretation);
+
+                // Update confidence interval
+                document.getElementById('ciLower').textContent = formatCurrency(data.confidence_interval_95.lower);
+                document.getElementById('ciUpper').textContent = formatCurrency(data.confidence_interval_95.upper);
+                document.getElementById('ciMargin').textContent = formatCurrency(data.confidence_interval_95.margin_of_error);
+
+                // Create distribution chart (histogram)
+                const expenses = data.time_series.map(d => parseInt(d.total));
+                const min = Math.min(...expenses);
+                const max = Math.max(...expenses);
+                const binCount = 10;
+                const binSize = (max - min) / binCount;
+
+                const bins = Array(binCount).fill(0);
+                const binLabels = [];
+
+                for (let i = 0; i < binCount; i++) {
+                    const binStart = min + (i * binSize);
+                    const binEnd = binStart + binSize;
+                    binLabels.push(formatCurrency(binStart));
+
+                    expenses.forEach(expense => {
+                        if (expense >= binStart && expense < binEnd) {
+                            bins[i]++;
+                        }
+                    });
+                }
+
+                const ctx = document.getElementById('distributionChart');
+                if (charts.distribution) charts.distribution.destroy();
+
+                charts.distribution = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: binLabels,
+                        datasets: [{
+                            label: currentLang === 'en' ? 'Frequency' : '頻度',
+                            data: bins,
+                            backgroundColor: colors.primary + '80',
+                            borderColor: colors.primary,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                labels: { color: colors.text, font: { size: 14, weight: '600' } }
+                            },
+                            datalabels: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: colors.text },
+                                grid: { color: colors.grid },
+                                title: {
+                                    display: true,
+                                    text: currentLang === 'en' ? 'Number of Months' : '月数',
+                                    color: colors.text
+                                }
+                            },
+                            x: {
+                                ticks: { color: colors.text, maxRotation: 45, minRotation: 45 },
+                                grid: { color: colors.grid },
+                                title: {
+                                    display: true,
+                                    text: currentLang === 'en' ? 'Expense Range' : '支出範囲',
+                                    color: colors.text
+                                }
+                            }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error('Statistics loading error:', error);
+            }
+        }
+
+        // Load Correlation Data
+        async function loadCorrelation() {
+            try {
+                const data = await fetchData('correlation');
+                const colors = getChartColors();
+
+                const correlationList = document.getElementById('correlationList');
+                if (data.correlations.length === 0) {
+                    correlationList.innerHTML = '<p class="text-center opacity-50">' +
+                        (currentLang === 'en' ? 'Not enough data for correlation analysis' : '相関分析に十分なデータがありません') + '</p>';
+                } else {
+                    correlationList.innerHTML = data.correlations.map(corr => {
+                        const strengthText = translate(corr.strength);
+                        const directionText = translate(corr.direction);
+                        const strengthClass = corr.strength === 'strong' ? 'strong' : '';
+                        const directionClass = corr.direction === 'negative' ? 'negative' : '';
+
+                        return `
+                            <div class="correlation-item ${strengthClass} ${directionClass}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${corr.category1}</strong> ↔ <strong>${corr.category2}</strong>
+                                        <div class="mt-1">
+                                            <span class="badge bg-${corr.strength === 'strong' ? 'success' : 'secondary'} me-2">${strengthText}</span>
+                                            <span class="badge bg-${corr.direction === 'positive' ? 'primary' : 'warning'}">${directionText}</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div style="font-size: 1.8rem; font-weight: 700; color: ${corr.correlation > 0 ? colors.success : colors.danger}">
+                                            ${corr.correlation > 0 ? '+' : ''}${corr.correlation}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+            } catch (error) {
+                console.error('Correlation loading error:', error);
+            }
+        }
+
+        // Load Heatmap Data
+        async function loadHeatmap() {
+            try {
+                const data = await fetchData('heatmap', { type: 'weekday_month' });
+                const colors = getChartColors();
+
+                // Transform matrix data for Chart.js
+                const matrix = data.matrix;
+                const labels = data.labels;
+
+                // Create dataset for heatmap using scatter plot
+                const heatmapData = [];
+                const maxValue = data.max_value;
+
+                Object.keys(matrix).forEach((dayOfWeek, dayIndex) => {
+                    Object.keys(matrix[dayOfWeek]).forEach((month, monthIndex) => {
+                        const value = matrix[dayOfWeek][month];
+                        if (value > 0) {
+                            heatmapData.push({
+                                x: parseInt(month) - 1,
+                                y: parseInt(dayOfWeek) - 1,
+                                value: value
+                            });
+                        }
+                    });
+                });
+
+                const ctx = document.getElementById('heatmapChart');
+                if (charts.heatmap) charts.heatmap.destroy();
+
+                // Create bubble chart as heatmap
+                charts.heatmap = new Chart(ctx, {
+                    type: 'bubble',
+                    data: {
+                        datasets: [{
+                            label: currentLang === 'en' ? 'Average Spending' : '平均支出',
+                            data: heatmapData.map(d => ({
+                                x: d.x,
+                                y: d.y,
+                                r: (d.value / maxValue) * 30 + 5
+                            })),
+                            backgroundColor: heatmapData.map(d => {
+                                const intensity = d.value / maxValue;
+                                return `rgba(102, 126, 234, ${0.3 + intensity * 0.7})`;
+                            }),
+                            borderColor: colors.primary,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const dataIndex = context.dataIndex;
+                                        const value = heatmapData[dataIndex].value;
+                                        const month = labels.x[heatmapData[dataIndex].x];
+                                        const day = labels.y[heatmapData[dataIndex].y];
+                                        return `${day}, ${month}: ${formatCurrency(value)}`;
+                                    }
+                                }
+                            },
+                            datalabels: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    color: colors.text,
+                                    callback: function(value) {
+                                        return labels.y[value] || '';
+                                    }
+                                },
+                                grid: { color: colors.grid }
+                            },
+                            x: {
+                                ticks: {
+                                    color: colors.text,
+                                    callback: function(value) {
+                                        return labels.x[value] || '';
+                                    }
+                                },
+                                grid: { color: colors.grid }
+                            }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error('Heatmap loading error:', error);
+            }
+        }
+
+        // Load all data
+        async function loadAllData() {
+            await Promise.all([
+                loadForecast(),
+                loadAnomalies(),
+                loadStatistics(),
+                loadCorrelation(),
+                loadHeatmap()
+            ]);
+        }
+
+        // Event Listeners
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+        document.getElementById('langToggle').addEventListener('click', toggleLanguage);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set saved theme
+            const savedTheme = localStorage.getItem('analytics_theme') || 'dark';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+            const icon = document.querySelector('#themeToggle i');
+            icon.className = savedTheme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+
+            // Set language
+            document.getElementById('langText').textContent = currentLang === 'en' ? '日本語' : 'English';
+            updateTranslations();
+
+            // Load data
+            loadAllData();
+        });
+    </script>
+</body>
+</html>

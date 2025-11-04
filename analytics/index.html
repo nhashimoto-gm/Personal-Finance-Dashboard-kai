@@ -196,6 +196,9 @@
                 <span id="navTitle">Personal Finance Dashboard</span>
             </span>
             <div>
+                <a href="advanced.html" class="btn btn-warning btn-sm me-2">
+                    <i class="bi bi-graph-up-arrow"></i> <span id="advancedBtn">Advanced Analytics</span>
+                </a>
                 <button class="btn btn-outline-light btn-sm me-2" id="langToggle">
                     <i class="bi bi-translate"></i> <span id="langLabel">JP</span>
                 </button>
@@ -233,6 +236,7 @@
             en: {
                 navTitle: 'Personal Finance Dashboard',
                 pageTitle: 'Advanced Analytics Dashboard',
+                advancedBtn: 'Advanced Analytics',
                 close: 'Close',
                 loadingText: 'Loading data...',
                 errorOccurred: 'An Error Occurred',
@@ -305,6 +309,7 @@
             ja: {
                 navTitle: '家計簿ダッシュボード',
                 pageTitle: '高度な分析ダッシュボード',
+                advancedBtn: '高度な分析',
                 close: '閉じる',
                 loadingText: 'データを読み込んでいます...',
                 errorOccurred: 'エラーが発生しました',
@@ -405,6 +410,7 @@
         function updateUILanguage() {
             const t = translations[currentLang];
             document.getElementById('navTitle').textContent = t.navTitle;
+            document.getElementById('advancedBtn').textContent = t.advancedBtn;
             document.getElementById('closeBtn').textContent = t.close;
             document.getElementById('loadingText').textContent = t.loadingText;
         }
