@@ -37,17 +37,18 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-radius: 16px;
-            padding: 1.5rem;
+            padding: 1rem 1.25rem;
             text-align: center;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             margin-bottom: 1rem;
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
             border: 1px solid rgba(255,255,255,0.1);
-            min-height: 180px;
-            height: 180px;
+            min-height: 160px;
+            height: 160px;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            overflow: hidden;
         }
 
         .stat-card:hover {
@@ -56,15 +57,19 @@
         }
 
         .stat-card.success {
-            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
         }
 
         .stat-card.warning {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #dc3545 0%, #e63757 100%);
         }
 
         .stat-card.info {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .stat-card.stable {
+            background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
         }
 
         [data-bs-theme="light"] .stat-card {
@@ -76,22 +81,27 @@
         }
 
         .stat-value {
-            font-size: 2.2rem;
+            font-size: 1.9rem;
             font-weight: 700;
-            margin: 0.5rem 0;
+            margin: 0.4rem 0;
             letter-spacing: -0.5px;
+            line-height: 1.2;
+            word-break: break-word;
         }
 
         .stat-label {
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             opacity: 0.95;
             font-weight: 500;
+            line-height: 1.3;
+            margin-bottom: 0.25rem;
         }
 
         .stat-sublabel {
-            font-size: 0.75rem;
-            opacity: 0.8;
+            font-size: 0.7rem;
+            opacity: 0.85;
             margin-top: 0.25rem;
+            line-height: 1.2;
         }
 
         .chart-container {
@@ -356,11 +366,18 @@
 
         @media (max-width: 768px) {
             .stat-card {
-                min-height: 140px;
+                min-height: 130px;
                 height: auto;
+                padding: 0.85rem 1rem;
             }
             .stat-value {
-                font-size: 1.8rem;
+                font-size: 1.5rem;
+            }
+            .stat-label {
+                font-size: 0.75rem;
+            }
+            .stat-sublabel {
+                font-size: 0.65rem;
             }
             .chart-container {
                 padding: 1.25rem;
@@ -372,6 +389,22 @@
             }
             .advanced-header {
                 padding: 1.5rem 0;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stat-card {
+                min-height: 120px;
+                padding: 0.75rem 0.85rem;
+            }
+            .stat-value {
+                font-size: 1.3rem;
+            }
+            .stat-label {
+                font-size: 0.7rem;
+            }
+            .stat-sublabel {
+                font-size: 0.6rem;
             }
         }
     </style>
@@ -987,10 +1020,16 @@
                 document.getElementById('trendDirection').innerHTML = `${trendText} <span class="${trendClass}">${trendIcon}</span>`;
                 document.getElementById('trendRate').textContent = `${data.model.trend_rate}% ${translate('perMonth')}`;
 
+                // Remove all color classes first
+                trendCard.classList.remove('warning', 'success', 'info', 'stable');
+
+                // Add appropriate color class based on trend
                 if (data.model.trend === 'increasing') {
-                    trendCard.classList.add('warning');
+                    trendCard.classList.add('warning');  // Red - Warning for increasing spending
                 } else if (data.model.trend === 'decreasing') {
-                    trendCard.classList.add('success');
+                    trendCard.classList.add('success');  // Green - Good, spending is decreasing
+                } else {
+                    trendCard.classList.add('stable');   // Yellow - Stable spending
                 }
 
                 // Update data quality
