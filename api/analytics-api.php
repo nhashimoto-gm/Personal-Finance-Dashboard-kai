@@ -61,6 +61,26 @@ try {
             handleStatistics($pdo);
             break;
 
+        case 'forecast':
+            handleForecast($pdo);
+            break;
+
+        case 'anomalies':
+            handleAnomalies($pdo);
+            break;
+
+        case 'advanced_stats':
+            handleAdvancedStatistics($pdo);
+            break;
+
+        case 'correlation':
+            handleCorrelation($pdo);
+            break;
+
+        case 'heatmap':
+            handleHeatmap($pdo);
+            break;
+
         default:
             echo json_encode(['success' => false, 'error' => 'Invalid action']);
     }
@@ -526,6 +546,592 @@ function handleStatistics($pdo) {
                 'weekday' => [],
                 'seasonal' => []
             ]
+        ]);
+    }
+}
+
+/**
+ * 予測分析（時系列予測）
+ * 線形回帰と移動平均を使用して将来の支出を予測
+ */
+function handleForecast($pdo) {
+    try {
+        $tables = getTableNames();
+        $months_ahead = (int)($_GET['months'] ?? 6); // デフォルト6ヶ月先まで予測
+        $months_ahead = max(1, min(12, $months_ahead)); // 1-12ヶ月の範囲
+
+        // 過去の月次データを取得（最低12ヶ月、できれば24ヶ月）
+        $stmt = $pdo->query("
+            SELECT
+                DATE_FORMAT(re_date, '%Y-%m') as month,
+                SUM(price) as expense,
+                COUNT(*) as transaction_count,
+                COUNT(DISTINCT re_date) as active_days
+            FROM {$tables['source']}
+            WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
+            GROUP BY DATE_FORMAT(re_date, '%Y-%m')
+            ORDER BY month ASC
+        ");
+        $historical = $stmt->fetchAll();
+
+        if (count($historical) < 3) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Not enough historical data for forecasting (minimum 3 months required)'
+            ]);
+            return;
+        }
+
+        // 線形回帰の計算
+        $n = count($historical);
+        $sum_x = 0;
+        $sum_y = 0;
+        $sum_xy = 0;
+        $sum_x2 = 0;
+
+        foreach ($historical as $i => $row) {
+            $x = $i; // 時間インデックス
+            $y = (float)$row['expense'];
+            $sum_x += $x;
+            $sum_y += $y;
+            $sum_xy += $x * $y;
+            $sum_x2 += $x * $x;
+        }
+
+        // 傾きと切片の計算
+        $slope = ($n * $sum_xy - $sum_x * $sum_y) / ($n * $sum_x2 - $sum_x * $sum_x);
+        $intercept = ($sum_y - $slope * $sum_x) / $n;
+
+        // 移動平均の計算（3ヶ月移動平均）
+        $ma_period = min(3, count($historical));
+        $moving_avg = 0;
+        for ($i = count($historical) - $ma_period; $i < count($historical); $i++) {
+            $moving_avg += (float)$historical[$i]['expense'];
+        }
+        $moving_avg = $moving_avg / $ma_period;
+
+        // 予測値の生成
+        $predictions = [];
+        $current_date = new DateTime();
+        $current_date->modify('first day of next month');
+
+        for ($i = 0; $i < $months_ahead; $i++) {
+            $x = $n + $i; // 未来の時間インデックス
+            $linear_pred = $slope * $x + $intercept;
+
+            // 線形予測と移動平均の加重平均（60%線形、40%移動平均）
+            $weighted_pred = $linear_pred * 0.6 + $moving_avg * 0.4;
+
+            // 季節性調整（同じ月の過去平均との比率）
+            $target_month = (int)$current_date->format('n');
+            $seasonal_factor = calculateSeasonalFactor($pdo, $tables, $target_month);
+            $adjusted_pred = $weighted_pred * $seasonal_factor;
+
+            $predictions[] = [
+                'month' => $current_date->format('Y-m'),
+                'predicted_expense' => round($adjusted_pred),
+                'linear_prediction' => round($linear_pred),
+                'moving_average' => round($moving_avg),
+                'seasonal_factor' => round($seasonal_factor, 3),
+                'confidence' => calculateConfidence($n, $i)
+            ];
+
+            $current_date->modify('+1 month');
+        }
+
+        // トレンド情報
+        $trend = $slope > 0 ? 'increasing' : ($slope < 0 ? 'decreasing' : 'stable');
+        $trend_rate = abs($slope) / ($sum_y / $n) * 100; // パーセンテージ変化率
+
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'historical' => $historical,
+                'predictions' => $predictions,
+                'model' => [
+                    'type' => 'linear_regression_with_ma',
+                    'slope' => round($slope, 2),
+                    'intercept' => round($intercept, 2),
+                    'moving_average' => round($moving_avg),
+                    'trend' => $trend,
+                    'trend_rate' => round($trend_rate, 2),
+                    'data_points' => $n
+                ]
+            ]
+        ]);
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Forecast API error: ' . $e->getMessage()
+        ]);
+    }
+}
+
+/**
+ * 季節性ファクターの計算
+ */
+function calculateSeasonalFactor($pdo, $tables, $target_month) {
+    try {
+        // 対象月の過去平均
+        $stmt = $pdo->prepare("
+            SELECT AVG(monthly_total) as month_avg
+            FROM (
+                SELECT SUM(price) as monthly_total
+                FROM {$tables['source']}
+                WHERE MONTH(re_date) = ?
+                AND re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
+                GROUP BY DATE_FORMAT(re_date, '%Y-%m')
+            ) monthly
+        ");
+        $stmt->execute([$target_month]);
+        $month_data = $stmt->fetch();
+
+        // 全体平均
+        $stmt = $pdo->query("
+            SELECT AVG(monthly_total) as overall_avg
+            FROM (
+                SELECT SUM(price) as monthly_total
+                FROM {$tables['source']}
+                WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
+                GROUP BY DATE_FORMAT(re_date, '%Y-%m')
+            ) monthly
+        ");
+        $overall_data = $stmt->fetch();
+
+        if ($overall_data['overall_avg'] > 0 && $month_data['month_avg'] > 0) {
+            return (float)$month_data['month_avg'] / (float)$overall_data['overall_avg'];
+        }
+        return 1.0; // デフォルト値
+    } catch (Exception $e) {
+        return 1.0;
+    }
+}
+
+/**
+ * 予測信頼度の計算
+ */
+function calculateConfidence($data_points, $months_ahead) {
+    // データポイントが多いほど、近い未来ほど信頼度が高い
+    $base_confidence = min(0.95, 0.5 + ($data_points / 48)); // 最大95%
+    $decay = pow(0.9, $months_ahead); // 先に行くほど減衰
+    return round($base_confidence * $decay, 2);
+}
+
+/**
+ * 異常検知
+ * 標準偏差を使用して通常パターンから外れた支出を検出
+ */
+function handleAnomalies($pdo) {
+    try {
+        $tables = getTableNames();
+        $sensitivity = (float)($_GET['sensitivity'] ?? 2.0); // 標準偏差の倍数
+        $days_back = (int)($_GET['days'] ?? 90);
+
+        // 日次データの取得
+        $stmt = $pdo->prepare("
+            SELECT
+                re_date,
+                SUM(price) as daily_total,
+                COUNT(*) as transaction_count
+            FROM {$tables['source']}
+            WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+            GROUP BY re_date
+            ORDER BY re_date DESC
+        ");
+        $stmt->execute([$days_back]);
+        $daily_data = $stmt->fetchAll();
+
+        if (count($daily_data) < 7) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Not enough data for anomaly detection'
+            ]);
+            return;
+        }
+
+        // 平均と標準偏差の計算
+        $total = 0;
+        $totals = [];
+        foreach ($daily_data as $row) {
+            $val = (float)$row['daily_total'];
+            $totals[] = $val;
+            $total += $val;
+        }
+        $mean = $total / count($totals);
+
+        $variance = 0;
+        foreach ($totals as $val) {
+            $variance += pow($val - $mean, 2);
+        }
+        $variance = $variance / count($totals);
+        $std_dev = sqrt($variance);
+
+        // 異常の検出
+        $anomalies = [];
+        $threshold_upper = $mean + ($sensitivity * $std_dev);
+        $threshold_lower = max(0, $mean - ($sensitivity * $std_dev));
+
+        foreach ($daily_data as $row) {
+            $amount = (float)$row['daily_total'];
+            $z_score = $std_dev > 0 ? ($amount - $mean) / $std_dev : 0;
+
+            if ($amount > $threshold_upper || $amount < $threshold_lower) {
+                $anomalies[] = [
+                    'date' => $row['re_date'],
+                    'amount' => (int)$amount,
+                    'transaction_count' => (int)$row['transaction_count'],
+                    'deviation' => round($amount - $mean),
+                    'z_score' => round($z_score, 2),
+                    'type' => $amount > $threshold_upper ? 'high' : 'low',
+                    'severity' => abs($z_score) > 3 ? 'critical' : (abs($z_score) > 2.5 ? 'high' : 'moderate')
+                ];
+            }
+        }
+
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'anomalies' => $anomalies,
+                'statistics' => [
+                    'mean' => round($mean),
+                    'std_dev' => round($std_dev),
+                    'threshold_upper' => round($threshold_upper),
+                    'threshold_lower' => round($threshold_lower),
+                    'total_days' => count($daily_data),
+                    'anomaly_count' => count($anomalies),
+                    'anomaly_rate' => round(count($anomalies) / count($daily_data) * 100, 2)
+                ]
+            ]
+        ]);
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Anomaly detection error: ' . $e->getMessage()
+        ]);
+    }
+}
+
+/**
+ * 高度な統計分析
+ */
+function handleAdvancedStatistics($pdo) {
+    try {
+        $tables = getTableNames();
+        $period = $_GET['period'] ?? 'monthly'; // monthly or daily
+
+        if ($period === 'monthly') {
+            // 月次統計
+            $stmt = $pdo->query("
+                SELECT
+                    DATE_FORMAT(re_date, '%Y-%m') as period,
+                    SUM(price) as total,
+                    COUNT(*) as count,
+                    AVG(price) as mean,
+                    MIN(price) as min,
+                    MAX(price) as max
+                FROM {$tables['source']}
+                WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
+                GROUP BY DATE_FORMAT(re_date, '%Y-%m')
+                ORDER BY period ASC
+            ");
+        } else {
+            // 日次統計
+            $stmt = $pdo->query("
+                SELECT
+                    re_date as period,
+                    SUM(price) as total,
+                    COUNT(*) as count,
+                    AVG(price) as mean,
+                    MIN(price) as min,
+                    MAX(price) as max
+                FROM {$tables['source']}
+                WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+                GROUP BY re_date
+                ORDER BY re_date ASC
+            ");
+        }
+        $data = $stmt->fetchAll();
+
+        if (count($data) < 2) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Not enough data for statistical analysis'
+            ]);
+            return;
+        }
+
+        // 統計計算
+        $totals = array_map(function($row) { return (float)$row['total']; }, $data);
+        $n = count($totals);
+        $sum = array_sum($totals);
+        $mean = $sum / $n;
+
+        // 分散と標準偏差
+        $variance = 0;
+        foreach ($totals as $val) {
+            $variance += pow($val - $mean, 2);
+        }
+        $variance = $variance / $n;
+        $std_dev = sqrt($variance);
+
+        // 変動係数（CV）
+        $cv = $mean > 0 ? ($std_dev / $mean) * 100 : 0;
+
+        // 四分位数
+        sort($totals);
+        $q1 = $totals[floor($n * 0.25)];
+        $q2 = $totals[floor($n * 0.50)]; // 中央値
+        $q3 = $totals[floor($n * 0.75)];
+        $iqr = $q3 - $q1;
+
+        // 歪度（Skewness）の簡易計算
+        $skewness = 0;
+        foreach ($totals as $val) {
+            $skewness += pow(($val - $mean) / $std_dev, 3);
+        }
+        $skewness = $skewness / $n;
+
+        // 信頼区間（95%）
+        $z_score = 1.96; // 95%信頼区間
+        $std_error = $std_dev / sqrt($n);
+        $ci_lower = $mean - ($z_score * $std_error);
+        $ci_upper = $mean + ($z_score * $std_error);
+
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'period_type' => $period,
+                'sample_size' => $n,
+                'descriptive' => [
+                    'mean' => round($mean),
+                    'median' => round($q2),
+                    'min' => round(min($totals)),
+                    'max' => round(max($totals)),
+                    'range' => round(max($totals) - min($totals))
+                ],
+                'dispersion' => [
+                    'variance' => round($variance),
+                    'std_deviation' => round($std_dev),
+                    'coefficient_of_variation' => round($cv, 2),
+                    'iqr' => round($iqr)
+                ],
+                'quartiles' => [
+                    'q1' => round($q1),
+                    'q2' => round($q2),
+                    'q3' => round($q3)
+                ],
+                'distribution' => [
+                    'skewness' => round($skewness, 3),
+                    'interpretation' => abs($skewness) < 0.5 ? 'symmetric' : ($skewness > 0 ? 'right_skewed' : 'left_skewed')
+                ],
+                'confidence_interval_95' => [
+                    'lower' => round($ci_lower),
+                    'upper' => round($ci_upper),
+                    'margin_of_error' => round($z_score * $std_error)
+                ],
+                'time_series' => $data
+            ]
+        ]);
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Advanced statistics error: ' . $e->getMessage()
+        ]);
+    }
+}
+
+/**
+ * カテゴリ間の相関分析
+ */
+function handleCorrelation($pdo) {
+    try {
+        $tables = getTableNames();
+
+        // カテゴリ別月次データの取得
+        $stmt = $pdo->query("
+            SELECT
+                DATE_FORMAT(s.re_date, '%Y-%m') as month,
+                c2.label as category,
+                SUM(s.price) as total
+            FROM {$tables['source']} s
+            LEFT JOIN {$tables['cat_2_labels']} c2 ON s.cat_2 = c2.id
+            WHERE s.re_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+            AND c2.label IS NOT NULL
+            GROUP BY DATE_FORMAT(s.re_date, '%Y-%m'), c2.label
+            ORDER BY month, total DESC
+        ");
+        $raw_data = $stmt->fetchAll();
+
+        // データを月×カテゴリの行列に変換
+        $matrix = [];
+        $categories = [];
+        foreach ($raw_data as $row) {
+            $month = $row['month'];
+            $category = $row['category'];
+            $total = (float)$row['total'];
+
+            if (!isset($matrix[$month])) {
+                $matrix[$month] = [];
+            }
+            $matrix[$month][$category] = $total;
+            $categories[$category] = true;
+        }
+
+        $categories = array_keys($categories);
+
+        // 上位5カテゴリのみに絞る（計算量削減）
+        $category_totals = [];
+        foreach ($categories as $cat) {
+            $category_totals[$cat] = 0;
+            foreach ($matrix as $month_data) {
+                $category_totals[$cat] += $month_data[$cat] ?? 0;
+            }
+        }
+        arsort($category_totals);
+        $top_categories = array_slice(array_keys($category_totals), 0, 5);
+
+        // 相関係数の計算
+        $correlations = [];
+        for ($i = 0; $i < count($top_categories); $i++) {
+            for ($j = $i + 1; $j < count($top_categories); $j++) {
+                $cat1 = $top_categories[$i];
+                $cat2 = $top_categories[$j];
+
+                $values1 = [];
+                $values2 = [];
+                foreach ($matrix as $month_data) {
+                    $values1[] = $month_data[$cat1] ?? 0;
+                    $values2[] = $month_data[$cat2] ?? 0;
+                }
+
+                $correlation = calculatePearsonCorrelation($values1, $values2);
+
+                if ($correlation !== null) {
+                    $correlations[] = [
+                        'category1' => $cat1,
+                        'category2' => $cat2,
+                        'correlation' => round($correlation, 3),
+                        'strength' => abs($correlation) > 0.7 ? 'strong' : (abs($correlation) > 0.4 ? 'moderate' : 'weak'),
+                        'direction' => $correlation > 0 ? 'positive' : 'negative'
+                    ];
+                }
+            }
+        }
+
+        // 相関の強い順にソート
+        usort($correlations, function($a, $b) {
+            return abs($b['correlation']) <=> abs($a['correlation']);
+        });
+
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'correlations' => $correlations,
+                'categories_analyzed' => $top_categories,
+                'total_months' => count($matrix)
+            ]
+        ]);
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Correlation analysis error: ' . $e->getMessage()
+        ]);
+    }
+}
+
+/**
+ * ピアソン相関係数の計算
+ */
+function calculatePearsonCorrelation($x, $y) {
+    $n = count($x);
+    if ($n < 2 || $n !== count($y)) return null;
+
+    $sum_x = array_sum($x);
+    $sum_y = array_sum($y);
+    $sum_xy = 0;
+    $sum_x2 = 0;
+    $sum_y2 = 0;
+
+    for ($i = 0; $i < $n; $i++) {
+        $sum_xy += $x[$i] * $y[$i];
+        $sum_x2 += $x[$i] * $x[$i];
+        $sum_y2 += $y[$i] * $y[$i];
+    }
+
+    $numerator = ($n * $sum_xy) - ($sum_x * $sum_y);
+    $denominator = sqrt((($n * $sum_x2) - ($sum_x * $sum_x)) * (($n * $sum_y2) - ($sum_y * $sum_y)));
+
+    if ($denominator == 0) return 0;
+    return $numerator / $denominator;
+}
+
+/**
+ * ヒートマップデータ（曜日×月の支出パターン）
+ */
+function handleHeatmap($pdo) {
+    try {
+        $tables = getTableNames();
+        $type = $_GET['type'] ?? 'weekday_month'; // weekday_month, hour_day, category_month
+
+        if ($type === 'weekday_month') {
+            // 曜日×月のヒートマップ
+            $stmt = $pdo->query("
+                SELECT
+                    DAYOFWEEK(re_date) as day_of_week,
+                    DAYNAME(re_date) as day_name,
+                    MONTH(re_date) as month,
+                    MONTHNAME(re_date) as month_name,
+                    ROUND(AVG(daily_total)) as avg_expense,
+                    COUNT(*) as occurrence_count
+                FROM (
+                    SELECT re_date, SUM(price) as daily_total
+                    FROM {$tables['source']}
+                    WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
+                    GROUP BY re_date
+                ) daily
+                GROUP BY DAYOFWEEK(re_date), DAYNAME(re_date), MONTH(re_date), MONTHNAME(re_date)
+                ORDER BY month, day_of_week
+            ");
+            $data = $stmt->fetchAll();
+
+            // マトリクス形式に変換
+            $matrix = [];
+            $max_value = 0;
+            foreach ($data as $row) {
+                $day = (int)$row['day_of_week'];
+                $month = (int)$row['month'];
+                $value = (int)$row['avg_expense'];
+
+                if (!isset($matrix[$day])) {
+                    $matrix[$day] = array_fill(1, 12, 0);
+                }
+                $matrix[$day][$month] = $value;
+                $max_value = max($max_value, $value);
+            }
+
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'type' => 'weekday_month',
+                    'matrix' => $matrix,
+                    'max_value' => $max_value,
+                    'raw_data' => $data,
+                    'labels' => [
+                        'x' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                        'y' => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                    ]
+                ]
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Unsupported heatmap type'
+            ]);
+        }
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Heatmap data error: ' . $e->getMessage()
         ]);
     }
 }
