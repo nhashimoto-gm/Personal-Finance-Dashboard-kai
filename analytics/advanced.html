@@ -86,7 +86,9 @@
             margin: 0.4rem 0;
             letter-spacing: -0.5px;
             line-height: 1.2;
-            word-break: break-word;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .stat-label {
@@ -372,6 +374,9 @@
             }
             .stat-value {
                 font-size: 1.5rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             .stat-label {
                 font-size: 0.75rem;
@@ -399,6 +404,9 @@
             }
             .stat-value {
                 font-size: 1.3rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             .stat-label {
                 font-size: 0.7rem;
@@ -461,7 +469,10 @@
             </div>
             <div class="col-md-3">
                 <div class="stat-card warning">
-                    <div class="stat-label" data-i18n="anomaliesDetected">Anomalies (90 days)</div>
+                    <div class="stat-label">
+                        <span data-i18n="anomaliesTitle">Anomalies</span><br>
+                        <span data-i18n="anomaliesPeriod">(90 days)</span>
+                    </div>
                     <div class="stat-value" id="anomalyCount">-</div>
                     <div class="stat-sublabel" id="anomalyRate">-</div>
                 </div>
@@ -747,7 +758,8 @@
                 nextMonthForecast: 'Next Month Forecast',
                 confidence: 'confidence',
                 spendingTrend: 'Spending Trend',
-                anomaliesDetected: 'Anomalies (90 days)',
+                anomaliesTitle: 'Anomalies',
+                anomaliesPeriod: '(90 days)',
                 dataQuality: 'Data Quality',
                 monthsOfData: 'months of data',
                 tabForecast: 'Forecast & Predictions',
@@ -823,7 +835,8 @@
                 nextMonthForecast: '来月予測',
                 confidence: '信頼度',
                 spendingTrend: '支出トレンド',
-                anomaliesDetected: '異常値（90日間）',
+                anomaliesTitle: '異常値',
+                anomaliesPeriod: '（90日間）',
                 dataQuality: 'データ品質',
                 monthsOfData: 'ヶ月のデータ',
                 tabForecast: '予測',
