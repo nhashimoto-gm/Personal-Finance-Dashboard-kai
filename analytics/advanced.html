@@ -29,6 +29,10 @@
             box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
         }
 
+        [data-bs-theme="light"] .advanced-header {
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+
         .stat-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -39,7 +43,8 @@
             margin-bottom: 1rem;
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
             border: 1px solid rgba(255,255,255,0.1);
-            min-height: 140px;
+            min-height: 180px;
+            height: 180px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -60,6 +65,14 @@
 
         .stat-card.info {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        [data-bs-theme="light"] .stat-card {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        [data-bs-theme="light"] .stat-card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
         }
 
         .stat-value {
@@ -115,6 +128,10 @@
             border-bottom-color: rgba(0,0,0,0.1);
         }
 
+        [data-bs-theme="light"] .chart-container:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
         .chart-title {
             font-size: 1.3rem;
             font-weight: 700;
@@ -159,6 +176,18 @@
             background: rgba(220, 53, 69, 0.15);
         }
 
+        [data-bs-theme="light"] .anomaly-item {
+            background: rgba(245, 87, 108, 0.08);
+        }
+
+        [data-bs-theme="light"] .anomaly-item:hover {
+            background: rgba(245, 87, 108, 0.12);
+        }
+
+        [data-bs-theme="light"] .anomaly-item.critical {
+            background: rgba(220, 53, 69, 0.1);
+        }
+
         .correlation-item {
             background: rgba(79, 172, 254, 0.1);
             padding: 1rem;
@@ -174,6 +203,14 @@
 
         .correlation-item.negative {
             border-left-color: #f093fb;
+        }
+
+        [data-bs-theme="light"] .correlation-item {
+            background: rgba(79, 172, 254, 0.08);
+        }
+
+        [data-bs-theme="light"] .correlation-item.strong {
+            background: rgba(86, 171, 47, 0.08);
         }
 
         .stats-grid {
@@ -206,6 +243,11 @@
             color: #764ba2;
         }
 
+        [data-bs-theme="light"] .stats-item {
+            background: rgba(102, 126, 234, 0.08);
+            border: 1px solid rgba(102, 126, 234, 0.15);
+        }
+
         .prediction-item {
             background: rgba(79, 172, 254, 0.08);
             padding: 0.75rem 1rem;
@@ -215,6 +257,10 @@
             justify-content: space-between;
             align-items: center;
             border-left: 3px solid #4facfe;
+        }
+
+        [data-bs-theme="light"] .prediction-item {
+            background: rgba(79, 172, 254, 0.06);
         }
 
         .confidence-badge {
@@ -230,14 +276,29 @@
             color: #a8e063;
         }
 
+        [data-bs-theme="light"] .confidence-high {
+            color: #56ab2f;
+            background: rgba(86, 171, 47, 0.15);
+        }
+
         .confidence-medium {
             background: rgba(255, 193, 7, 0.2);
             color: #ffc107;
         }
 
+        [data-bs-theme="light"] .confidence-medium {
+            color: #d39e00;
+            background: rgba(255, 193, 7, 0.15);
+        }
+
         .confidence-low {
             background: rgba(245, 87, 108, 0.2);
             color: #f5576c;
+        }
+
+        [data-bs-theme="light"] .confidence-low {
+            color: #dc3545;
+            background: rgba(245, 87, 108, 0.15);
         }
 
         .loading-spinner {
@@ -286,6 +347,22 @@
 
         .trend-stable {
             color: #ffc107;
+        }
+
+        @media (max-width: 768px) {
+            .stat-card {
+                min-height: 140px;
+                height: auto;
+            }
+            .stat-value {
+                font-size: 1.8rem;
+            }
+            .chart-container {
+                padding: 1.25rem;
+            }
+            .advanced-header {
+                padding: 1.5rem 0;
+            }
         }
     </style>
 </head>
@@ -602,7 +679,7 @@
 
     <div class="container mt-5 mb-5">
         <footer class="text-center opacity-50">
-            <small>Advanced Analytics Dashboard v1.0 | Powered by Statistical Analysis & Machine Learning</small>
+            <small><span data-i18n="footerText">Advanced Analytics Dashboard v1.0 | Powered by Statistical Analysis & Machine Learning</span></small>
         </footer>
     </div>
 
@@ -689,7 +766,11 @@
                 negative: 'Negative',
                 symmetric: 'Symmetric',
                 rightSkewed: 'Right Skewed',
-                leftSkewed: 'Left Skewed'
+                leftSkewed: 'Left Skewed',
+                seasonalAdjustment: 'Seasonal adj.',
+                ofDays: 'of days',
+                transactions: 'transactions',
+                footerText: 'Advanced Analytics Dashboard v1.0 | Powered by Statistical Analysis & Machine Learning'
             },
             ja: {
                 title: '高度な分析',
@@ -761,7 +842,11 @@
                 negative: '負',
                 symmetric: '対称',
                 rightSkewed: '右偏',
-                leftSkewed: '左偏'
+                leftSkewed: '左偏',
+                seasonalAdjustment: '季節調整',
+                ofDays: '日数',
+                transactions: '件',
+                footerText: '高度な分析ダッシュボード v1.0 | 統計分析と機械学習による予測'
             }
         };
 
@@ -988,7 +1073,7 @@
                             <div>
                                 <strong>${pred.month}</strong>
                                 <span class="ms-3">${formatCurrency(pred.predicted_expense)}</span>
-                                <small class="ms-2 opacity-75">(季節調整: ${pred.seasonal_factor})</small>
+                                <small class="ms-2 opacity-75">(${translate('seasonalAdjustment')}: ${pred.seasonal_factor})</small>
                             </div>
                             <span class="confidence-badge ${confClass}">${confText} ${confPercent}%</span>
                         </div>
@@ -1008,7 +1093,7 @@
 
                 // Update summary card
                 document.getElementById('anomalyCount').textContent = data.statistics.anomaly_count;
-                document.getElementById('anomalyRate').textContent = `${data.statistics.anomaly_rate}% ${currentLang === 'en' ? 'of days' : '日数'}`;
+                document.getElementById('anomalyRate').textContent = `${data.statistics.anomaly_rate}% ${translate('ofDays')}`;
 
                 // Create anomaly chart
                 const allDays = [];
@@ -1127,7 +1212,7 @@
                                     </div>
                                     <div class="text-end">
                                         <div><strong>${formatCurrency(anomaly.amount)}</strong></div>
-                                        <small class="opacity-75">Z-score: ${anomaly.z_score} | ${anomaly.transaction_count} ${currentLang === 'en' ? 'transactions' : '件'}</small>
+                                        <small class="opacity-75">Z-score: ${anomaly.z_score} | ${anomaly.transaction_count} ${translate('transactions')}</small>
                                     </div>
                                 </div>
                             </div>
