@@ -805,23 +805,30 @@
             url.searchParams.append('action', action);
             Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
-            console.log(`Fetching: ${action}`, url.toString());
+            console.log(`[API] Fetching: ${action}`, url.toString());
 
-            const response = await fetch(url);
+            try {
+                const response = await fetch(url);
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`[API] HTTP Error ${response.status} for ${action}:`, errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
+                }
+
+                const data = await response.json();
+                console.log(`[API] Response for ${action}:`, data);
+
+                if (!data.success) {
+                    console.error(`[API] Error (${action}):`, data.error);
+                    throw new Error(data.error || 'Unknown API error');
+                }
+
+                return data.data;
+            } catch (error) {
+                console.error(`[API] Exception for ${action}:`, error);
+                throw error;
             }
-
-            const data = await response.json();
-            console.log(`Response for ${action}:`, data);
-
-            if (!data.success) {
-                console.error(`API Error (${action}):`, data.error);
-                throw new Error(data.error);
-            }
-
-            return data.data;
         }
 
         // Chart Configuration
@@ -996,7 +1003,7 @@
                     end_date: new Date().toISOString().split('T')[0]
                 });
 
-                dailyData.data.forEach(day => {
+                dailyData.forEach(day => {
                     allDays.push(day.re_date);
                     upperThreshold.push(data.statistics.threshold_upper);
                     lowerThreshold.push(data.statistics.threshold_lower);
@@ -1352,7 +1359,7 @@
 
         // Load all data
         async function loadAllData() {
-            console.log('Loading all advanced analytics data...');
+            console.log('[Dashboard] Loading all advanced analytics data...');
 
             // Show loading indicator
             const loadingIndicator = document.getElementById('loadingIndicator');
@@ -1361,29 +1368,101 @@
             if (loadingIndicator) loadingIndicator.style.display = 'block';
             if (mainContent) mainContent.style.display = 'none';
 
-            try {
-                await Promise.all([
-                    loadForecast().catch(err => console.error('Forecast error:', err)),
-                    loadAnomalies().catch(err => console.error('Anomalies error:', err)),
-                    loadStatistics().catch(err => console.error('Statistics error:', err)),
-                    loadCorrelation().catch(err => console.error('Correlation error:', err)),
-                    loadHeatmap().catch(err => console.error('Heatmap error:', err))
-                ]);
-                console.log('All data loaded successfully');
+            const results = {
+                forecast: false,
+                anomalies: false,
+                statistics: false,
+                correlation: false,
+                heatmap: false
+            };
 
-                // Hide loading, show content
-                if (loadingIndicator) loadingIndicator.style.display = 'none';
-                if (mainContent) mainContent.style.display = 'block';
+            const errors = [];
+
+            try {
+                // Load each section and track success/failure
+                await loadForecast()
+                    .then(() => { results.forecast = true; })
+                    .catch(err => {
+                        console.error('[Dashboard] Forecast error:', err);
+                        errors.push(`Forecast: ${err.message}`);
+                    });
+
+                await loadAnomalies()
+                    .then(() => { results.anomalies = true; })
+                    .catch(err => {
+                        console.error('[Dashboard] Anomalies error:', err);
+                        errors.push(`Anomalies: ${err.message}`);
+                    });
+
+                await loadStatistics()
+                    .then(() => { results.statistics = true; })
+                    .catch(err => {
+                        console.error('[Dashboard] Statistics error:', err);
+                        errors.push(`Statistics: ${err.message}`);
+                    });
+
+                await loadCorrelation()
+                    .then(() => { results.correlation = true; })
+                    .catch(err => {
+                        console.error('[Dashboard] Correlation error:', err);
+                        errors.push(`Correlation: ${err.message}`);
+                    });
+
+                await loadHeatmap()
+                    .then(() => { results.heatmap = true; })
+                    .catch(err => {
+                        console.error('[Dashboard] Heatmap error:', err);
+                        errors.push(`Heatmap: ${err.message}`);
+                    });
+
+                const successCount = Object.values(results).filter(v => v).length;
+                console.log(`[Dashboard] Loaded ${successCount}/5 sections successfully`, results);
+
+                // Show content if at least one section loaded
+                if (successCount > 0) {
+                    if (loadingIndicator) loadingIndicator.style.display = 'none';
+                    if (mainContent) mainContent.style.display = 'block';
+
+                    if (errors.length > 0) {
+                        console.warn('[Dashboard] Some sections failed to load:', errors);
+                    }
+                } else {
+                    // All sections failed
+                    throw new Error('All analytics sections failed to load. Errors: ' + errors.join('; '));
+                }
             } catch (error) {
-                console.error('Error loading data:', error);
+                console.error('[Dashboard] Critical error loading data:', error);
                 if (loadingIndicator) {
                     loadingIndicator.innerHTML = `
-                        <div class="alert alert-danger" role="alert">
-                            <h4 class="alert-heading">Error Loading Data</h4>
-                            <p>${error.message}</p>
-                            <hr>
-                            <p class="mb-0">Please check the browser console for more details.</p>
-                            <button class="btn btn-primary mt-3" onclick="location.reload()">Retry</button>
+                        <div class="container">
+                            <div class="alert alert-danger" role="alert">
+                                <h4 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Error Loading Analytics Data</h4>
+                                <p><strong>Could not load advanced analytics.</strong></p>
+                                <hr>
+                                <h6>Possible causes:</h6>
+                                <ul class="mb-3">
+                                    <li>API endpoint not accessible (check: <code>../api/analytics-api.php</code>)</li>
+                                    <li>Database connection error</li>
+                                    <li>Insufficient data for analysis</li>
+                                    <li>CORS or permission issues</li>
+                                </ul>
+                                <h6>Error details:</h6>
+                                <pre class="bg-dark text-light p-3 rounded">${error.message}</pre>
+                                <p class="mb-2"><strong>Failed sections:</strong></p>
+                                <ul>
+                                    ${errors.map(e => `<li>${e}</li>`).join('')}
+                                </ul>
+                                <hr>
+                                <p class="mb-0">
+                                    <strong>Next steps:</strong><br>
+                                    1. Open browser console (F12) for detailed logs<br>
+                                    2. Verify API is accessible: <a href="../api/analytics-api.php?action=summary" target="_blank">Test API</a><br>
+                                    3. Check that you have transaction data in the database
+                                </p>
+                                <button class="btn btn-primary mt-3" onclick="location.reload()">
+                                    <i class="bi bi-arrow-clockwise"></i> Retry
+                                </button>
+                            </div>
                         </div>
                     `;
                 }
