@@ -424,7 +424,8 @@
         };
 
         // Load language from localStorage or default to 'en'
-        let currentLang = localStorage.getItem('dashboardLang') || 'en';
+        // Check both keys for compatibility
+        let currentLang = localStorage.getItem('analytics_lang') || localStorage.getItem('dashboardLang') || 'en';
         let charts = {};
         let cachedData = null;
 
@@ -437,6 +438,7 @@
             currentLang = lang;
             // Save language preference to localStorage
             localStorage.setItem('dashboardLang', lang);
+            localStorage.setItem('analytics_lang', lang);
 
             document.getElementById('langLabel').textContent = lang === 'en' ? 'JP' : 'EN';
             updateUILanguage();
@@ -446,6 +448,15 @@
 
             if (cachedData) {
                 renderDashboard(cachedData);
+            }
+
+            // Notify iframe of language change
+            const iframe = document.getElementById('advancedFrame');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({
+                    type: 'languageChange',
+                    language: lang
+                }, '*');
             }
         }
 
@@ -466,12 +477,24 @@
             html.setAttribute('data-bs-theme', newTheme);
             document.getElementById('themeIcon').className = newTheme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
 
+            // Save theme preference
+            localStorage.setItem('analytics_theme', newTheme);
+
             // Update Chart.js theme
             updateChartTheme(newTheme);
 
             // Re-render charts if data exists
             if (cachedData) {
                 renderAllCharts(cachedData);
+            }
+
+            // Notify iframe of theme change
+            const iframe = document.getElementById('advancedFrame');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({
+                    type: 'themeChange',
+                    theme: newTheme
+                }, '*');
             }
         }
 
@@ -1240,6 +1263,12 @@
             document.title = translations[currentLang].pageTitle;
             updateUILanguage();
 
+            // Initialize theme from localStorage
+            const savedTheme = localStorage.getItem('analytics_theme') || 'dark';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+            document.getElementById('themeIcon').className = savedTheme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+            updateChartTheme(savedTheme);
+
             // Language toggle
             document.getElementById('langToggle').addEventListener('click', () => {
                 switchLanguage(currentLang === 'en' ? 'ja' : 'en');
@@ -1247,6 +1276,23 @@
 
             // Theme toggle
             document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+            // Initialize iframe communication when iframe loads
+            const iframe = document.getElementById('advancedFrame');
+            if (iframe) {
+                iframe.addEventListener('load', () => {
+                    // Send initial theme and language to iframe
+                    const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+                    iframe.contentWindow.postMessage({
+                        type: 'themeChange',
+                        theme: currentTheme
+                    }, '*');
+                    iframe.contentWindow.postMessage({
+                        type: 'languageChange',
+                        language: currentLang
+                    }, '*');
+                });
+            }
 
             // Load data
             loadAllData();
