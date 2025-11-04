@@ -609,7 +609,13 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // API Configuration
-        const API_BASE_URL = '../api/analytics-api.php';
+        // Use absolute path from root to ensure correct resolution in iframe
+        const API_BASE_URL = (function() {
+            // Get the base path - remove any file path, keep only the directory structure
+            const path = window.location.pathname;
+            const basePath = path.substring(0, path.lastIndexOf('/analytics/'));
+            return basePath + '/api/analytics-api.php';
+        })();
 
         // i18n translations
         const translations = {
@@ -801,14 +807,24 @@
         }
 
         async function fetchData(action, params = {}) {
-            const url = new URL(API_BASE_URL, window.location.origin);
-            url.searchParams.append('action', action);
-            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-
-            console.log(`[API] Fetching: ${action}`, url.toString());
-
             try {
-                const response = await fetch(url);
+                // Build URL with proper parameters
+                const url = new URL(API_BASE_URL, window.location.origin);
+                url.searchParams.append('action', action);
+                Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+                console.log(`[API] Fetching: ${action}`, url.toString());
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'  // Include cookies for session
+                });
+
+                console.log(`[API] Response status for ${action}:`, response.status, response.statusText);
 
                 if (!response.ok) {
                     const errorText = await response.text();
@@ -816,11 +832,18 @@
                     throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
                 }
 
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error(`[API] Non-JSON response for ${action}:`, text.substring(0, 500));
+                    throw new Error(`Invalid response format (expected JSON, got ${contentType})`);
+                }
+
                 const data = await response.json();
-                console.log(`[API] Response for ${action}:`, data);
+                console.log(`[API] Response data for ${action}:`, data);
 
                 if (!data.success) {
-                    console.error(`[API] Error (${action}):`, data.error);
+                    console.error(`[API] API Error (${action}):`, data.error);
                     throw new Error(data.error || 'Unknown API error');
                 }
 
@@ -1475,8 +1498,14 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('[Advanced Analytics] Initializing...');
+            console.log('[Advanced Analytics] API Base URL:', API_BASE_URL);
+            console.log('[Advanced Analytics] Current Location:', window.location.href);
+            console.log('[Advanced Analytics] Pathname:', window.location.pathname);
+
             // Check if we're in an iframe
             const isInIframe = window.self !== window.top;
+            console.log('[Advanced Analytics] Running in iframe:', isInIframe);
 
             if (isInIframe) {
                 // Hide header and back button when embedded in iframe
@@ -1490,10 +1519,11 @@
                     const parentTheme = window.parent.document.documentElement.getAttribute('data-bs-theme');
                     if (parentTheme) {
                         document.documentElement.setAttribute('data-bs-theme', parentTheme);
+                        console.log('[Advanced Analytics] Synced theme with parent:', parentTheme);
                     }
                 } catch (e) {
                     // Cross-origin restriction, use default
-                    console.log('Cannot access parent theme due to cross-origin policy');
+                    console.log('[Advanced Analytics] Cannot access parent theme (cross-origin)');
                 }
             }
 
@@ -1509,6 +1539,7 @@
             updateTranslations();
 
             // Load data
+            console.log('[Advanced Analytics] Starting data load...');
             loadAllData();
         });
     </script>
