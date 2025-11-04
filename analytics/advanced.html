@@ -349,6 +349,11 @@
             color: #ffc107;
         }
 
+        .chart-container canvas {
+            min-height: 300px;
+            max-height: 500px;
+        }
+
         @media (max-width: 768px) {
             .stat-card {
                 min-height: 140px;
@@ -359,6 +364,11 @@
             }
             .chart-container {
                 padding: 1.25rem;
+            }
+            .chart-container canvas {
+                min-height: 350px !important;
+                height: 400px !important;
+                max-height: 450px !important;
             }
             .advanced-header {
                 padding: 1.5rem 0;
@@ -1029,7 +1039,7 @@
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: true,
+                        maintainAspectRatio: false,
                         plugins: {
                             legend: {
                                 display: true,
@@ -1165,7 +1175,7 @@
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: true,
+                        maintainAspectRatio: false,
                         plugins: {
                             legend: {
                                 labels: { color: colors.text, font: { size: 14, weight: '600' } }
@@ -1291,7 +1301,7 @@
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: true,
+                        maintainAspectRatio: false,
                         plugins: {
                             legend: {
                                 labels: { color: colors.text, font: { size: 14, weight: '600' } }
@@ -1421,7 +1431,7 @@
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: true,
+                        maintainAspectRatio: false,
                         plugins: {
                             legend: { display: false },
                             tooltip: {
