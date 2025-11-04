@@ -1637,6 +1637,43 @@
             console.log('[Advanced Analytics] Starting data load...');
             loadAllData();
         });
+
+        // Listen for theme and language changes from parent window
+        window.addEventListener('message', (event) => {
+            // For security, you might want to check event.origin
+            if (event.data && event.data.type === 'themeChange') {
+                const newTheme = event.data.theme;
+                console.log('[Advanced Analytics] Received theme change:', newTheme);
+                document.documentElement.setAttribute('data-bs-theme', newTheme);
+                localStorage.setItem('analytics_theme', newTheme);
+
+                // Update theme icon if visible
+                const icon = document.querySelector('#themeToggle i');
+                if (icon) {
+                    icon.className = newTheme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+                }
+
+                // Reload charts with new theme
+                loadAllData();
+            }
+
+            if (event.data && event.data.type === 'languageChange') {
+                const newLang = event.data.language;
+                console.log('[Advanced Analytics] Received language change:', newLang);
+                currentLang = newLang;
+                localStorage.setItem('analytics_lang', newLang);
+
+                // Update language toggle text if visible
+                const langText = document.getElementById('langText');
+                if (langText) {
+                    langText.textContent = newLang === 'en' ? '日本語' : 'English';
+                }
+
+                // Update translations and reload data
+                updateTranslations();
+                loadAllData();
+            }
+        });
     </script>
 </body>
 </html>
