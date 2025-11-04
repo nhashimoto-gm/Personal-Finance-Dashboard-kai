@@ -290,7 +290,7 @@
     </style>
 </head>
 <body>
-    <div class="advanced-header">
+    <div class="advanced-header" id="advancedHeader">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -304,7 +304,7 @@
                     <button class="btn btn-light" id="langToggle">
                         <span id="langText">日本語</span>
                     </button>
-                    <a href="index.html" class="btn btn-outline-light">
+                    <a href="index.html" class="btn btn-outline-light" id="backBtn">
                         <i class="bi bi-arrow-left"></i> <span data-i18n="backToBasic">Back to Analytics</span>
                     </a>
                 </div>
@@ -1396,14 +1396,37 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            // Check if we're in an iframe
+            const isInIframe = window.self !== window.top;
+
+            if (isInIframe) {
+                // Hide header and back button when embedded in iframe
+                const header = document.getElementById('advancedHeader');
+                const backBtn = document.getElementById('backBtn');
+                if (header) header.style.display = 'none';
+                if (backBtn) backBtn.style.display = 'none';
+
+                // Sync theme and language with parent
+                try {
+                    const parentTheme = window.parent.document.documentElement.getAttribute('data-bs-theme');
+                    if (parentTheme) {
+                        document.documentElement.setAttribute('data-bs-theme', parentTheme);
+                    }
+                } catch (e) {
+                    // Cross-origin restriction, use default
+                    console.log('Cannot access parent theme due to cross-origin policy');
+                }
+            }
+
             // Set saved theme
             const savedTheme = localStorage.getItem('analytics_theme') || 'dark';
             document.documentElement.setAttribute('data-bs-theme', savedTheme);
             const icon = document.querySelector('#themeToggle i');
-            icon.className = savedTheme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+            if (icon) icon.className = savedTheme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
 
             // Set language
-            document.getElementById('langText').textContent = currentLang === 'en' ? '日本語' : 'English';
+            const langText = document.getElementById('langText');
+            if (langText) langText.textContent = currentLang === 'en' ? '日本語' : 'English';
             updateTranslations();
 
             // Load data

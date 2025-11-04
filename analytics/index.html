@@ -196,9 +196,6 @@
                 <span id="navTitle">Personal Finance Dashboard</span>
             </span>
             <div>
-                <a href="advanced.html" class="btn btn-warning btn-sm me-2">
-                    <i class="bi bi-graph-up-arrow"></i> <span id="advancedBtn">Advanced Analytics</span>
-                </a>
                 <button class="btn btn-outline-light btn-sm me-2" id="langToggle">
                     <i class="bi bi-translate"></i> <span id="langLabel">JP</span>
                 </button>
@@ -213,13 +210,39 @@
     </nav>
 
     <div class="container-fluid">
-        <!-- Loading/Error State -->
-        <div id="root">
-            <div class="text-center p-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+        <!-- Tab Navigation -->
+        <ul class="nav nav-tabs nav-fill mt-3 mb-4" id="analyticsTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic-analytics" type="button" role="tab">
+                    <i class="bi bi-bar-chart-line"></i> <span id="basicTabLabel">Basic Analytics</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-analytics" type="button" role="tab">
+                    <i class="bi bi-graph-up-arrow"></i> <span id="advancedTabLabel">Advanced Analytics</span>
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="analyticsTabContent">
+            <!-- Basic Analytics Tab -->
+            <div class="tab-pane fade show active" id="basic-analytics" role="tabpanel">
+                <!-- Loading/Error State -->
+                <div id="root">
+                    <div class="text-center p-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3" id="loadingText">Loading data...</p>
+                    </div>
                 </div>
-                <p class="mt-3" id="loadingText">Loading data...</p>
+            </div>
+
+            <!-- Advanced Analytics Tab -->
+            <div class="tab-pane fade" id="advanced-analytics" role="tabpanel">
+                <!-- Embedded Advanced Analytics -->
+                <iframe id="advancedFrame" src="advanced.html" style="width: 100%; min-height: 1200px; border: none;"></iframe>
             </div>
         </div>
     </div>
@@ -236,7 +259,8 @@
             en: {
                 navTitle: 'Personal Finance Dashboard',
                 pageTitle: 'Analytics Dashboard',
-                advancedBtn: 'Advanced Analytics (Predictions & Stats)',
+                basicTabLabel: 'Basic Analytics',
+                advancedTabLabel: 'Advanced Analytics (Predictions & Stats)',
                 close: 'Close',
                 loadingText: 'Loading data...',
                 errorOccurred: 'An Error Occurred',
@@ -309,7 +333,8 @@
             ja: {
                 navTitle: '家計簿ダッシュボード',
                 pageTitle: '分析ダッシュボード',
-                advancedBtn: '高度な分析（予測・統計）',
+                basicTabLabel: '基本分析',
+                advancedTabLabel: '高度な分析（予測・統計）',
                 close: '閉じる',
                 loadingText: 'データを読み込んでいます...',
                 errorOccurred: 'エラーが発生しました',
@@ -410,7 +435,8 @@
         function updateUILanguage() {
             const t = translations[currentLang];
             document.getElementById('navTitle').textContent = t.navTitle;
-            document.getElementById('advancedBtn').textContent = t.advancedBtn;
+            document.getElementById('basicTabLabel').textContent = t.basicTabLabel;
+            document.getElementById('advancedTabLabel').textContent = t.advancedTabLabel;
             document.getElementById('closeBtn').textContent = t.close;
             document.getElementById('loadingText').textContent = t.loadingText;
         }
