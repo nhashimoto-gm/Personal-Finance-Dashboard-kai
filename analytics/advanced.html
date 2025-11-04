@@ -305,14 +305,24 @@
                         <span id="langText">日本語</span>
                     </button>
                     <a href="index.html" class="btn btn-outline-light">
-                        <i class="bi bi-arrow-left"></i> <span data-i18n="backToBasic">Basic Analytics</span>
+                        <i class="bi bi-arrow-left"></i> <span data-i18n="backToBasic">Back to Analytics</span>
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="container">
+    <div class="container" id="mainContainer">
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 fs-5"><span data-i18n="loading">Loading advanced analytics...</span></p>
+        </div>
+
+        <!-- Main Content (hidden until loaded) -->
+        <div id="mainContent" style="display: none;">
         <!-- Forecast Summary Cards -->
         <div class="row mb-4">
             <div class="col-md-3">
@@ -586,6 +596,8 @@
                 </div>
             </div>
         </div>
+        </div>
+        <!-- End Main Content -->
     </div>
 
     <div class="container mt-5 mb-5">
@@ -604,7 +616,8 @@
             en: {
                 title: 'Advanced Analytics',
                 subtitle: 'Predictions, Statistical Analysis & Pattern Detection',
-                backToBasic: 'Basic Analytics',
+                loading: 'Loading advanced analytics...',
+                backToBasic: 'Back to Analytics',
                 nextMonthForecast: 'Next Month Forecast',
                 confidence: 'confidence',
                 spendingTrend: 'Spending Trend',
@@ -675,7 +688,8 @@
             ja: {
                 title: '高度な分析',
                 subtitle: '予測、統計分析、パターン検出',
-                backToBasic: '基本分析',
+                loading: '高度な分析データを読み込み中...',
+                backToBasic: '分析に戻る',
                 nextMonthForecast: '来月予測',
                 confidence: '信頼度',
                 spendingTrend: '支出トレンド',
@@ -791,8 +805,16 @@
             url.searchParams.append('action', action);
             Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
 
+            console.log(`Fetching: ${action}`, url.toString());
+
             const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
+            console.log(`Response for ${action}:`, data);
 
             if (!data.success) {
                 console.error(`API Error (${action}):`, data.error);
@@ -1330,13 +1352,42 @@
 
         // Load all data
         async function loadAllData() {
-            await Promise.all([
-                loadForecast(),
-                loadAnomalies(),
-                loadStatistics(),
-                loadCorrelation(),
-                loadHeatmap()
-            ]);
+            console.log('Loading all advanced analytics data...');
+
+            // Show loading indicator
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const mainContent = document.getElementById('mainContent');
+
+            if (loadingIndicator) loadingIndicator.style.display = 'block';
+            if (mainContent) mainContent.style.display = 'none';
+
+            try {
+                await Promise.all([
+                    loadForecast().catch(err => console.error('Forecast error:', err)),
+                    loadAnomalies().catch(err => console.error('Anomalies error:', err)),
+                    loadStatistics().catch(err => console.error('Statistics error:', err)),
+                    loadCorrelation().catch(err => console.error('Correlation error:', err)),
+                    loadHeatmap().catch(err => console.error('Heatmap error:', err))
+                ]);
+                console.log('All data loaded successfully');
+
+                // Hide loading, show content
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
+                if (mainContent) mainContent.style.display = 'block';
+            } catch (error) {
+                console.error('Error loading data:', error);
+                if (loadingIndicator) {
+                    loadingIndicator.innerHTML = `
+                        <div class="alert alert-danger" role="alert">
+                            <h4 class="alert-heading">Error Loading Data</h4>
+                            <p>${error.message}</p>
+                            <hr>
+                            <p class="mb-0">Please check the browser console for more details.</p>
+                            <button class="btn btn-primary mt-3" onclick="location.reload()">Retry</button>
+                        </div>
+                    `;
+                }
+            }
         }
 
         // Event Listeners
