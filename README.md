@@ -10,6 +10,8 @@ A comprehensive personal finance tracking dashboard built with PHP, MySQL, Boots
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
 [![Chart.js](https://img.shields.io/badge/Chart.js-4-FF6384?logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
 
+> **⚠️ SECURITY WARNING**: This application has known security vulnerabilities and is **NOT ready for production use**. Do not deploy to production or expose to the internet without addressing the critical security issues documented in the [Security section](#-security). Recommended for **local development and testing only**.
+
 ---
 
 ## ✨ Features
@@ -143,13 +145,15 @@ Personal-Finance-Dashboard/
 
 ## 🚀 Installation
 
+> **⚠️ IMPORTANT**: Due to known security vulnerabilities, this application should **ONLY be installed in a local development environment**. Do not deploy to production servers or expose to the internet.
+
 ### Prerequisites
 - PHP 7.4 or higher
 - MySQL 5.7+ / MariaDB 10.2+
-- Apache/Nginx web server
+- Apache/Nginx web server (local development only)
 - Web browser with JavaScript enabled
 
-### Quick Start
+### Quick Start (Local Development Only)
 
 1. **Clone the repository**
 ```bash
@@ -223,27 +227,28 @@ Coming soon...
 
 ## 🚢 Deployment
 
-### Shared Hosting Deployment
+### ⛔ Production Deployment - NOT RECOMMENDED
 
-This application can be deployed to any shared hosting service that supports PHP 7.4+ and MySQL.
+**This application is NOT ready for production deployment.** Critical security vulnerabilities must be fixed first (see [Security section](#-security)).
 
-#### General Deployment Steps
+**Current Status**: Development/Testing Only
 
-1. Upload all files to your web server
-2. Import `database.sql` into your MySQL database
-3. Configure `.env_db` with your database credentials
-4. Set proper file permissions (storage directories writable)
-5. Point your web server to the root directory containing `index.php`
+**Before considering production deployment:**
+1. ✅ Fix all CRITICAL security issues
+2. ✅ Implement API authentication
+3. ✅ Add user_id filtering to all endpoints
+4. ✅ Complete security audit
+5. ✅ Penetration testing
+6. ✅ Enable HTTPS only
+7. ✅ Disable error display
+8. ✅ Implement comprehensive audit logging
 
-#### Example: Apache Configuration
-
-```apache
-DirectoryIndex index.php
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA,L]
-```
+**If you must deploy for testing** (isolated network only):
+1. Deploy behind a firewall (no internet access)
+2. Use only for single-user testing
+3. Do not store real financial data
+4. Regular backups
+5. Monitor access logs
 
 ---
 
@@ -385,26 +390,71 @@ INSERT INTO cat_2_labels (label) VALUES ('New Category');
 
 ## 🔒 Security
 
+### ⚠️ SECURITY NOTICE
+
+**This application is currently in development and has known security issues that must be addressed before production use.**
+
+#### Known Security Issues
+
+**CRITICAL - Must Fix Before Production:**
+
+1. **Missing API Authentication** (`api/analytics-api.php`)
+   - ❌ Analytics API has no authentication checks
+   - ❌ CORS set to `Access-Control-Allow-Origin: *`
+   - **Risk**: Anyone can access all financial data without logging in
+   - **Fix Required**: Add session-based authentication to all API endpoints
+
+2. **Data Exposure - Missing User ID Filtering** (`api/analytics-api.php`)
+   - ❌ All API queries lack `user_id` filtering
+   - **Risk**: Users can access other users' financial data
+   - **Fix Required**: Add `WHERE user_id = ?` to all database queries in API
+
+3. **Export Function Security** (`export.php`)
+   - ❌ No user ID validation before exporting data
+   - **Risk**: Users could export other users' data
+   - **Fix Required**: Validate user ownership before exporting
+
+4. **Import Function Issues** (`import.php`)
+   - ❌ Function signature mismatch when calling `addTransaction()`
+   - ❌ Missing user context in transaction imports
+   - **Risk**: Transactions may be assigned to wrong user
+   - **Fix Required**: Correct function parameters and add user validation
+
+**HIGH PRIORITY:**
+
+5. **Missing Rate Limiting** on export/import endpoints
+6. **No Audit Logging** for data modifications
+7. **Error Suppression** in config.php masks critical errors
+
+**Recommendation**: Do not deploy to production or expose to the internet until these issues are resolved.
+
 ### Implemented Protections
-- ✅ **User Authentication**: Session-based authentication with secure login/logout
+- ✅ **User Authentication**: Session-based authentication with secure login/logout (main dashboard only)
 - ✅ **Password Security**: Bcrypt hashing for all user passwords
 - ✅ **SQL Injection**: PDO prepared statements throughout
 - ✅ **XSS**: `htmlspecialchars()` on all user-generated outputs
 - ✅ **CSRF Protection**: Token-based validation on all POST requests
-- ✅ **Rate Limiting**: Protection against brute-force attacks
+- ✅ **Rate Limiting**: Protection against brute-force attacks (login page)
 - ✅ **Session Management**: Secure session handling with 30-minute timeout
 - ✅ **Session Configuration**: HttpOnly cookies, SameSite protection, strict mode
-- ✅ **Multi-User Isolation**: User-specific data access with query-level filtering
+- ⚠️ **Multi-User Isolation**: Partially implemented (main dashboard yes, API endpoints NO)
 - ✅ **Environment Variables**: Credentials in `.env_db` (gitignored)
 
 ### Production Checklist
+- [ ] **CRITICAL**: Add authentication to analytics API
+- [ ] **CRITICAL**: Add user_id filtering to all API queries
+- [ ] **CRITICAL**: Fix export.php user validation
+- [ ] **CRITICAL**: Fix import.php function signature
 - [ ] Disable error display (`display_errors = 0`)
-- [ ] Enable HTTPS
+- [ ] Enable HTTPS (mandatory)
 - [x] Implement CSRF protection
-- [x] Add rate limiting
+- [x] Add rate limiting (needs extension to all endpoints)
 - [x] Set secure session cookies
+- [ ] Implement audit logging
 - [ ] Regular database backups
 - [ ] Update dependencies
+- [ ] Security audit by professional
+- [ ] Penetration testing
 
 ### Recommended .htaccess Security Headers
 ```apache
@@ -555,6 +605,17 @@ Please include:
 - [x] **User Display in Header** - Current user display with dropdown menu
 - [x] **AI-Powered Expense Forecasting** - Statistical ML-like prediction engine with ensemble methods
 
+### Version 2.2 (Next Release - Security Fixes)
+- [ ] **CRITICAL**: Add authentication to Analytics API
+- [ ] **CRITICAL**: Implement user_id filtering in all API endpoints
+- [ ] **CRITICAL**: Fix export.php user validation
+- [ ] **CRITICAL**: Fix import.php function signature mismatch
+- [ ] Add rate limiting to export/import endpoints
+- [ ] Implement audit logging for data modifications
+- [ ] Remove error suppression and add proper error handling
+- [ ] Add database indexes for performance
+- [ ] Comprehensive security testing
+
 ### Version 3.0 (Planned)
 - [ ] Transaction memo/notes field
 - [ ] Transaction categories hierarchy
@@ -563,6 +624,8 @@ Please include:
 - [ ] PDF/Excel report generation from analytics
 - [ ] Two-factor authentication (2FA)
 - [ ] Password reset via email
+- [ ] Input validation improvements
+- [ ] API documentation (OpenAPI/Swagger)
 
 ### Version 4.0 (Future)
 - [ ] Multi-currency support
