@@ -1,25 +1,61 @@
 <?php
-// export.php - CSV/Excelエクスポート機能
-
-// セキュアなセッション設定
-session_start([
-    'cookie_httponly' => true,
-    'cookie_samesite' => 'Lax',
-    'use_strict_mode' => true,
-]);
+// export.php - CSV/Excelエクスポート機能（セキュア版）
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/queries.php';
 
-// データベース接続
-$pdo = getDatabaseConnection();
+// 認証チェック
+if (!isLoggedIn()) {
+    http_response_code(401);
+    die('Unauthorized: Authentication required');
+}
 
-// パラメータ取得
+// 現在のユーザーIDを取得
+$user_id = getCurrentUserId();
+if (!$user_id) {
+    http_response_code(401);
+    die('Unauthorized: Invalid session');
+}
+
+// レート制限チェック
+if (!checkRateLimit('export', 30, 10)) { // 30分に10回まで
+    http_response_code(429);
+    die('Too many export requests. Please try again later.');
+}
+
+// データベース接続
+try {
+    $pdo = getDatabaseConnection();
+} catch (Exception $e) {
+    http_response_code(500);
+    die('Database connection error');
+}
+
+// パラメータ取得と検証
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
 $search_shop = isset($_GET['search_shop']) ? $_GET['search_shop'] : '';
 $search_category = isset($_GET['search_category']) ? $_GET['search_category'] : '';
 $export_type = isset($_GET['type']) ? $_GET['type'] : 'transactions';
+
+// 日付フォーマット検証
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start_date) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $end_date)) {
+    http_response_code(400);
+    die('Invalid date format');
+}
+
+// 日付範囲検証
+if (strtotime($start_date) > strtotime($end_date)) {
+    http_response_code(400);
+    die('Start date must be before end date');
+}
+
+// エクスポートタイプ検証
+$valid_types = ['transactions', 'summary', 'shop_summary', 'category_summary'];
+if (!in_array($export_type, $valid_types)) {
+    http_response_code(400);
+    die('Invalid export type');
+}
 
 // CSVヘッダー設定（UTF-8 BOM付き、Excel互換）
 header('Content-Type: text/csv; charset=UTF-8');
@@ -33,10 +69,15 @@ echo "\xEF\xBB\xBF";
 // 出力バッファリング
 $output = fopen('php://output', 'w');
 
+if (!$output) {
+    http_response_code(500);
+    die('Failed to open output stream');
+}
+
 if ($export_type === 'transactions') {
-    // トランザクションエクスポート
+    // トランザクションエクスポート（user_idフィルタリング付き）
     $limit = 10000; // 最大10,000件
-    $transactions = getRecentTransactions($pdo, $start_date, $end_date, $search_shop, $search_category, $limit);
+    $transactions = getRecentTransactions($pdo, $user_id, $start_date, $end_date, $search_shop, $search_category, $limit);
 
     // CSVヘッダー
     fputcsv($output, ['Date', 'Shop', 'Category', 'Amount']);
@@ -51,9 +92,9 @@ if ($export_type === 'transactions') {
         ]);
     }
 } elseif ($export_type === 'summary') {
-    // サマリーエクスポート
-    $summary = getSummary($pdo, $start_date, $end_date);
-    $active_days = getActiveDays($pdo, $start_date, $end_date);
+    // サマリーエクスポート（user_idフィルタリング付き）
+    $summary = getSummary($pdo, $user_id, $start_date, $end_date);
+    $active_days = getActiveDays($pdo, $user_id, $start_date, $end_date);
 
     // CSVヘッダー
     fputcsv($output, ['Metric', 'Value']);
@@ -68,8 +109,8 @@ if ($export_type === 'transactions') {
     fputcsv($output, ['Daily Average', $active_days > 0 ? round($summary['total'] / $active_days, 2) : 0]);
 
 } elseif ($export_type === 'shop_summary') {
-    // ショップ別サマリー
-    $shop_data_result = getShopData($pdo, $start_date, $end_date);
+    // ショップ別サマリー（user_idフィルタリング付き）
+    $shop_data_result = getShopData($pdo, $user_id, $start_date, $end_date);
     $shop_data_above_4pct = $shop_data_result['above_4pct'];
 
     // CSVヘッダー
@@ -84,8 +125,8 @@ if ($export_type === 'transactions') {
     }
 
 } elseif ($export_type === 'category_summary') {
-    // カテゴリ別サマリー
-    $category_data = getCategoryData($pdo, $start_date, $end_date);
+    // カテゴリ別サマリー（user_idフィルタリング付き）
+    $category_data = getCategoryData($pdo, $user_id, $start_date, $end_date);
 
     // CSVヘッダー
     fputcsv($output, ['Category', 'Total Amount']);

@@ -21,12 +21,22 @@ if ($appEnv === 'production') {
 function loadEnvironment() {
     $envFilePath = __DIR__ . '/.env_db';
     if (!file_exists($envFilePath)) {
+        error_log("Environment file not found: " . $envFilePath);
         die(".env_db file does not exist.");
     }
 
-    $envVariables = @parse_ini_file($envFilePath);
+    if (!is_readable($envFilePath)) {
+        error_log("Environment file not readable: " . $envFilePath);
+        die(".env_db file is not readable. Please check file permissions.");
+    }
+
+    // エラー抑制演算子を削除し、適切なエラーハンドリングを追加
+    $envVariables = parse_ini_file($envFilePath);
     if ($envVariables === false) {
-        die("Failed to parse .env_db file. Please check the file format.\n" .
+        $error = error_get_last();
+        $errorMessage = $error['message'] ?? 'Unknown error';
+        error_log("Failed to parse .env_db file: " . $errorMessage);
+        die("Failed to parse .env_db file. Error: " . $errorMessage . "\n\n" .
             "Expected format:\n" .
             "DB_HOST=localhost\n" .
             "DB_USERNAME=your_username\n" .

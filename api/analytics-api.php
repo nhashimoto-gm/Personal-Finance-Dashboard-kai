@@ -2,16 +2,49 @@
 /**
  * Finance Analytics API
  * 既存のpersonal-finance-dashboardシステムと完全統合
+ * セキュアバージョン: 認証とuser_idフィルタリング実装
  */
 
 // 既存の設定ファイルを読み込み
 require_once __DIR__ . '/../config.php';
 
-// CORS設定
+// 認証チェック
+if (!isLoggedIn()) {
+    http_response_code(401);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'success' => false,
+        'error' => 'Unauthorized',
+        'message' => 'Authentication required'
+    ]);
+    exit;
+}
+
+// 現在のユーザーIDを取得
+$user_id = getCurrentUserId();
+if (!$user_id) {
+    http_response_code(401);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'success' => false,
+        'error' => 'Invalid session',
+        'message' => 'User ID not found in session'
+    ]);
+    exit;
+}
+
+// CORS設定（認証後に設定）
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
+
+// 本番環境では特定のオリジンのみ許可すべき
+// header('Access-Control-Allow-Origin: https://yourdomain.com');
+// 開発環境でのみ使用（セキュリティリスクあり）
+if (isset($_SERVER['HTTP_ORIGIN'])) {
+    header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
@@ -23,68 +56,69 @@ try {
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     $action = $_GET['action'] ?? 'summary';
 
-    // エンドポイント処理
+    // エンドポイント処理（user_idを渡す）
     switch ($action) {
         case 'summary':
-            handleSummary($pdo);
+            handleSummary($pdo, $user_id);
             break;
 
         case 'monthly':
-            handleMonthly($pdo);
+            handleMonthly($pdo, $user_id);
             break;
 
         case 'yearly':
-            handleYearly($pdo);
+            handleYearly($pdo, $user_id);
             break;
 
         case 'shop':
-            handleShop($pdo);
+            handleShop($pdo, $user_id);
             break;
 
         case 'category':
-            handleCategory($pdo);
+            handleCategory($pdo, $user_id);
             break;
 
         case 'daily':
-            handleDaily($pdo);
+            handleDaily($pdo, $user_id);
             break;
 
         case 'trends':
-            handleTrends($pdo);
+            handleTrends($pdo, $user_id);
             break;
 
         case 'period':
-            handlePeriod($pdo);
+            handlePeriod($pdo, $user_id);
             break;
 
         case 'stats':
-            handleStatistics($pdo);
+            handleStatistics($pdo, $user_id);
             break;
 
         case 'forecast':
-            handleForecast($pdo);
+            handleForecast($pdo, $user_id);
             break;
 
         case 'anomalies':
-            handleAnomalies($pdo);
+            handleAnomalies($pdo, $user_id);
             break;
 
         case 'advanced_stats':
-            handleAdvancedStatistics($pdo);
+            handleAdvancedStatistics($pdo, $user_id);
             break;
 
         case 'correlation':
-            handleCorrelation($pdo);
+            handleCorrelation($pdo, $user_id);
             break;
 
         case 'heatmap':
-            handleHeatmap($pdo);
+            handleHeatmap($pdo, $user_id);
             break;
 
         default:
             echo json_encode(['success' => false, 'error' => 'Invalid action']);
     }
 } catch (Exception $e) {
+    http_response_code(500);
     echo json_encode([
         'success' => false,
         'error' => $e->getMessage(),
@@ -95,7 +129,7 @@ try {
 /**
  * サマリー情報取得
  */
-function handleSummary($pdo) {
+function handleSummary($pdo, $user_id) {
     try {
         $tables = getTableNames();
         $start_date = $_GET['start_date'] ?? '2008-01-01';
@@ -113,9 +147,9 @@ function handleSummary($pdo) {
                 COUNT(DISTINCT cat_2) as unique_categories,
                 ROUND(AVG(price)) as avg_transaction
             FROM {$tables['source']}
-            WHERE re_date BETWEEN ? AND ?
+            WHERE user_id = ? AND re_date BETWEEN ? AND ?
         ");
-        $stmt->execute([$start_date, $end_date]);
+        $stmt->execute([$user_id, $start_date, $end_date]);
         $summary = $stmt->fetch();
 
         if (!$summary || !$summary['earliest_date']) {
@@ -142,36 +176,36 @@ function handleSummary($pdo) {
         $currentStmt = $pdo->prepare("
             SELECT COALESCE(SUM(price), 0) as total
             FROM {$tables['source']}
-            WHERE DATE_FORMAT(re_date, '%Y-%m') = ?
+            WHERE user_id = ? AND DATE_FORMAT(re_date, '%Y-%m') = ?
         ");
-        $currentStmt->execute([$currentMonth]);
+        $currentStmt->execute([$user_id, $currentMonth]);
         $currentMonthExpense = $currentStmt->fetch()['total'];
 
         // 前月の支出
         $lastStmt = $pdo->prepare("
             SELECT COALESCE(SUM(price), 0) as total
             FROM {$tables['source']}
-            WHERE DATE_FORMAT(re_date, '%Y-%m') = ?
+            WHERE user_id = ? AND DATE_FORMAT(re_date, '%Y-%m') = ?
         ");
-        $lastStmt->execute([$lastMonth]);
+        $lastStmt->execute([$user_id, $lastMonth]);
         $lastMonthExpense = $lastStmt->fetch()['total'];
 
         // 6か月前の支出
         $sixStmt = $pdo->prepare("
             SELECT COALESCE(SUM(price), 0) as total
             FROM {$tables['source']}
-            WHERE DATE_FORMAT(re_date, '%Y-%m') = ?
+            WHERE user_id = ? AND DATE_FORMAT(re_date, '%Y-%m') = ?
         ");
-        $sixStmt->execute([$sixMonthsAgo]);
+        $sixStmt->execute([$user_id, $sixMonthsAgo]);
         $sixMonthsAgoExpense = $sixStmt->fetch()['total'];
 
         // 12か月前の支出
         $twelveStmt = $pdo->prepare("
             SELECT COALESCE(SUM(price), 0) as total
             FROM {$tables['source']}
-            WHERE DATE_FORMAT(re_date, '%Y-%m') = ?
+            WHERE user_id = ? AND DATE_FORMAT(re_date, '%Y-%m') = ?
         ");
-        $twelveStmt->execute([$twelveMonthsAgo]);
+        $twelveStmt->execute([$user_id, $twelveMonthsAgo]);
         $twelveMonthsAgoExpense = $twelveStmt->fetch()['total'];
 
         // パーセンテージ計算
@@ -224,7 +258,7 @@ function handleSummary($pdo) {
 /**
  * 月次データ取得
  */
-function handleMonthly($pdo) {
+function handleMonthly($pdo, $user_id) {
     $tables = getTableNames();
     $start_date = $_GET['start_date'] ?? '2008-01-01';
     $end_date = $_GET['end_date'] ?? date('Y-m-d');
@@ -241,11 +275,11 @@ function handleMonthly($pdo) {
             MAX(price) as max_transaction,
             MIN(price) as min_transaction
         FROM {$tables['source']}
-        WHERE re_date BETWEEN ? AND ?
+        WHERE user_id = ? AND re_date BETWEEN ? AND ?
         GROUP BY DATE_FORMAT(re_date, '%Y-%m')
         ORDER BY re_date ASC
     ");
-    $stmt->execute([$start_date, $end_date]);
+    $stmt->execute([$user_id, $start_date, $end_date]);
     $data = $stmt->fetchAll();
 
     echo json_encode([
@@ -258,10 +292,10 @@ function handleMonthly($pdo) {
 /**
  * 年次データ取得
  */
-function handleYearly($pdo) {
+function handleYearly($pdo, $user_id) {
     $tables = getTableNames();
 
-    $stmt = $pdo->query("
+    $stmt = $pdo->prepare("
         SELECT
             YEAR(re_date) as year,
             SUM(price) as total_expense,
@@ -270,10 +304,11 @@ function handleYearly($pdo) {
             COUNT(DISTINCT cat_1) as unique_shops,
             ROUND(AVG(price)) as avg_transaction
         FROM {$tables['source']}
-        WHERE re_date >= '2008-01-01'
+        WHERE user_id = ? AND re_date >= '2008-01-01'
         GROUP BY YEAR(re_date)
         ORDER BY year ASC
     ");
+    $stmt->execute([$user_id]);
     $data = $stmt->fetchAll();
 
     echo json_encode([
@@ -285,7 +320,7 @@ function handleYearly($pdo) {
 /**
  * ショップ別データ取得
  */
-function handleShop($pdo) {
+function handleShop($pdo, $user_id) {
     $tables = getTableNames();
     $start_date = $_GET['start_date'] ?? '2008-01-01';
     $end_date = $_GET['end_date'] ?? date('Y-m-d');
@@ -293,16 +328,6 @@ function handleShop($pdo) {
 
     // LIMIT値のバリデーション（1-100の範囲）
     $limit = max(1, min(100, $limit));
-
-    // デバッグ: テーブル名とパラメータを確認
-    error_log("Shop API Debug - Tables: " . json_encode($tables));
-    error_log("Shop API Debug - Params: start_date={$start_date}, end_date={$end_date}, limit={$limit}");
-
-    // まずデータ件数を確認
-    $countStmt = $pdo->prepare("SELECT COUNT(*) as count FROM {$tables['source']} WHERE re_date BETWEEN ? AND ?");
-    $countStmt->execute([$start_date, $end_date]);
-    $count = $countStmt->fetch();
-    error_log("Shop API Debug - Source records in date range: " . $count['count']);
 
     // LIMIT句はバインドパラメータではなく直接埋め込む（整数として検証済み）
     $sql = "
@@ -316,20 +341,15 @@ function handleShop($pdo) {
             MAX(s.re_date) as last_purchase
         FROM {$tables['source']} s
         LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id
-        WHERE s.re_date BETWEEN ? AND ?
+        WHERE s.user_id = ? AND s.re_date BETWEEN ? AND ?
         GROUP BY s.cat_1, c1.label
         ORDER BY total DESC
         LIMIT {$limit}
     ";
 
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$start_date, $end_date]);
+    $stmt->execute([$user_id, $start_date, $end_date]);
     $data = $stmt->fetchAll();
-
-    error_log("Shop API Debug - Result count: " . count($data));
-    if (count($data) > 0) {
-        error_log("Shop API Debug - First record: " . json_encode($data[0]));
-    }
 
     echo json_encode([
         'success' => true,
@@ -338,8 +358,7 @@ function handleShop($pdo) {
             'start_date' => $start_date,
             'end_date' => $end_date,
             'limit' => $limit,
-            'record_count' => count($data),
-            'source_records' => $count['count']
+            'record_count' => count($data)
         ]
     ]);
 }
@@ -347,7 +366,7 @@ function handleShop($pdo) {
 /**
  * カテゴリ別データ取得
  */
-function handleCategory($pdo) {
+function handleCategory($pdo, $user_id) {
     $tables = getTableNames();
     $start_date = $_GET['start_date'] ?? '2008-01-01';
     $end_date = $_GET['end_date'] ?? date('Y-m-d');
@@ -361,11 +380,11 @@ function handleCategory($pdo) {
             ROUND(AVG(s.price)) as avg_amount
         FROM {$tables['source']} s
         LEFT JOIN {$tables['cat_2_labels']} c2 ON s.cat_2 = c2.id
-        WHERE s.re_date BETWEEN ? AND ?
+        WHERE s.user_id = ? AND s.re_date BETWEEN ? AND ?
         GROUP BY s.cat_2, c2.label
         ORDER BY total DESC
     ");
-    $stmt->execute([$start_date, $end_date]);
+    $stmt->execute([$user_id, $start_date, $end_date]);
     $data = $stmt->fetchAll();
 
     echo json_encode([
@@ -377,7 +396,7 @@ function handleCategory($pdo) {
 /**
  * 日別データ取得
  */
-function handleDaily($pdo) {
+function handleDaily($pdo, $user_id) {
     $tables = getTableNames();
     $start_date = $_GET['start_date'] ?? date('Y-m-01');
     $end_date = $_GET['end_date'] ?? date('Y-m-d');
@@ -388,11 +407,11 @@ function handleDaily($pdo) {
             SUM(price) as daily_total,
             COUNT(*) as transaction_count
         FROM {$tables['source']}
-        WHERE re_date BETWEEN ? AND ?
+        WHERE user_id = ? AND re_date BETWEEN ? AND ?
         GROUP BY re_date
         ORDER BY re_date ASC
     ");
-    $stmt->execute([$start_date, $end_date]);
+    $stmt->execute([$user_id, $start_date, $end_date]);
     $data = $stmt->fetchAll();
 
     echo json_encode([
@@ -404,32 +423,36 @@ function handleDaily($pdo) {
 /**
  * トレンド分析データ
  */
-function handleTrends($pdo) {
+function handleTrends($pdo, $user_id) {
     $tables = getTableNames();
 
     // 月別トレンド（全期間）
-    $stmt = $pdo->query("
+    $stmt = $pdo->prepare("
         SELECT
             DATE_FORMAT(re_date, '%Y-%m') as month,
             SUM(price) as expense,
             COUNT(*) as count
         FROM {$tables['source']}
+        WHERE user_id = ?
         GROUP BY DATE_FORMAT(re_date, '%Y-%m')
         ORDER BY re_date ASC
     ");
+    $stmt->execute([$user_id]);
     $monthly = $stmt->fetchAll();
 
     // カテゴリ別年次推移
-    $stmt = $pdo->query("
+    $stmt = $pdo->prepare("
         SELECT
             YEAR(s.re_date) as year,
             c2.label as category,
             SUM(s.price) as total
         FROM {$tables['source']} s
         LEFT JOIN {$tables['cat_2_labels']} c2 ON s.cat_2 = c2.id
+        WHERE s.user_id = ?
         GROUP BY YEAR(s.re_date), c2.label
         ORDER BY year, total DESC
     ");
+    $stmt->execute([$user_id]);
     $category_yearly = $stmt->fetchAll();
 
     echo json_encode([
@@ -444,7 +467,7 @@ function handleTrends($pdo) {
 /**
  * 期間別推移（月次/年次）
  */
-function handlePeriod($pdo) {
+function handlePeriod($pdo, $user_id) {
     $tables = getTableNames();
     $period_range = (int)($_GET['months'] ?? 12);
     $group_by_shop = $_GET['group_by_shop'] ?? false;
@@ -459,7 +482,7 @@ function handlePeriod($pdo) {
                 SUM(s.price) as total
             FROM {$tables['source']} s
             " . ($group_by_shop ? "LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id" : "") . "
-            WHERE s.re_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+            WHERE s.user_id = ? AND s.re_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
             GROUP BY DATE_FORMAT(s.re_date, '%Y-%m')" . $group_clause . "
             ORDER BY period ASC
         ");
@@ -473,13 +496,13 @@ function handlePeriod($pdo) {
                 SUM(s.price) as total
             FROM {$tables['source']} s
             " . ($group_by_shop ? "LEFT JOIN {$tables['cat_1_labels']} c1 ON s.cat_1 = c1.id" : "") . "
-            WHERE s.re_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+            WHERE s.user_id = ? AND s.re_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
             GROUP BY YEAR(s.re_date)" . $group_clause . "
             ORDER BY period ASC
         ");
     }
 
-    $stmt->execute([$period_range]);
+    $stmt->execute([$user_id, $period_range]);
     $data = $stmt->fetchAll();
 
     echo json_encode([
@@ -491,12 +514,12 @@ function handlePeriod($pdo) {
 /**
  * 統計分析データ
  */
-function handleStatistics($pdo) {
+function handleStatistics($pdo, $user_id) {
     try {
         $tables = getTableNames();
 
         // 曜日別統計
-        $stmt = $pdo->query("
+        $stmt = $pdo->prepare("
             SELECT
                 DAYNAME(daily.re_date) as day_of_week,
                 DAYOFWEEK(daily.re_date) as day_num,
@@ -505,15 +528,17 @@ function handleStatistics($pdo) {
             FROM (
                 SELECT re_date, SUM(price) as daily_total
                 FROM {$tables['source']}
+                WHERE user_id = ?
                 GROUP BY re_date
             ) daily
             GROUP BY DAYOFWEEK(daily.re_date), DAYNAME(daily.re_date)
             ORDER BY day_num
         ");
+        $stmt->execute([$user_id]);
         $weekday_stats = $stmt->fetchAll();
 
         // 月別季節性
-        $stmt = $pdo->query("
+        $stmt = $pdo->prepare("
             SELECT
                 monthly.month,
                 ROUND(AVG(monthly.monthly_total)) as avg_expense,
@@ -524,11 +549,13 @@ function handleStatistics($pdo) {
                     MONTH(re_date) as month,
                     SUM(price) as monthly_total
                 FROM {$tables['source']}
+                WHERE user_id = ?
                 GROUP BY DATE_FORMAT(re_date, '%Y-%m'), MONTH(re_date)
             ) monthly
             GROUP BY monthly.month
             ORDER BY monthly.month
         ");
+        $stmt->execute([$user_id]);
         $seasonal_stats = $stmt->fetchAll();
 
         echo json_encode([
@@ -554,24 +581,25 @@ function handleStatistics($pdo) {
  * 予測分析（時系列予測）
  * 線形回帰と移動平均を使用して将来の支出を予測
  */
-function handleForecast($pdo) {
+function handleForecast($pdo, $user_id) {
     try {
         $tables = getTableNames();
         $months_ahead = (int)($_GET['months'] ?? 6); // デフォルト6ヶ月先まで予測
         $months_ahead = max(1, min(12, $months_ahead)); // 1-12ヶ月の範囲
 
         // 過去の月次データを取得（最低12ヶ月、できれば24ヶ月）
-        $stmt = $pdo->query("
+        $stmt = $pdo->prepare("
             SELECT
                 DATE_FORMAT(re_date, '%Y-%m') as month,
                 SUM(price) as expense,
                 COUNT(*) as transaction_count,
                 COUNT(DISTINCT re_date) as active_days
             FROM {$tables['source']}
-            WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
+            WHERE user_id = ? AND re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
             GROUP BY DATE_FORMAT(re_date, '%Y-%m')
             ORDER BY month ASC
         ");
+        $stmt->execute([$user_id]);
         $historical = $stmt->fetchAll();
 
         if (count($historical) < 3) {
@@ -624,7 +652,7 @@ function handleForecast($pdo) {
 
             // 季節性調整（同じ月の過去平均との比率）
             $target_month = (int)$current_date->format('n');
-            $seasonal_factor = calculateSeasonalFactor($pdo, $tables, $target_month);
+            $seasonal_factor = calculateSeasonalFactor($pdo, $tables, $user_id, $target_month);
             $adjusted_pred = $weighted_pred * $seasonal_factor;
 
             $predictions[] = [
@@ -670,7 +698,7 @@ function handleForecast($pdo) {
 /**
  * 季節性ファクターの計算
  */
-function calculateSeasonalFactor($pdo, $tables, $target_month) {
+function calculateSeasonalFactor($pdo, $tables, $user_id, $target_month) {
     try {
         // 対象月の過去平均
         $stmt = $pdo->prepare("
@@ -678,24 +706,25 @@ function calculateSeasonalFactor($pdo, $tables, $target_month) {
             FROM (
                 SELECT SUM(price) as monthly_total
                 FROM {$tables['source']}
-                WHERE MONTH(re_date) = ?
+                WHERE user_id = ? AND MONTH(re_date) = ?
                 AND re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
                 GROUP BY DATE_FORMAT(re_date, '%Y-%m')
             ) monthly
         ");
-        $stmt->execute([$target_month]);
+        $stmt->execute([$user_id, $target_month]);
         $month_data = $stmt->fetch();
 
         // 全体平均
-        $stmt = $pdo->query("
+        $stmt = $pdo->prepare("
             SELECT AVG(monthly_total) as overall_avg
             FROM (
                 SELECT SUM(price) as monthly_total
                 FROM {$tables['source']}
-                WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
+                WHERE user_id = ? AND re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
                 GROUP BY DATE_FORMAT(re_date, '%Y-%m')
             ) monthly
         ");
+        $stmt->execute([$user_id]);
         $overall_data = $stmt->fetch();
 
         if ($overall_data['overall_avg'] > 0 && $month_data['month_avg'] > 0) {
@@ -721,7 +750,7 @@ function calculateConfidence($data_points, $months_ahead) {
  * 異常検知
  * 標準偏差を使用して通常パターンから外れた支出を検出
  */
-function handleAnomalies($pdo) {
+function handleAnomalies($pdo, $user_id) {
     try {
         $tables = getTableNames();
         $sensitivity = (float)($_GET['sensitivity'] ?? 2.0); // 標準偏差の倍数
@@ -734,11 +763,11 @@ function handleAnomalies($pdo) {
                 SUM(price) as daily_total,
                 COUNT(*) as transaction_count
             FROM {$tables['source']}
-            WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+            WHERE user_id = ? AND re_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
             GROUP BY re_date
             ORDER BY re_date DESC
         ");
-        $stmt->execute([$days_back]);
+        $stmt->execute([$user_id, $days_back]);
         $daily_data = $stmt->fetchAll();
 
         if (count($daily_data) < 7) {
@@ -814,14 +843,14 @@ function handleAnomalies($pdo) {
 /**
  * 高度な統計分析
  */
-function handleAdvancedStatistics($pdo) {
+function handleAdvancedStatistics($pdo, $user_id) {
     try {
         $tables = getTableNames();
         $period = $_GET['period'] ?? 'monthly'; // monthly or daily
 
         if ($period === 'monthly') {
             // 月次統計
-            $stmt = $pdo->query("
+            $stmt = $pdo->prepare("
                 SELECT
                     DATE_FORMAT(re_date, '%Y-%m') as period,
                     SUM(price) as total,
@@ -830,13 +859,14 @@ function handleAdvancedStatistics($pdo) {
                     MIN(price) as min,
                     MAX(price) as max
                 FROM {$tables['source']}
-                WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
+                WHERE user_id = ? AND re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
                 GROUP BY DATE_FORMAT(re_date, '%Y-%m')
                 ORDER BY period ASC
             ");
+            $stmt->execute([$user_id]);
         } else {
             // 日次統計
-            $stmt = $pdo->query("
+            $stmt = $pdo->prepare("
                 SELECT
                     re_date as period,
                     SUM(price) as total,
@@ -845,10 +875,11 @@ function handleAdvancedStatistics($pdo) {
                     MIN(price) as min,
                     MAX(price) as max
                 FROM {$tables['source']}
-                WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+                WHERE user_id = ? AND re_date >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
                 GROUP BY re_date
                 ORDER BY re_date ASC
             ");
+            $stmt->execute([$user_id]);
         }
         $data = $stmt->fetchAll();
 
@@ -943,23 +974,24 @@ function handleAdvancedStatistics($pdo) {
 /**
  * カテゴリ間の相関分析
  */
-function handleCorrelation($pdo) {
+function handleCorrelation($pdo, $user_id) {
     try {
         $tables = getTableNames();
 
         // カテゴリ別月次データの取得
-        $stmt = $pdo->query("
+        $stmt = $pdo->prepare("
             SELECT
                 DATE_FORMAT(s.re_date, '%Y-%m') as month,
                 c2.label as category,
                 SUM(s.price) as total
             FROM {$tables['source']} s
             LEFT JOIN {$tables['cat_2_labels']} c2 ON s.cat_2 = c2.id
-            WHERE s.re_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+            WHERE s.user_id = ? AND s.re_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
             AND c2.label IS NOT NULL
             GROUP BY DATE_FORMAT(s.re_date, '%Y-%m'), c2.label
             ORDER BY month, total DESC
         ");
+        $stmt->execute([$user_id]);
         $raw_data = $stmt->fetchAll();
 
         // データを月×カテゴリの行列に変換
@@ -1061,21 +1093,21 @@ function calculatePearsonCorrelation($x, $y) {
     $numerator = ($n * $sum_xy) - ($sum_x * $sum_y);
     $denominator = sqrt((($n * $sum_x2) - ($sum_x * $sum_x)) * (($n * $sum_y2) - ($sum_y * $sum_y)));
 
-    if ($denominator == 0) return 0;
+    if (abs($denominator) < 0.0001) return 0;
     return $numerator / $denominator;
 }
 
 /**
  * ヒートマップデータ（曜日×月の支出パターン）
  */
-function handleHeatmap($pdo) {
+function handleHeatmap($pdo, $user_id) {
     try {
         $tables = getTableNames();
         $type = $_GET['type'] ?? 'weekday_month'; // weekday_month, hour_day, category_month
 
         if ($type === 'weekday_month') {
             // 曜日×月のヒートマップ
-            $stmt = $pdo->query("
+            $stmt = $pdo->prepare("
                 SELECT
                     DAYOFWEEK(re_date) as day_of_week,
                     DAYNAME(re_date) as day_name,
@@ -1086,12 +1118,13 @@ function handleHeatmap($pdo) {
                 FROM (
                     SELECT re_date, SUM(price) as daily_total
                     FROM {$tables['source']}
-                    WHERE re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
+                    WHERE user_id = ? AND re_date >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH)
                     GROUP BY re_date
                 ) daily
                 GROUP BY DAYOFWEEK(re_date), DAYNAME(re_date), MONTH(re_date), MONTHNAME(re_date)
                 ORDER BY month, day_of_week
             ");
+            $stmt->execute([$user_id]);
             $data = $stmt->fetchAll();
 
             // マトリクス形式に変換
