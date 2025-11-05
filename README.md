@@ -10,6 +10,8 @@ A comprehensive personal finance tracking dashboard built with PHP, MySQL, Boots
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
 [![Chart.js](https://img.shields.io/badge/Chart.js-4-FF6384?logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
 
+> **✅ SECURITY UPDATE**: All critical security vulnerabilities have been resolved! The application now includes authentication for all APIs, complete user data isolation, rate limiting, and proper error handling. While suitable for **controlled environments**, additional production hardening is recommended (HTTPS enforcement, audit logging, professional security audit). See the [Security section](#-security) for details.
+
 ---
 
 ## ✨ Features
@@ -143,6 +145,8 @@ Personal-Finance-Dashboard/
 
 ## 🚀 Installation
 
+> **ℹ️ NOTE**: All critical security vulnerabilities have been resolved. This application is suitable for controlled environments. For production deployment, follow the production hardening checklist in the [Security section](#-security).
+
 ### Prerequisites
 - PHP 7.4 or higher
 - MySQL 5.7+ / MariaDB 10.2+
@@ -223,27 +227,38 @@ Coming soon...
 
 ## 🚢 Deployment
 
-### Shared Hosting Deployment
+### ✅ Production Deployment - Ready with Hardening
 
-This application can be deployed to any shared hosting service that supports PHP 7.4+ and MySQL.
+**This application has resolved all critical security vulnerabilities** and is suitable for controlled production environments.
 
-#### General Deployment Steps
+**Current Status**: ✅ Core Security Complete | ⚠️ Production Hardening Recommended
 
-1. Upload all files to your web server
-2. Import `database.sql` into your MySQL database
-3. Configure `.env_db` with your database credentials
-4. Set proper file permissions (storage directories writable)
-5. Point your web server to the root directory containing `index.php`
+**Completed Security Measures:**
+1. ✅ All CRITICAL security issues fixed
+2. ✅ API authentication implemented
+3. ✅ Complete user_id filtering across all endpoints
+4. ✅ Rate limiting on sensitive endpoints
+5. ✅ Proper error handling and logging
+6. ✅ CSRF protection
+7. ✅ Session security hardening
 
-#### Example: Apache Configuration
+**Recommended Production Hardening:**
+1. Enable HTTPS only (disable HTTP completely)
+2. Configure production CORS settings (restrict origins)
+3. Set `display_errors = 0` in production
+4. Implement audit logging for compliance
+5. Set up automated database backups
+6. Professional security audit
+7. Penetration testing
 
-```apache
-DirectoryIndex index.php
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA,L]
-```
+**Deployment Steps:**
+1. Follow standard PHP application deployment
+2. Configure `.env_db` with production credentials
+3. Set `APP_ENV=production` environment variable
+4. Enable HTTPS with valid SSL certificate
+5. Configure web server security headers (see README)
+6. Set up monitoring and logging
+7. Regular security updates
 
 ---
 
@@ -385,26 +400,97 @@ INSERT INTO cat_2_labels (label) VALUES ('New Category');
 
 ## 🔒 Security
 
+### ✅ SECURITY UPDATE - All Critical Issues Resolved!
+
+**All critical and high-priority security vulnerabilities have been fixed as of the latest commit.**
+
+#### ✅ Fixed Security Issues (Completed)
+
+**CRITICAL - ALL FIXED:**
+
+1. **✅ API Authentication Implemented** (`api/analytics-api.php`)
+   - ✅ Added session-based authentication using `isLoggedIn()`
+   - ✅ Added user ID validation via `getCurrentUserId()`
+   - ✅ Returns 401 Unauthorized if not authenticated
+   - ✅ CORS restricted to specific origins (configurable for production)
+   - **Status**: SECURED - All 14 API endpoints now require authentication
+
+2. **✅ Complete User Data Isolation** (`api/analytics-api.php`)
+   - ✅ All API queries now include `WHERE user_id = ?` filtering
+   - ✅ User ID parameter added to all 14 handler functions
+   - ✅ Protected endpoints: summary, monthly, yearly, shop, category, daily, trends, period, stats, forecast, anomalies, advanced_stats, correlation, heatmap
+   - **Status**: SECURED - Complete multi-user data isolation
+
+3. **✅ Export Security Hardened** (`export.php`)
+   - ✅ Authentication check before any export operation
+   - ✅ User ID validation and filtering on all queries
+   - ✅ Rate limiting (10 exports per 30 minutes)
+   - ✅ Input validation for dates, types, and parameters
+   - **Status**: SECURED - User-specific exports only
+
+4. **✅ Import Security Fixed** (`import.php`)
+   - ✅ Authentication check before import
+   - ✅ User ID validation
+   - ✅ Rate limiting (5 imports per 60 minutes)
+   - ✅ Correct function signature: `addTransaction($pdo, $user_id, $date, $amount, $shop, $category)`
+   - ✅ File type validation (CSV only)
+   - ✅ Maximum line limit (10,000 rows)
+   - **Status**: SECURED - Correct parameters and user context
+
+**HIGH PRIORITY - ALL FIXED:**
+
+5. **✅ Rate Limiting** - Implemented on export (30min/10), import (60min/5), and login endpoints
+6. **✅ Error Handling** - Removed error suppression (@) in config.php, added proper logging
+7. **✅ Input Validation** - Added comprehensive validation for all user inputs
+
+#### Remaining Improvements (Non-Critical)
+
+**RECOMMENDED for Production:**
+
+- [ ] Implement audit logging for data modifications
+- [ ] Set up regular automated database backups
+- [ ] Professional security audit and penetration testing
+- [ ] Enable HTTPS only (disable HTTP)
+- [ ] Configure production CORS settings
+- [ ] Set `display_errors = 0` in production
+
 ### Implemented Protections
-- ✅ **User Authentication**: Session-based authentication with secure login/logout
+
+- ✅ **User Authentication**: Session-based authentication across all endpoints
 - ✅ **Password Security**: Bcrypt hashing for all user passwords
 - ✅ **SQL Injection**: PDO prepared statements throughout
 - ✅ **XSS**: `htmlspecialchars()` on all user-generated outputs
 - ✅ **CSRF Protection**: Token-based validation on all POST requests
-- ✅ **Rate Limiting**: Protection against brute-force attacks
+- ✅ **Rate Limiting**: Login, export, and import endpoints protected
 - ✅ **Session Management**: Secure session handling with 30-minute timeout
 - ✅ **Session Configuration**: HttpOnly cookies, SameSite protection, strict mode
-- ✅ **Multi-User Isolation**: User-specific data access with query-level filtering
+- ✅ **Multi-User Isolation**: Complete user data isolation across ALL endpoints
 - ✅ **Environment Variables**: Credentials in `.env_db` (gitignored)
+- ✅ **API Authentication**: All analytics API endpoints require authentication
+- ✅ **Export/Import Security**: Authentication, rate limiting, and validation
+- ✅ **Error Handling**: Proper error logging instead of suppression
 
-### Production Checklist
+### Production Readiness Checklist
+
+**Security (Core):**
+- [x] **CRITICAL**: Add authentication to analytics API ✅ COMPLETED
+- [x] **CRITICAL**: Add user_id filtering to all API queries ✅ COMPLETED
+- [x] **CRITICAL**: Fix export.php user validation ✅ COMPLETED
+- [x] **CRITICAL**: Fix import.php function signature ✅ COMPLETED
+- [x] **CRITICAL**: Add rate limiting to export/import ✅ COMPLETED
+- [x] **CRITICAL**: Remove error suppression ✅ COMPLETED
+- [x] Implement CSRF protection ✅ COMPLETED
+- [x] Set secure session cookies ✅ COMPLETED
+
+**Production Hardening:**
 - [ ] Disable error display (`display_errors = 0`)
-- [ ] Enable HTTPS
-- [x] Implement CSRF protection
-- [x] Add rate limiting
-- [x] Set secure session cookies
+- [ ] Enable HTTPS only (mandatory)
+- [ ] Configure production CORS (restrict origins)
+- [ ] Implement audit logging
 - [ ] Regular database backups
 - [ ] Update dependencies
+- [ ] Security audit by professional
+- [ ] Penetration testing
 
 ### Recommended .htaccess Security Headers
 ```apache
@@ -555,6 +641,18 @@ Please include:
 - [x] **User Display in Header** - Current user display with dropdown menu
 - [x] **AI-Powered Expense Forecasting** - Statistical ML-like prediction engine with ensemble methods
 
+### Version 2.2 (✅ Completed - Security Fixes)
+- [x] **CRITICAL**: Add authentication to Analytics API ✅
+- [x] **CRITICAL**: Implement user_id filtering in all API endpoints ✅
+- [x] **CRITICAL**: Fix export.php user validation ✅
+- [x] **CRITICAL**: Fix import.php function signature mismatch ✅
+- [x] Add rate limiting to export/import endpoints ✅
+- [x] Remove error suppression and add proper error handling ✅
+- [x] Input validation improvements ✅
+- [ ] Implement audit logging for data modifications (planned)
+- [ ] Add database indexes for performance (planned)
+- [ ] Comprehensive security testing (recommended)
+
 ### Version 3.0 (Planned)
 - [ ] Transaction memo/notes field
 - [ ] Transaction categories hierarchy
@@ -563,6 +661,8 @@ Please include:
 - [ ] PDF/Excel report generation from analytics
 - [ ] Two-factor authentication (2FA)
 - [ ] Password reset via email
+- [ ] Input validation improvements
+- [ ] API documentation (OpenAPI/Swagger)
 
 ### Version 4.0 (Future)
 - [ ] Multi-currency support
