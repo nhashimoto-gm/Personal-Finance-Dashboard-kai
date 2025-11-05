@@ -17,6 +17,46 @@ if ($appEnv === 'production') {
     error_reporting(E_ALL);
 }
 
+// ============================================================
+// HTTPS強制（本番環境のみ）
+// ============================================================
+/**
+ * HTTPSを強制的に使用させる
+ * 本番環境でのみ有効化
+ *
+ * 注意: SSL証明書がインストールされている必要があります
+ * 開発環境で無効化する場合は、環境変数 FORCE_HTTPS=0 を設定してください
+ */
+function forceHttps() {
+    $appEnv = getenv('APP_ENV') ?: 'development';
+    $forceHttps = getenv('FORCE_HTTPS');
+
+    // 本番環境、またはFORCE_HTTPS=1が設定されている場合
+    if ($appEnv === 'production' || $forceHttps === '1') {
+        // HTTPSかどうかをチェック
+        $isHttps = (
+            (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+            (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ||
+            (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+        );
+
+        if (!$isHttps) {
+            // HTTPSにリダイレクト
+            $redirect = 'https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+            header('Location: ' . $redirect, true, 301);
+            exit('Redirecting to HTTPS...');
+        }
+
+        // HSTSヘッダーを設定（1年間有効）
+        header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
+    }
+}
+
+// HTTPS強制を実行（CLIモードでは実行しない）
+if (php_sapi_name() !== 'cli') {
+    forceHttps();
+}
+
 // 環境変数読み込み
 function loadEnvironment() {
     $envFilePath = __DIR__ . '/.env_db';

@@ -33,20 +33,101 @@ if (!$user_id) {
     exit;
 }
 
-// CORS設定（認証後に設定）
+// ============================================================
+// CORS設定（セキュア版）
+// ============================================================
+// 環境別のCORS設定を実装
+// 本番環境: ホワイトリストのオリジンのみ許可
+// 開発環境: 柔軟な設定（環境変数で制御）
+// ============================================================
+
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 
-// 本番環境では特定のオリジンのみ許可すべき
-// header('Access-Control-Allow-Origin: https://yourdomain.com');
-// 開発環境でのみ使用（セキュリティリスクあり）
-if (isset($_SERVER['HTTP_ORIGIN'])) {
-    header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
+// 環境変数からアプリケーション環境を取得
+$appEnv = getenv('APP_ENV') ?: 'development';
+
+// 環境変数から許可するオリジンを取得（カンマ区切り）
+// 例: ALLOWED_ORIGINS=https://example.com,https://www.example.com
+$allowedOriginsEnv = getenv('ALLOWED_ORIGINS');
+
+// 許可するオリジンのホワイトリスト
+$allowedOrigins = [];
+
+if ($allowedOriginsEnv) {
+    // 環境変数で指定されている場合
+    $allowedOrigins = array_map('trim', explode(',', $allowedOriginsEnv));
+} elseif ($appEnv === 'production') {
+    // 本番環境: 厳格なホワイトリスト（要変更）
+    // ⚠️ 警告: 実際のドメインに変更してください
+    $allowedOrigins = [
+        'https://yourdomain.com',
+        'https://www.yourdomain.com',
+        'https://app.yourdomain.com'
+    ];
+} else {
+    // 開発環境: localhost系を許可
+    $allowedOrigins = [
+        'http://localhost',
+        'http://localhost:3000',
+        'http://localhost:8000',
+        'http://localhost:8080',
+        'http://127.0.0.1',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:8000',
+        'http://127.0.0.1:8080'
+    ];
 }
 
+// リクエストのオリジンを取得
+$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+// オリジン検証
+$originAllowed = false;
+
+if (!empty($requestOrigin)) {
+    // 完全一致チェック
+    if (in_array($requestOrigin, $allowedOrigins, true)) {
+        $originAllowed = true;
+        header('Access-Control-Allow-Origin: ' . $requestOrigin);
+    }
+    // 開発環境のみ: ワイルドカードパターンマッチ（オプション）
+    elseif ($appEnv === 'development') {
+        // localhostのポート違いを許可
+        if (preg_match('/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/', $requestOrigin)) {
+            $originAllowed = true;
+            header('Access-Control-Allow-Origin: ' . $requestOrigin);
+        }
+    }
+}
+
+// オリジンが許可されていない場合
+if (!$originAllowed && !empty($requestOrigin)) {
+    // 本番環境: 403 Forbiddenを返す
+    if ($appEnv === 'production') {
+        http_response_code(403);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Forbidden',
+            'message' => 'Origin not allowed'
+        ]);
+        error_log("CORS: Blocked origin - $requestOrigin");
+        exit;
+    }
+    // 開発環境: 警告ログのみ（ブロックしない）
+    else {
+        error_log("CORS: Warning - Unknown origin: $requestOrigin");
+        // 開発環境では許可（デバッグ用）
+        header('Access-Control-Allow-Origin: ' . $requestOrigin);
+    }
+}
+
+// プリフライトリクエストの処理
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    header('Access-Control-Max-Age: 86400'); // 24時間キャッシュ
     exit(0);
 }
 

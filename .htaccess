@@ -1,0 +1,149 @@
+# ============================================================
+# Personal Finance Dashboard - Apache Configuration
+# ============================================================
+
+# ============================================================
+# 1. HTTPS強制（HTTP無効化）
+# ============================================================
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # HTTPSでない場合は強制的にHTTPSにリダイレクト
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # ディレクトリインデックス設定
+    DirectoryIndex index.php
+
+    # URLリライト（ルーティング）
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# ============================================================
+# 2. セキュリティヘッダー
+# ============================================================
+<IfModule mod_headers.c>
+    # HSTS（HTTP Strict Transport Security）- ブラウザにHTTPSのみ使用を強制
+    # max-age=31536000 = 1年間有効
+    # includeSubDomains = サブドメインにも適用
+    # preload = HSTSプリロードリストに登録可能
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+    # X-Content-Type-Options - MIMEタイプスニッフィング攻撃を防止
+    Header set X-Content-Type-Options "nosniff"
+
+    # X-Frame-Options - クリックジャッキング攻撃を防止
+    Header set X-Frame-Options "SAMEORIGIN"
+
+    # X-XSS-Protection - ブラウザのXSS保護を有効化
+    Header set X-XSS-Protection "1; mode=block"
+
+    # Referrer-Policy - リファラー情報の漏洩を制限
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Content-Security-Policy - XSS攻撃を防止（開発環境用）
+    # 本番環境では適切に調整してください
+    # Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://code.highcharts.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self' https://cdn.jsdelivr.net"
+
+    # Permissions-Policy - ブラウザ機能へのアクセス制御
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# ============================================================
+# 3. ファイルアクセス制限
+# ============================================================
+
+# .env_dbファイルへのアクセスを禁止
+<Files ".env_db">
+    Require all denied
+</Files>
+
+# .gitファイル・ディレクトリへのアクセスを禁止
+<DirectoryMatch "\.git">
+    Require all denied
+</DirectoryMatch>
+
+# バックアップファイルへのアクセスを禁止
+<FilesMatch "\.(bak|backup|sql|log|old|save|swp|~)$">
+    Require all denied
+</FilesMatch>
+
+# composer関連ファイルへのアクセスを禁止
+<FilesMatch "^(composer\.(json|lock)|package(-lock)?\.json)$">
+    Require all denied
+</FilesMatch>
+
+# READMEやドキュメントファイルへのアクセスを禁止（オプション）
+<FilesMatch "^(README|CHANGELOG|LICENSE|CONTRIBUTING)\.(md|txt)$">
+    Require all denied
+</FilesMatch>
+
+# ============================================================
+# 4. PHPセキュリティ設定
+# ============================================================
+<IfModule mod_php7.c>
+    # ファイルアップロードの制限
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+
+    # セッションのセキュリティ強化
+    php_flag session.cookie_httponly on
+    php_flag session.cookie_secure on
+    php_value session.cookie_samesite Strict
+
+    # エラー表示を無効化（本番環境用）
+    # 開発環境では有効にすることを推奨
+    # php_flag display_errors off
+    # php_flag display_startup_errors off
+</IfModule>
+
+# ============================================================
+# 5. ディレクトリ一覧表示の無効化
+# ============================================================
+Options -Indexes
+
+# ============================================================
+# 6. キャッシュ設定（パフォーマンス向上）
+# ============================================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+
+    # 画像
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/x-icon "access plus 1 year"
+
+    # CSS & JavaScript
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType text/javascript "access plus 1 week"
+
+    # フォント
+    ExpiresByType font/woff "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 month"
+    ExpiresByType application/font-woff "access plus 1 month"
+    ExpiresByType application/font-woff2 "access plus 1 month"
+</IfModule>
+
+# ============================================================
+# 7. 圧縮設定（パフォーマンス向上）
+# ============================================================
+<IfModule mod_deflate.c>
+    # テキストベースのファイルを圧縮
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript
+    AddOutputFilterByType DEFLATE application/xml application/xhtml+xml application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# ============================================================
+# 注意事項
+# ============================================================
+# 1. 本番環境でHTTPSを有効にする前に、有効なSSL証明書をインストールしてください
+# 2. HTTPS強制を有効にすると、HTTP経由のアクセスはすべてHTTPSにリダイレクトされます
+# 3. 開発環境でHTTPSが使えない場合は、RewriteRuleをコメントアウトしてください
+# 4. Content-Security-Policyは環境に合わせて調整してください
