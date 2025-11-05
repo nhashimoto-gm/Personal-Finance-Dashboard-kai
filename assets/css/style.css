@@ -14,6 +14,41 @@ body {
     scroll-behavior: smooth;
 }
 
+/* Responsive typography using clamp() */
+.stat-card .card-title {
+    font-size: clamp(1.25rem, 4vw, 2rem);
+}
+
+.stat-card .card-subtitle {
+    font-size: clamp(0.75rem, 2vw, 1rem);
+}
+
+.stat-card .card-text {
+    font-size: clamp(0.7rem, 1.5vw, 0.875rem);
+}
+
+.card-header h5 {
+    font-size: clamp(0.9rem, 2.5vw, 1.25rem);
+}
+
+/* Budget progress card responsive typography */
+.card-body .h4 {
+    font-size: clamp(1rem, 3vw, 1.5rem);
+}
+
+.card-body .h5 {
+    font-size: clamp(0.9rem, 2.5vw, 1.25rem);
+}
+
+.card-body .h6 {
+    font-size: clamp(0.8rem, 2vw, 1rem);
+}
+
+.card-body .small,
+.card-body small {
+    font-size: clamp(0.7rem, 1.5vw, 0.875rem);
+}
+
 .card {
     box-shadow: var(--elevation-1);
     transition: box-shadow var(--transition-speed);
@@ -468,13 +503,7 @@ body {
         margin-bottom: 1rem;
     }
 
-    .card-header h5 {
-        font-size: 0.95rem;
-    }
-
-    h2 {
-        font-size: 1.5rem;
-    }
+    /* Removed fixed font-size for .card-header h5 and h2 - using clamp() instead */
 
     .table {
         font-size: 0.875rem;
@@ -611,9 +640,7 @@ body {
         line-height: 1.2;
     }
 
-    .card-header h5 {
-        font-size: 0.85rem;
-    }
+    /* Removed fixed font-size for .card-header h5 - using clamp() instead */
 
     .btn-group-sm .btn {
         min-height: unset;
