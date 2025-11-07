@@ -41,9 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
         $errors[] = 'Invalid security token. Please refresh the page and try again.';
     } else {
         // レート制限チェック
-        if (!checkRateLimit('import', 60, 5)) { // 60分に5回まで
+        $rateLimitCheck = checkRateLimit('import');
+        if (!$rateLimitCheck['allowed']) {
             http_response_code(429);
-            $errors[] = 'Too many import requests. Please try again later.';
+            $errors[] = $rateLimitCheck['message'];
         } else {
             $file = $_FILES['csv_file'];
 

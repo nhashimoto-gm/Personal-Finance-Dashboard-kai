@@ -1,6 +1,9 @@
 <?php
 // queries.php - データ取得クエリ（Multi-Account対応）
 
+// N+1クエリ対策: 繰り返し経費データのキャッシュ
+$GLOBALS['recurring_expenses_cache'] = [];
+
 // サマリー取得
 function getSummary($pdo, $user_id, $start_date, $end_date) {
     // ユーザーID検証
@@ -1339,7 +1342,12 @@ function generateRecurringExpenseInstances($pdo, $user_id, $start_date, $end_dat
         return [];
     }
 
-    $recurring_expenses = getRecurringExpenses($pdo, $user_id, false);
+    // N+1クエリ対策: キャッシュを使用
+    $cache_key = 'user_' . $user_id;
+    if (!isset($GLOBALS['recurring_expenses_cache'][$cache_key])) {
+        $GLOBALS['recurring_expenses_cache'][$cache_key] = getRecurringExpenses($pdo, $user_id, false);
+    }
+    $recurring_expenses = $GLOBALS['recurring_expenses_cache'][$cache_key];
     $instances = [];
 
     foreach ($recurring_expenses as $expense) {

@@ -18,9 +18,13 @@ if (!$user_id) {
 }
 
 // レート制限チェック
-if (!checkRateLimit('export', 30, 10)) { // 30分に10回まで
+$rateLimitCheck = checkRateLimit('export');
+if (!$rateLimitCheck['allowed']) {
     http_response_code(429);
-    die('Too many export requests. Please try again later.');
+    if (isset($rateLimitCheck['retry_after'])) {
+        header('Retry-After: ' . $rateLimitCheck['retry_after']);
+    }
+    die($rateLimitCheck['message']);
 }
 
 // データベース接続
