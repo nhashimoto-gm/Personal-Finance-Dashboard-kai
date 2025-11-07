@@ -116,11 +116,23 @@ if (!$originAllowed && !empty($requestOrigin)) {
         error_log("CORS: Blocked origin - $requestOrigin");
         exit;
     }
-    // 開発環境: 警告ログのみ（ブロックしない）
+    // 開発環境: localhostのみ許可（セキュリティ向上）
     else {
-        error_log("CORS: Warning - Unknown origin: $requestOrigin");
-        // 開発環境では許可（デバッグ用）
-        header('Access-Control-Allow-Origin: ' . $requestOrigin);
+        // localhostファミリーのみ許可
+        if (preg_match('/^https?:\/\/(localhost|127\.0\.0\.1|::1)(:\d+)?$/', $requestOrigin)) {
+            error_log("CORS: Development mode - Allowing localhost origin: $requestOrigin");
+            header('Access-Control-Allow-Origin: ' . $requestOrigin);
+        } else {
+            // localhost以外は明示的な設定が必要
+            http_response_code(403);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Forbidden',
+                'message' => 'Origin not allowed. Add to ALLOWED_ORIGINS in .env_db'
+            ]);
+            error_log("CORS: Blocked non-localhost origin in development: $requestOrigin");
+            exit;
+        }
     }
 }
 

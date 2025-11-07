@@ -28,7 +28,7 @@
                         </button>
                     </div>
                     <div class="col-4 col-md-2">
-                        <a href="export.php?type=summary&start_date=<?= $start_date ?>&end_date=<?= $end_date ?>"
+                        <a href="export.php?type=summary&start_date=<?= urlencode($start_date) ?>&end_date=<?= urlencode($end_date) ?>"
                            class="btn btn-success w-100 filter-action-btn" title="Export">
                             <i class="bi bi-download"></i> <span class="btn-text" data-i18n="export">Export</span>
                         </a>
@@ -37,13 +37,13 @@
                 <!-- Quick Filter Buttons -->
                 <div class="row g-2 mt-2">
                     <div class="col-auto">
-                        <a href="?start_date=<?= date('Y-m-01') ?>&end_date=<?= date('Y-m-t') ?>"
+                        <a href="?start_date=<?= urlencode(date('Y-m-01')) ?>&end_date=<?= urlencode(date('Y-m-t')) ?>"
                            class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-calendar-month"></i> <span data-i18n="currentMonth">当月</span>
                         </a>
                     </div>
                     <div class="col-auto">
-                        <a href="?start_date=<?= date('Y-m-01', strtotime('first day of last month')) ?>&end_date=<?= date('Y-m-t', strtotime('last day of last month')) ?>"
+                        <a href="?start_date=<?= urlencode(date('Y-m-01', strtotime('first day of last month'))) ?>&end_date=<?= urlencode(date('Y-m-t', strtotime('last day of last month'))) ?>"
                            class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-calendar-minus"></i> <span data-i18n="lastMonth">前月</span>
                         </a>
@@ -332,16 +332,16 @@
                             data-i18n="<?= $period_range < 60 ? 'months' : 'years' ?>"><?= $period_range < 60 ? 'ヶ月' : '年' ?></span>)
                     </h5>
                     <div class="btn-group" role="group">
-                        <a href="?start_date=<?= $start_date ?>&end_date=<?= $end_date ?>&period_range=12#periodTrendSection"
+                        <a href="?start_date=<?= urlencode($start_date) ?>&end_date=<?= urlencode($end_date) ?>&period_range=12#periodTrendSection"
                             class="btn btn-sm <?= $period_range == 12 ? 'btn-primary' : 'btn-outline-primary' ?>">12<span
                                 data-i18n="monthsShort">ヶ月</span></a>
-                        <a href="?start_date=<?= $start_date ?>&end_date=<?= $end_date ?>&period_range=24#periodTrendSection"
+                        <a href="?start_date=<?= urlencode($start_date) ?>&end_date=<?= urlencode($end_date) ?>&period_range=24#periodTrendSection"
                             class="btn btn-sm <?= $period_range == 24 ? 'btn-primary' : 'btn-outline-primary' ?>">2<span
                                 data-i18n="yearsShort">年</span></a>
-                        <a href="?start_date=<?= $start_date ?>&end_date=<?= $end_date ?>&period_range=60#periodTrendSection"
+                        <a href="?start_date=<?= urlencode($start_date) ?>&end_date=<?= urlencode($end_date) ?>&period_range=60#periodTrendSection"
                             class="btn btn-sm <?= $period_range == 60 ? 'btn-primary' : 'btn-outline-primary' ?>">5<span
                                 data-i18n="yearsShort">年</span></a>
-                        <a href="?start_date=<?= $start_date ?>&end_date=<?= $end_date ?>&period_range=120#periodTrendSection"
+                        <a href="?start_date=<?= urlencode($start_date) ?>&end_date=<?= urlencode($end_date) ?>&period_range=120#periodTrendSection"
                             class="btn btn-sm <?= $period_range == 120 ? 'btn-primary' : 'btn-outline-primary' ?>">10<span
                                 data-i18n="yearsShort">年</span></a>
                     </div>

@@ -231,6 +231,25 @@ if (isset($_SESSION['successMessage'])) {
 // デフォルトは当月初日から当月最終日
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t');
+
+// 日付フォーマット検証
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start_date)) {
+    $start_date = date('Y-m-01');
+}
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $end_date)) {
+    $end_date = date('Y-m-t');
+}
+
+// 日付の妥当性検証
+$start_date_obj = DateTime::createFromFormat('Y-m-d', $start_date);
+$end_date_obj = DateTime::createFromFormat('Y-m-d', $end_date);
+if (!$start_date_obj || $start_date_obj->format('Y-m-d') !== $start_date) {
+    $start_date = date('Y-m-01');
+}
+if (!$end_date_obj || $end_date_obj->format('Y-m-d') !== $end_date) {
+    $end_date = date('Y-m-t');
+}
+
 $period_range = isset($_GET['period_range']) ? $_GET['period_range'] : '12';
 $search_shop = isset($_GET['search_shop']) ? $_GET['search_shop'] : '';
 $search_category = isset($_GET['search_category']) ? $_GET['search_category'] : '';
